@@ -16,7 +16,7 @@
   char *sval;
 }
 
-%token TYPE ARRAY OF VAR FUNCTION
+%token TYPE ARRAY OF VAR FUNCTION END_OF_FILE
 %token LET IN END IF THEN ELSE WHILE DO FOR TO BREAK
 %token PTO DOSP DOSPIG COMA PCOMA IGUAL PI PD CI CD LI LD
 %token AMPER PIPE MENOR MENIG MAYOR MAYIG DIST
@@ -34,14 +34,16 @@
 %nonassoc IGUAL MENOR MENIG MAYOR MAYIG DIST
 %left MAS MENOS
 %left POR DIV
+%start prog
 %%
+prog : exp END_OF_FILE
 
-exp : INT					{ cout << "Int:"<< $1 << endl; }
+exp : INT					{ }
 	| PI PD					{  }
-	| NIL					{ cout << "Nil"<< endl; }
-  | LITERAL				{ cout << "Literal:"<< $1 << endl; }
-	| BREAK					{ cout << "Break" << endl; }
-	| l_value				{ cout << "l value" << endl; }
+	| NIL					{ }
+  | LITERAL				{ }
+	| BREAK					{ }
+	| l_value				{ }
 	| l_value DOSPIG exp	{ }
 	| PI exp PCOMA explist {  }
 	| exp PIPE exp			{  }
@@ -128,7 +130,10 @@ int main(int, char**) {
 }
 
 void yyerror(const char *s) {
-  cout << "EEK, parse error!  Message: " << s << endl;
+  extern int yylineno;
+  extern int line_num;
+  //cout << "Ori Pesha, parse error!  Message: " << s << endl;
+  //cout << "Line: " << line_num << endl;
   // might as well halt now:
   exit(-1);
 }

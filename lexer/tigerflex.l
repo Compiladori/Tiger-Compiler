@@ -1,7 +1,11 @@
 %{
 #include "tigerbison.tab.h"
+int num_comments = 0;
+int line_num = 0;
 %}
 %option noyywrap
+%option yylineno
+%x COMMENT
 %%
 type		{ return TYPE; }
 array		{ return ARRAY; }
@@ -23,7 +27,7 @@ nil			{ return NIL; }
 
 \.  				{ return PTO; }
 \:  				{ return DOSP; }
-\:=				{ return DOSPIG; }
+\:=				  { return DOSPIG; }
 \,  				{ return COMA; }
 \;  				{ return PCOMA; }
 \=  				{ return IGUAL; }
@@ -36,17 +40,26 @@ nil			{ return NIL; }
 \&  				{ return AMPER; }
 \|  				{ return PIPE; }
 \<  				{ return MENOR; }
-\<=				{ return MENIG; }
+\<=				  { return MENIG; }
 \>  				{ return MAYOR; }
-\>=				{ return MAYIG; }
-\<>				{ return DIST; }
+\>=				  { return MAYIG; }
+\<>				  {  return DIST; }
 \+  				{ return MAS; }
 \-  				{ return MENOS; }
 \*  				{ return POR; }
 \/  				{ return DIV; }
+\n          { line_num++; }
 [0-9]+         { yylval.ival = atoi(yytext); return INT; }
-[a-zA-Z0-9]+   {
-                yylval.sval = strdup(yytext);
-                return LITERAL;
-              }
+\"([^\\\"]|\\.)*\"  { yylval.sval = strdup(yytext); return LITERAL; }
+[A-Za-z][A-Za-z0-9_]* { yylval.sval = strdup(yytext); return ID; }
+"/*"            {num_comments = 1; BEGIN(COMMENT); }
+<COMMENT>"*/" { num_comments--;
+                if(!num_comments)
+                  BEGIN(INITIAL); }
+<COMMENT>"/*" { num_comments++; }
+<COMMENT>.    { }
+<COMMENT>\n    { line_num++; }
+[` ``\t``\r``\^L`]      {}
+<<EOF>>     return END_OF_FILE;
+.              { exit(-1);}
 %%
