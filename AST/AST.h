@@ -33,7 +33,8 @@ typedef enum {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge} Operation;
 class Symbol {
     std::string name;
 public:
-    Symbol(std::string name);
+    Symbol(std::string name) : name(name) {}
+    Symbol(char *name) : name(std::string(name)) {}
     std::string get_name();
 };
 
@@ -43,7 +44,7 @@ public:
 class Position {
     int pos;
 public:
-    Position (int pos);
+    Position (int pos) : pos(pos) {}
 };
 
 
@@ -55,28 +56,28 @@ public:
 };
 
 class TypeField {
-    Symbol id;
-    Symbol type_id;
+    Symbol *id;
+    Symbol *type_id;
 public:
-    TypeField(Symbol id, Symbol type_id);
+    TypeField(Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
 };
 
 class NameType : public Type {
-    Symbol type_id;
+    Symbol *type_id;
 public:
-    NameType (Symbol type_id);
+    NameType (Symbol *type_id) : type_id(type_id) {}
 };
 
 class RecordType : public Type {
     TypeFieldList *tyfields;
 public:
-    RecordType (TypeFieldList *tyfields);
+    RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
 };
 
 class ArrayType : public Type {
-    Symbol type_id;
+    Symbol *type_id;
 public:
-    ArrayType (Symbol type_id);
+    ArrayType (Symbol *type_id) : type_id(type_id) {}
 };
 
 
@@ -88,30 +89,31 @@ public:
 };
 
 class SimpleVar : public Variable {
-    Symbol id;
+    Symbol *id;
 public:
-    SimpleVar (Symbol symbol);
+    SimpleVar (Symbol *id) : id(id) {}
 };
 
 class FieldVar : public Variable {
     Variable *var;
-    Symbol id;
+    Symbol *id;
 public:
-    FieldVar (Variable *var, Symbol id);
+    FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
 };
 
 class SubscriptVar : public Variable {
     Variable *var;
     Expression *exp;
 public:
-    SubscriptVar (Variable *var, Expression *exp);
+    SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
 };
 
 
 
 /** Expressions **/
 class Expression {
-    Position pos;
+protected:
+    Position *pos;
 public:
     virtual void print();
     Position get_position();
@@ -120,23 +122,23 @@ public:
 class VarExp : public Expression {
     Variable *var;
 public:
-    VarExp (Variable &var, Position pos);
+    VarExp (Variable &var, Position *pos);
 };
 
 class UnitExp : public Expression {
 public:
-    UnitExp (Position pos);
+    UnitExp (Position *pos);
 };
 
 class NilExp : public Expression {
 public:
-    NilExp (Position pos);
+    NilExp (Position *pos);
 };
 
 class IntExp : public Expression {
     int value;
 public:
-    IntExp (int value, Position pos);
+    IntExp (int value, Position *pos);
     int get_value();
 };
 
@@ -187,6 +189,7 @@ class IfExp : public Expression {
     Expression *then;
     Expression *otherwise;
 public:
+    IfExp (Expression *test, Expression *then, Position pos);
     IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos);
 };
 
