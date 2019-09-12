@@ -137,9 +137,9 @@ public:
 
 template<class T>
 class GenericValueExp : public Expression {
-    T *value;
+    T value;
 public:
-    GenericValueExp(T *value, Position *pos) : value(value), Expression(pos) {}
+    GenericValueExp(T value, Position *pos) : value(value), Expression(pos) {}
     T getValue();
 };
 
