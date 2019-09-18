@@ -33,8 +33,9 @@ typedef enum {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge} Operation;
 class Symbol {
     std::string name;
 public:
-    Symbol(std::string name);
-    std::string get_name();
+    Symbol(std::string name) : name(name) {}
+    Symbol(char *name) : name(std::string(name)) {}
+    std::string getName();
 };
 
 
@@ -43,7 +44,7 @@ public:
 class Position {
     int pos;
 public:
-    Position (int pos);
+    Position (int pos) : pos(pos) {}
 };
 
 
@@ -51,32 +52,32 @@ public:
 /** Types **/
 class Type {
 public:
-    virtual void print();
+    virtual void print() = 0;
 };
 
 class TypeField {
-    Symbol id;
-    Symbol type_id;
+    Symbol *id;
+    Symbol *type_id;
 public:
-    TypeField(Symbol id, Symbol type_id);
+    TypeField(Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
 };
 
 class NameType : public Type {
-    Symbol type_id;
+    Symbol *type_id;
 public:
-    NameType (Symbol type_id);
+    NameType (Symbol *type_id) : type_id(type_id) {}
 };
 
 class RecordType : public Type {
     TypeFieldList *tyfields;
 public:
-    RecordType (TypeFieldList *tyfields);
+    RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
 };
 
 class ArrayType : public Type {
-    Symbol type_id;
+    Symbol *type_id;
 public:
-    ArrayType (Symbol type_id);
+    ArrayType (Symbol *type_id) : type_id(type_id) {}
 };
 
 
@@ -84,74 +85,73 @@ public:
 /** Variables **/
 class Variable {
 public:
-    virtual void print();
+    virtual void print() = 0;
 };
 
 class SimpleVar : public Variable {
-    Symbol id;
+    Symbol *id;
 public:
-    SimpleVar (Symbol symbol);
+    SimpleVar (Symbol *id) : id(id) {}
 };
 
 class FieldVar : public Variable {
     Variable *var;
-    Symbol id;
+    Symbol *id;
 public:
-    FieldVar (Variable *var, Symbol id);
+    FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
 };
 
 class SubscriptVar : public Variable {
     Variable *var;
     Expression *exp;
 public:
-    SubscriptVar (Variable *var, Expression *exp);
+    SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
 };
 
 
 
 /** Expressions **/
 class Expression {
-    Position pos;
+    Position *pos;
 public:
-    virtual void print();
-    Position get_position();
+    Expression(Position *pos) : pos(pos) {}
+    virtual void print() = 0;
+    Position getPosition();
 };
 
 class VarExp : public Expression {
     Variable *var;
 public:
-    VarExp (Variable &var, Position pos);
+    VarExp (Variable *var, Position *pos) : var(var), Expression(pos) {}
 };
 
 class UnitExp : public Expression {
 public:
-    UnitExp (Position pos);
+    UnitExp (Position *pos) : Expression(pos) {}
 };
 
 class NilExp : public Expression {
 public:
-    NilExp (Position pos);
+    NilExp (Position *pos) : Expression(pos) {}
 };
 
-class IntExp : public Expression {
-    int value;
+template<class T>
+class GenericValueExp : public Expression {
+    T value;
 public:
-    IntExp (int value, Position pos);
-    int get_value();
+    GenericValueExp(T value, Position *pos) : value(value), Expression(pos) {}
+    T getValue();
 };
 
-class StringExp : public Expression {
-    std::string value;
-public:
-    StringExp (std::string value, Position pos);
-    std::string get_value();
-};
+typedef GenericValueExp<int> IntExp;
+typedef GenericValueExp<double> RealExp;
+typedef GenericValueExp<std::string> StringExp;
 
 class CallExp : public Expression {
     Symbol func;
     ExpressionList *exp_list;
 public:
-    CallExp (Symbol func, ExpressionList *exp_list);
+    CallExp (Symbol func, ExpressionList *exp_list, Position *pos) : func(func), exp_list(exp_list), Expression(pos) {}
 };
 
 class OpExp : public Expression {
@@ -159,27 +159,27 @@ class OpExp : public Expression {
     Operation oper;
     Expression *right;
 public:
-    OpExp (Expression *left, Operation oper, Expression *right);
+    OpExp (Expression *left, Operation oper, Expression *right, Position *pos) : left(left), oper(oper), right(right), Expression(pos) {}
 };
 
 class RecordExp : public Expression {
     VariableList *fields;
     Type *ty;
 public:
-    RecordExp (VariableList *fields, Type *ty, Position pos);
+    RecordExp (VariableList *fields, Type *ty, Position *pos) : fields(fields), ty(ty), Expression(pos) {}
 };
 
 class SeqExp : public Expression {
     ExpressionList *exp_list;
 public:
-    SeqExp (ExpressionList *exp_list, Position pos);
+    SeqExp (ExpressionList *exp_list, Position *pos) : exp_list(exp_list), Expression(pos) {}
 };
 
 class AssignExp : public Expression {
     Variable *var;
     Expression *exp;
 public:
-    AssignExp (Variable *var, Expression *exp, Position pos);
+    AssignExp (Variable *var, Expression *exp, Position *pos) : var(var), exp(exp), Expression(pos) {}
 };
 
 class IfExp : public Expression {
@@ -187,14 +187,15 @@ class IfExp : public Expression {
     Expression *then;
     Expression *otherwise;
 public:
-    IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos);
+    IfExp (Expression *test, Expression *then, Position *pos) : test(test), then(then), otherwise(nullptr), Expression(pos) {}
+    IfExp (Expression *test, Expression *then, Expression *otherwise, Position *pos) : test(test), then(then), otherwise(otherwise), Expression(pos) {}
 };
 
 class WhileExp : public Expression {
     Expression *test;
     Expression *body;
 public:
-    WhileExp (Expression *test, Expression *body, Position pos);
+    WhileExp (Expression *test, Expression *body, Position *pos) : test(test), body(body), Expression(pos) {}
 };
 
 class ForExp : public Expression {
@@ -204,28 +205,28 @@ class ForExp : public Expression {
     Expression *hi;
     Expression *body;
 public:
-    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos);
-    bool get_escape();
+    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position *pos) : var(var), escape(escape), lo(lo), hi(hi), body(body), Expression(pos) {}
+    bool getEscape();
 };
 
 class LetExp : public Expression {
     DeclarationList *decs;
     Expression *body;
 public:
-    LetExp (DeclarationList *decs, Expression *body, Position pos);
+    LetExp (DeclarationList *decs, Expression *body, Position *pos) : decs(decs), body(body), Expression(pos) {}
 };
 
 class BreakExp : public Expression {
 public:
-    BreakExp (Position pos);
+    BreakExp (Position *pos) : Expression(pos) {}
 };
 
 class ArrayExp : public Expression {
-    Symbol ty;
+    Symbol *ty;
     Expression *size;
     Expression *init;
 public:
-    ArrayExp (Symbol ty, Expression *size, Expression *init, Position pos);
+    ArrayExp (Symbol *ty, Expression *size, Expression *init, Position *pos) : ty(ty), size(size), init(init), Expression(pos) {}
 };
 
 
@@ -233,34 +234,35 @@ public:
 /** Declarations **/
 class Declaration {
 public:
-    virtual void print();
+    virtual void print() = 0;
 };
 
 class VarDec : public Declaration {
-    Symbol id;
+    Symbol *id;
     bool escape;
-    Symbol type_id;
+    Symbol *type_id;
     Expression *exp;
 public:
-    VarDec(Symbol id, bool escape, Expression *exp);
-    VarDec(Symbol id, bool escape, Symbol type_id, Expression *exp);
+    VarDec(Symbol *id, bool escape, Expression *exp) : id(id), escape(escape), type_id(nullptr), exp(exp) {}
+    VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : id(id), escape(escape), type_id(type_id), exp(exp) {}
+    bool getEscape();
 };
 
 class TypeDec : public Declaration {
-    Symbol type_id;
+    Symbol *type_id;
     Type *ty;
 public:
-    TypeDec(Symbol type_id, Type *ty);
+    TypeDec(Symbol *type_id, Type *ty) : type_id(type_id), ty(ty) {}
 };
 
 class FunDec : public Declaration {
-    Symbol id;
+    Symbol *id;
     TypeFieldList *tyfields;
-    Symbol type_id;
+    Symbol *type_id;
     Expression *exp;
 public:
-    FunDec(Symbol id, TypeFieldList *tyfields, Expression *exp);
-    FunDec(Symbol id, TypeFieldList *tyfields, Symbol type_id, Expression *exp);
+    FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : id(id), tyfields(tyfields), type_id(nullptr), exp(exp) {}
+    FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
 };
 
 
