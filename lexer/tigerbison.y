@@ -1,3 +1,8 @@
+%code requires{
+  #include "AST.h"
+  using namespace ast;
+}
+
 %{
   #include <cstdio>
   #include <iostream>
@@ -14,6 +19,9 @@
 %union {
   int ival;
   char *sval;
+  Expression *Exp;
+  Symbol *symbol;
+  TypeField *typefield;
 }
 
 %token TYPE ARRAY OF VAR FUNCTION END_OF_FILE
@@ -35,6 +43,9 @@
 %left MAS MENOS
 %left POR DIV
 %start prog
+%type <Exp> exp
+%type <symbol> id
+%type <typefield> tyfield
 %%
 prog : exp END_OF_FILE
 
@@ -88,7 +99,7 @@ ty : id						{ }
 	| LI tyflds LD			{  }
 	| ARRAY OF id			{  }
 	;
-id : ID						{  }
+id : ID						{ string S($1); $$ = new Symbol(S); }
 	;
 tyflds : tyfield COMA tyflds { }
 	| tyfield				{ }
@@ -101,7 +112,10 @@ fundec : FUNCTION id PI tyflds PD IGUAL exp { }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
 							{ }
 	;
-tyfield : id DOSP id		{ }
+tyfield : id DOSP id		{
+              Symbol *a = $1;
+              Symbol *b = $3;
+              $$ = new TypeField(*a,*b);}
 	;
 args : exp COMA args		{ }
 	| exp					{ }
