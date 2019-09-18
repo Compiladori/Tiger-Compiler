@@ -66,18 +66,24 @@ class NameType : public Type {
     Symbol *type_id;
 public:
     NameType (Symbol *type_id) : type_id(type_id) {}
+    void print(){}
+
 };
 
 class RecordType : public Type {
     TypeFieldList *tyfields;
 public:
     RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
+    void print(){}
+
 };
 
 class ArrayType : public Type {
     Symbol *type_id;
 public:
     ArrayType (Symbol *type_id) : type_id(type_id) {}
+    void print(){}
+
 };
 
 
@@ -112,9 +118,9 @@ public:
 
 /** Expressions **/
 class Expression {
-    Position *pos;
+    Position pos;
 public:
-    Expression(Position *pos) : pos(pos) {}
+    Expression(Position pos) : pos(pos) {}
     virtual void print() = 0;
     Position getPosition();
 };
@@ -122,24 +128,24 @@ public:
 class VarExp : public Expression {
     Variable *var;
 public:
-    VarExp (Variable *var, Position *pos) : var(var), Expression(pos) {}
+    VarExp (Variable *var, Position pos) : var(var), Expression(pos) {}
 };
 
 class UnitExp : public Expression {
 public:
-    UnitExp (Position *pos) : Expression(pos) {}
+    UnitExp (Position pos) : Expression(pos) {}
 };
 
 class NilExp : public Expression {
 public:
-    NilExp (Position *pos) : Expression(pos) {}
+    NilExp (Position pos) : Expression(pos) {}
 };
 
 template<class T>
 class GenericValueExp : public Expression {
     T value;
 public:
-    GenericValueExp(T value, Position *pos) : value(value), Expression(pos) {}
+    GenericValueExp(T value, Position pos) : value(value), Expression(pos) {}
     T getValue();
 };
 
@@ -151,7 +157,7 @@ class CallExp : public Expression {
     Symbol func;
     ExpressionList *exp_list;
 public:
-    CallExp (Symbol func, ExpressionList *exp_list, Position *pos) : func(func), exp_list(exp_list), Expression(pos) {}
+    CallExp (Symbol func, ExpressionList *exp_list, Position pos) : func(func), exp_list(exp_list), Expression(pos) {}
 };
 
 class OpExp : public Expression {
@@ -159,27 +165,27 @@ class OpExp : public Expression {
     Operation oper;
     Expression *right;
 public:
-    OpExp (Expression *left, Operation oper, Expression *right, Position *pos) : left(left), oper(oper), right(right), Expression(pos) {}
+    OpExp (Expression *left, Operation oper, Expression *right, Position pos) : left(left), oper(oper), right(right), Expression(pos) {}
 };
 
 class RecordExp : public Expression {
     VariableList *fields;
-    Type *ty;
+    Symbol *type_id;
 public:
-    RecordExp (VariableList *fields, Type *ty, Position *pos) : fields(fields), ty(ty), Expression(pos) {}
+    RecordExp (VariableList *fields, Symbol *type_id, Position pos) : fields(fields), type_id(type_id), Expression(pos) {}
 };
 
 class SeqExp : public Expression {
     ExpressionList *exp_list;
 public:
-    SeqExp (ExpressionList *exp_list, Position *pos) : exp_list(exp_list), Expression(pos) {}
+    SeqExp (ExpressionList *exp_list, Position pos) : exp_list(exp_list), Expression(pos) {}
 };
 
 class AssignExp : public Expression {
     Variable *var;
     Expression *exp;
 public:
-    AssignExp (Variable *var, Expression *exp, Position *pos) : var(var), exp(exp), Expression(pos) {}
+    AssignExp (Variable *var, Expression *exp, Position pos) : var(var), exp(exp), Expression(pos) {}
 };
 
 class IfExp : public Expression {
@@ -187,15 +193,15 @@ class IfExp : public Expression {
     Expression *then;
     Expression *otherwise;
 public:
-    IfExp (Expression *test, Expression *then, Position *pos) : test(test), then(then), otherwise(nullptr), Expression(pos) {}
-    IfExp (Expression *test, Expression *then, Expression *otherwise, Position *pos) : test(test), then(then), otherwise(otherwise), Expression(pos) {}
+    IfExp (Expression *test, Expression *then, Position pos) : test(test), then(then), otherwise(nullptr), Expression(pos) {}
+    IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos) : test(test), then(then), otherwise(otherwise), Expression(pos) {}
 };
 
 class WhileExp : public Expression {
     Expression *test;
     Expression *body;
 public:
-    WhileExp (Expression *test, Expression *body, Position *pos) : test(test), body(body), Expression(pos) {}
+    WhileExp (Expression *test, Expression *body, Position pos) : test(test), body(body), Expression(pos) {}
 };
 
 class ForExp : public Expression {
@@ -205,7 +211,7 @@ class ForExp : public Expression {
     Expression *hi;
     Expression *body;
 public:
-    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position *pos) : var(var), escape(escape), lo(lo), hi(hi), body(body), Expression(pos) {}
+    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : var(var), escape(escape), lo(lo), hi(hi), body(body), Expression(pos) {}
     bool getEscape();
 };
 
@@ -213,12 +219,12 @@ class LetExp : public Expression {
     DeclarationList *decs;
     Expression *body;
 public:
-    LetExp (DeclarationList *decs, Expression *body, Position *pos) : decs(decs), body(body), Expression(pos) {}
+    LetExp (DeclarationList *decs, Expression *body, Position pos) : decs(decs), body(body), Expression(pos) {}
 };
 
 class BreakExp : public Expression {
 public:
-    BreakExp (Position *pos) : Expression(pos) {}
+    BreakExp (Position pos) : Expression(pos) {}
 };
 
 class ArrayExp : public Expression {
@@ -226,7 +232,7 @@ class ArrayExp : public Expression {
     Expression *size;
     Expression *init;
 public:
-    ArrayExp (Symbol *ty, Expression *size, Expression *init, Position *pos) : ty(ty), size(size), init(init), Expression(pos) {}
+    ArrayExp (Symbol *ty, Expression *size, Expression *init, Position pos) : ty(ty), size(size), init(init), Expression(pos) {}
 };
 
 
@@ -246,6 +252,7 @@ public:
     VarDec(Symbol *id, bool escape, Expression *exp) : id(id), escape(escape), type_id(nullptr), exp(exp) {}
     VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : id(id), escape(escape), type_id(type_id), exp(exp) {}
     bool getEscape();
+    void print(){}
 };
 
 class TypeDec : public Declaration {
@@ -253,6 +260,7 @@ class TypeDec : public Declaration {
     Type *ty;
 public:
     TypeDec(Symbol *type_id, Type *ty) : type_id(type_id), ty(ty) {}
+    void print(){}
 };
 
 class FunDec : public Declaration {
@@ -263,6 +271,7 @@ class FunDec : public Declaration {
 public:
     FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : id(id), tyfields(tyfields), type_id(nullptr), exp(exp) {}
     FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
+    void print(){}
 };
 
 

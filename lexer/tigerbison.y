@@ -1,5 +1,5 @@
 %code requires{
-  #include "AST.h"
+  #include "../AST/AST.h"
   using namespace ast;
 }
 
@@ -22,6 +22,12 @@
   Expression *Exp;
   Symbol *symbol;
   TypeField *typefield;
+  TypeFieldList *typefieldlist;
+  Type *typ;
+  FunDec *fundec;
+  VarDec *vardec;
+  Declaration *dec;
+  RecordExp *recordexp;
 }
 
 %token TYPE ARRAY OF VAR FUNCTION END_OF_FILE
@@ -46,6 +52,13 @@
 %type <Exp> exp
 %type <symbol> id
 %type <typefield> tyfield
+%type <typefieldlist> tyflds
+%type <typ> ty
+%type <fundec> fundec
+%type <vardec> vardec
+%type <dec> dec
+%type <recordexp> rec_fields
+
 %%
 prog : exp END_OF_FILE
 
@@ -80,42 +93,40 @@ exp : INT					{ }
 	| LET decs IN exp END	{ }
 	| LET decs IN exp PCOMA explist END  { }
 	| l_value CI exp CD OF exp {}
+  | id LI rec_fields LD	{  }
 	;
 explist: exp PCOMA explist	{ }
 	| exp					{ }
 	;
-rec_fields : id IGUAL exp COMA rec_fields {  }
+rec_fields : id IGUAL exp COMA rec_fields { $5->push_back(new RecordExp($3, $1, yylineno)); $$ = $5; }
 	| id IGUAL exp			{  }
 	|						{ }
 	;
-decs : dec decs		{ }
+decs : dec decs		{ /*lista*/ }
 	|						{ }
 	;
-dec : TYPE id IGUAL ty		{ }
-	| vardec				{ }
-	| fundec				{ }
+dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4); }
+	| vardec				{ $$ = $1; }
+	| fundec				{ $$ = $1; }
 	;
-ty : id						{ }
-	| LI tyflds LD			{  }
-	| ARRAY OF id			{  }
+ty : id						{ $$ = new NameType($1); }
+	| LI tyflds LD			{ $$ = new RecordType($2); }
+	| ARRAY OF id			{ $$ = new ArrayType($3); }
 	;
-id : ID						{ string S($1); $$ = new Symbol(S); }
+id : ID						{ $$ = new Symbol(string($1)); }
 	;
-tyflds : tyfield COMA tyflds { }
-	| tyfield				{ }
-	|						{ }
+  tyflds : tyfield COMA tyflds { $3->push_back($1); $$ = $3; }
+	| tyfield				{ $$ = new TypeFieldList(1, $1); }
+	|						{ $$ = new TypeFieldList(); }
 	;
-vardec : VAR id DOSPIG exp	{ }
-	| VAR id DOSP id DOSPIG exp { }
+vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, $4); }
+	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, $4, $6); }
 	;
-fundec : FUNCTION id PI tyflds PD IGUAL exp { }
+fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
-							{ }
+							{ $$ = new FunDec($2, $4, $7, $9); }
 	;
-tyfield : id DOSP id		{
-              Symbol *a = $1;
-              Symbol *b = $3;
-              $$ = new TypeField(*a,*b);}
+tyfield : id DOSP id		{ $$ = new TypeField($1, $3); }
 	;
 args : exp COMA args		{ }
 	| exp					{ }
