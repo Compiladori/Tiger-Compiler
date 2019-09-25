@@ -12,6 +12,7 @@
   extern int yylex();
   extern int yyparse();
   extern FILE *yyin;
+  extern int yylineno;
 
   void yyerror(const char *s);
 %}
@@ -19,7 +20,7 @@
 %union {
   int ival;
   char *sval;
-  Expression *Exp;
+  Expression *exp;
   Symbol *symbol;
   TypeField *typefield;
   TypeFieldList *typefieldlist;
@@ -49,7 +50,7 @@
 %left MAS MENOS
 %left POR DIV
 %start prog
-%type <Exp> exp
+%type <exp> exp
 %type <symbol> id
 %type <typefield> tyfield
 %type <typefieldlist> tyflds
@@ -65,7 +66,7 @@ prog : exp END_OF_FILE
 exp : INT					{ }
 	| PI PD					{  }
 	| NIL					{ }
-  | LITERAL				{ }
+    | LITERAL				{ }
 	| BREAK					{ }
 	| l_value				{ }
 	| l_value DOSPIG exp	{ }
@@ -92,14 +93,14 @@ exp : INT					{ }
 	| LET decs IN END		{ }
 	| LET decs IN exp END	{ }
 	| LET decs IN exp PCOMA explist END  { }
-	| l_value CI exp CD OF exp {}
-  | id LI rec_fields LD	{  }
+	| l_value CI exp CD OF exp { }
+    | id LI rec_fields LD	{  }
 	;
 explist: exp PCOMA explist	{ }
 	| exp					{ }
 	;
-rec_fields : id IGUAL exp COMA rec_fields { $5->push_back(new RecordExp($3, $1, yylineno)); $$ = $5; }
-	| id IGUAL exp			{  }
+rec_fields : id IGUAL exp COMA rec_fields { /* $5->push_back(new RecordExp($3, $1, Position(yylineno))); $$ = $5; */ /* TODO: Check what this should actually be */ }
+	| id IGUAL exp			{ }
 	|						{ }
 	;
 decs : dec decs		{ /*lista*/ }
@@ -113,14 +114,14 @@ ty : id						{ $$ = new NameType($1); }
 	| LI tyflds LD			{ $$ = new RecordType($2); }
 	| ARRAY OF id			{ $$ = new ArrayType($3); }
 	;
-id : ID						{ $$ = new Symbol(string($1)); }
+id : ID						{ $$ = new Symbol($1); }
 	;
   tyflds : tyfield COMA tyflds { $3->push_back($1); $$ = $3; }
-	| tyfield				{ $$ = new TypeFieldList(1, $1); }
-	|						{ $$ = new TypeFieldList(); }
+	| tyfield				   { $$ = new TypeFieldList($1); }
+	|						 { $$ = new TypeFieldList();   }
 	;
-vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, $4); }
-	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, $4, $6); }
+vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, false, $4); /* TODO: Check what 'false' should be! */ }
+	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, false, $4, $6); /* TODO: Check what 'false' should be! */ }
 	;
 fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
