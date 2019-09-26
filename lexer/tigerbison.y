@@ -29,6 +29,10 @@
   VarDec *vardec;
   Declaration *dec;
   RecordExp *recordexp;
+  GroupedDeclarations *grpdecs;
+  Variable *var;
+  ExpressionList *exp_list;
+  VariableList *varlist;
 }
 
 %token TYPE ARRAY OF VAR FUNCTION END_OF_FILE
@@ -58,21 +62,25 @@
 %type <fundec> fundec
 %type <vardec> vardec
 %type <dec> dec
-%type <recordexp> rec_fields
+%type <varlist> rec_fields
+%type <grpdecs> decs
+%type <var> l_value
+%type <exp_list> args explist
 
 %%
 prog : exp END_OF_FILE
 
-exp : INT					{ }
-	| PI PD					{  }
-	| NIL					{ }
-    | LITERAL				{ }
-	| BREAK					{ }
-	| l_value				{ }
-	| l_value DOSPIG exp	{ }
-	| PI exp PCOMA explist {  }
-	| exp PIPE exp			{  }
-	| exp AMPER exp			{  }
+exp : INT					{ $$ = new IntExp($1,Position(yylineno)); }
+	| PI PD					{ $$ = new UnitExp(Position(yylineno)); }
+	| NIL					  { $$ = NilExp(Position(yylineno)); }
+  | LITERAL				{ $$ = StringExp(Position(yylineno)); }
+	| BREAK					{ $$ = BreakExp(Position(yylineno));}
+	| l_value				{ $$ = VarExp($1,Position(yylineno)); }
+	| l_value DOSPIG exp	{ $$ = AssignExp($1,$3,Position(yylineno)); }
+	| PI exp PCOMA explist { $4 -> push_back($2);
+                           $$ = SeqExp($4,Position(yylineno)); }
+	| exp PIPE exp			{ $$ = IfExp($1,new IntExp(1),$3,Position(yylineno)); }
+	| exp AMPER exp			{ $$ = IfExp($1,$3, new IntExp(0), Position(yylineno)); }
 	| exp IGUAL exp			{  }
 	| exp MENOR exp			{  }
 	| exp MENIG exp			{  }
@@ -94,17 +102,22 @@ exp : INT					{ }
 	| LET decs IN exp END	{ }
 	| LET decs IN exp PCOMA explist END  { }
 	| l_value CI exp CD OF exp { }
-    | id LI rec_fields LD	{  }
+  | id LI rec_fields LD	{  }
 	;
-explist: exp PCOMA explist	{ }
-	| exp					{ }
+explist: exp PCOMA explist	{ $3 -> push_back($1); $$ = $3; }
+	| exp					{ $$ = new ExpressionList($1); }
 	;
-rec_fields : id IGUAL exp COMA rec_fields { /* $5->push_back(new RecordExp($3, $1, Position(yylineno))); $$ = $5; */ /* TODO: Check what this should actually be */ }
-	| id IGUAL exp			{ }
-	|						{ }
+rec_fields : id IGUAL exp COMA rec_fields { SimpleVar *svar = new SimpleVar($1);
+                                            SubscriptVar *susvar = new SubscriptVar(svar,$3);
+                                            $5 -> push_back(susvar);
+                                            $$ = $5; }
+	| id IGUAL exp			{ SimpleVar *svar = new SimpleVar($1);
+                        SubscriptVar *susvar = new SubscriptVar(svar,$3);
+                        $$ = new VariableList(susvar); }
+	|						        { $$ = new VariableList(); }
 	;
-decs : dec decs		{ /*lista*/ }
-	|						{ }
+decs : dec decs		{ $2 -> appendElement($1); $$ = $2;  }
+	|						{ $$ = new GroupedDeclarations(); }
 	;
 dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4); }
 	| vardec				{ $$ = $1; }
@@ -120,8 +133,8 @@ id : ID						{ $$ = new Symbol($1); }
 	| tyfield				   { $$ = new TypeFieldList($1); }
 	|						 { $$ = new TypeFieldList();   }
 	;
-vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, false, $4); /* TODO: Check what 'false' should be! */ }
-	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, false, $4, $6); /* TODO: Check what 'false' should be! */ }
+vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, false, $4); }
+	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, false, $4, $6); }
 	;
 fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
@@ -129,13 +142,13 @@ fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	;
 tyfield : id DOSP id		{ $$ = new TypeField($1, $3); }
 	;
-args : exp COMA args		{ }
-	| exp					{ }
-	|						{  }
+args : exp COMA args		{ $3 -> push_back($1); $$ = $3; }
+	| exp					{ $$ = new ExpressionList($1); }
+	|						{ $$ = new ExpressionList(); }
 	;
-l_value : id				{ }
-	| l_value PTO id		{  }
-	| l_value CI exp CD		{ }
+l_value : id				{ $$ = new SimpleVar($1); }
+	| l_value PTO id		{ $$ = new FieldVar($1,$3); }
+	| l_value CI exp CD		{ $$ = new SubscriptVar($1,$3); }
 	;
 
 %%
