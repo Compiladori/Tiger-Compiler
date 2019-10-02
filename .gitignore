@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Ignore binary files
+*
+!*.*
+!*/
+# Ignore flex and bison
+*.tab.c
+*.tab.h
+*.yy.c
