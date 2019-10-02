@@ -15,6 +15,7 @@ class Symbol;
 class Position;
 class Type;
 class TypeField;
+class RecordField;
 class Variable;
 class Expression;
 class Declaration;
@@ -35,6 +36,7 @@ typedef GenericList<TypeField> TypeFieldList;
 typedef GenericList<Variable> VariableList;
 typedef GenericList<Expression> ExpressionList;
 typedef GenericList<Declaration> DeclarationList;
+typedef GenericList<RecordField> RecordFieldList;
 
 
 
@@ -75,6 +77,14 @@ public:
     void print(){}
 };
 
+class RecordField {
+    std::unique_ptr<Symbol> id;
+    std::unique_ptr<Expression> exp;
+public:
+    RecordField(Symbol *id, Expression *exp) : id(id), exp(exp) {}
+    void print(){}
+};
+
 class NameType : public Type {
     std::unique_ptr<Symbol> type_id;
 public:
@@ -102,12 +112,14 @@ public:
 class Variable {
 public:
     virtual void print() = 0;
+    virtual std::string getName() = 0;
 };
 
 class SimpleVar : public Variable {
     std::unique_ptr<Symbol> id;
 public:
     SimpleVar (Symbol *id) : id(id) {}
+    std::string getName(){ return id->getName(); };
     void print(){}
 };
 
@@ -116,6 +128,7 @@ class FieldVar : public Variable {
     std::unique_ptr<Symbol> id;
 public:
     FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
+    std::string getName(){ return var->getName(); };
     void print(){}
 };
 
@@ -124,6 +137,7 @@ class SubscriptVar : public Variable {
     std::unique_ptr<Expression> exp;
 public:
     SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
+    std::string getName(){ return var->getName(); };
     void print(){}
 };
 
@@ -135,7 +149,7 @@ class Expression {
 public:
     Expression(Position pos) : pos(pos) {}
     Position getPosition(){ return pos; }
-    
+
     virtual void print() = 0;
 };
 
@@ -189,10 +203,10 @@ public:
 };
 
 class RecordExp : public Expression {
-    std::unique_ptr<VariableList> fields;
+    std::unique_ptr<RecordFieldList> fields;
     std::unique_ptr<Symbol> type_id;
 public:
-    RecordExp (VariableList *fields, Symbol *type_id, Position pos) : Expression(pos), fields(fields), type_id(type_id) {}
+    RecordExp (RecordFieldList *fields, Symbol *type_id, Position pos) : Expression(pos), fields(fields), type_id(type_id) {}
     void print(){}
 };
 
@@ -267,7 +281,7 @@ public:
     Declaration () : DK(DeclarationKind::NoDK) {}
     Declaration (DeclarationKind DK) : DK(DK) {}
     DeclarationKind getKind(){ return DK; }
-    
+
     virtual void print() = 0;
 };
 
@@ -279,7 +293,7 @@ class VarDec : public Declaration {
 public:
     VarDec(Symbol *id, bool escape, Expression *exp) : Declaration(DeclarationKind::VarDK), id(id), escape(escape), type_id(nullptr), exp(exp) {}
     VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : Declaration(DeclarationKind::VarDK), id(id), escape(escape), type_id(type_id), exp(exp) {}
-    
+
     bool getEscape(){ return escape; }
     void print(){}
 };
@@ -289,7 +303,7 @@ class TypeDec : public Declaration {
     std::unique_ptr<Type> ty;
 public:
     TypeDec(Symbol *type_id, Type *ty) : Declaration(DeclarationKind::TypeDK), type_id(type_id), ty(ty) {}
-    
+
     void print(){}
 };
 
@@ -301,7 +315,7 @@ class FunDec : public Declaration {
 public:
     FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : Declaration(DeclarationKind::FunDK), id(id), tyfields(tyfields), type_id(nullptr), exp(exp) {}
     FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : Declaration(DeclarationKind::FunDK), id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
-    
+
     void print(){}
 };
 
