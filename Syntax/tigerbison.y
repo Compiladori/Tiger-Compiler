@@ -2,7 +2,7 @@
   #include "../AST/AST.h"
   using namespace ast;
 }
-
+%define parse.error verbose
 %{
   #include <cstdio>
   #include <iostream>
@@ -36,7 +36,7 @@
 
 }
 
-%token TYPE ARRAY OF VAR FUNCTION END_OF_FILE
+%token TYPE ARRAY OF VAR FUNCTION
 %token LET IN END IF THEN ELSE WHILE DO FOR TO BREAK
 %token PTO DOSP DOSPIG COMA PCOMA IGUAL PI PD CI CD LI LD
 %token AMPER PIPE MENOR MENIG MAYOR MAYIG DIST
@@ -54,7 +54,7 @@
 %nonassoc IGUAL MENOR MENIG MAYOR MAYIG DIST
 %left MAS MENOS
 %left POR DIV
-%start prog
+%start exp
 %type <exp> exp
 %type <symbol> id
 %type <typefield> tyfield
@@ -69,8 +69,6 @@
 %type <exp_list> args explist
 
 %%
-prog : exp END_OF_FILE
-
 exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
 	| PI PD					{ $$ = new UnitExp(Position(yylineno)); }
 	| NIL					  { $$ = new NilExp(Position(yylineno)); }
@@ -168,7 +166,7 @@ int main(int, char**) {
 void yyerror(const char *s) {
   extern int yylineno;
   extern int line_num;
-  //cout << "Line: " << line_num << endl;
+  cout << s << " in line " << yylineno << endl;
   // might as well halt now:
   exit(-1);
 }

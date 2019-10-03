@@ -2,6 +2,7 @@
 #include "tigerbison.tab.h"
 int num_comments = 0;
 int line_num = 0;
+using namespace std;
 %}
 %option noyywrap
 %option yylineno
@@ -60,6 +61,6 @@ nil			{ return NIL; }
 <COMMENT>.    { }
 <COMMENT>\n    { line_num++; }
 [` ``\t``\r``\^L`]      {}
-<<EOF>>     return END_OF_FILE;
-.              { exit(-1);}
+.              { cout << "Lexer syntax error in line " << yylineno<<endl; exit(-1);}
+<<EOF>>                         { yyterminate(); return 0; }
 %%

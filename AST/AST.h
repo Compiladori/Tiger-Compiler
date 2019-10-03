@@ -51,6 +51,7 @@ class Symbol {
 public:
     Symbol(std::string name) : name(name) {}
     std::string getName(){ return name; }
+    void print() { std::cout << "Symbol " << name << std::endl; }
 };
 
 
@@ -74,7 +75,8 @@ class TypeField {
     std::unique_ptr<Symbol> id, type_id;
 public:
     TypeField(Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
-    void print(){}
+    void print(){   std::cout << "TypeField ("; id -> print();
+                    std::cout <<") ("; type_id -> print(); std::cout << ")"; }
 };
 
 class RecordField {
@@ -82,28 +84,28 @@ class RecordField {
     std::unique_ptr<Expression> exp;
 public:
     RecordField(Symbol *id, Expression *exp) : id(id), exp(exp) {}
-    void print(){}
+    void print(){ std::cout << "RecordField ("; id -> print(); std::cout <<") ("; exp -> print(); std::cout << ")"; }
 };
 
 class NameType : public Type {
     std::unique_ptr<Symbol> type_id;
 public:
     NameType (Symbol *type_id) : type_id(type_id) {}
-    void print(){}
+    void print(){ std::cout << "NameType ("; type_id -> print(); std::cout << ")";}
 };
 
 class RecordType : public Type {
     std::unique_ptr<TypeFieldList> tyfields;
 public:
     RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
-    void print(){}
+    void print(){ std::cout << "RecordType ("; tyfields -> print(); std::cout << ")";}
 };
 
 class ArrayType : public Type {
     std::unique_ptr<Symbol> type_id;
 public:
     ArrayType (Symbol *type_id) : type_id(type_id) {}
-    void print(){}
+    void print(){ std::cout << "ArrayType ("; type_id -> print(); std::cout << ")"; }
 };
 
 
@@ -120,7 +122,7 @@ class SimpleVar : public Variable {
 public:
     SimpleVar (Symbol *id) : id(id) {}
     std::string getName(){ return id->getName(); };
-    void print(){}
+    void print(){ std::cout << "SimpleVar ("; id -> print(); std::cout << ")"; }
 };
 
 class FieldVar : public Variable {
@@ -129,7 +131,7 @@ class FieldVar : public Variable {
 public:
     FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
     std::string getName(){ return var->getName(); };
-    void print(){}
+    void print(){ std::cout << "FieldVar ("; var -> print(); std::cout << ") ("; id -> print(); std::cout << ")"; }
 };
 
 class SubscriptVar : public Variable {
@@ -138,7 +140,7 @@ class SubscriptVar : public Variable {
 public:
     SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
     std::string getName(){ return var->getName(); };
-    void print(){}
+    void print(){ std::cout << "SubscriptVar ("; var -> print(); std::cout << ") ("; exp -> print(); std::cout << ")"; }
 };
 
 
@@ -157,19 +159,19 @@ class VarExp : public Expression {
     std::unique_ptr<Variable> var;
 public:
     VarExp (Variable *var, Position pos) : Expression(pos), var(var) {}
-    void print(){}
+    void print(){ std::cout << "VarExp (" << pos -> int << " )"; }
 };
 
 class UnitExp : public Expression {
 public:
     UnitExp (Position pos) : Expression(pos) {}
-    void print(){}
+    void print(){ std::cout << "UnitExp (" << pos -> int << " )"; }
 };
 
 class NilExp : public Expression {
 public:
     NilExp (Position pos) : Expression(pos) {}
-    void print(){}
+    void print(){ std::cout << "NilExp ( )"; }
 };
 
 template<class T>
@@ -190,8 +192,15 @@ class CallExp : public Expression {
     std::unique_ptr<ExpressionList> exp_list;
 public:
     CallExp (Symbol *func, ExpressionList *exp_list, Position pos) : Expression(pos), func(func), exp_list(exp_list) {}
-    void print(){}
+    void print(){ std::cout << "CallExp ("; func -> print(); std::cout << ") ("; exp_list -> print(); std::cout << ")"; }
 };
+/*
+operToText(Operation op){
+
+
+
+}
+*/
 
 class OpExp : public Expression {
     std::unique_ptr<Expression> left;
@@ -199,7 +208,7 @@ class OpExp : public Expression {
     std::unique_ptr<Expression> right;
 public:
     OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(pos), left(left), oper(oper), right(right) {}
-    void print(){}
+    void print(){ std::cout << "OpExp ("; left -> print(); std::cout << ") " << oper << "( "; right -> print(); std::cout << ")"; }
 };
 
 class RecordExp : public Expression {
@@ -207,7 +216,7 @@ class RecordExp : public Expression {
     std::unique_ptr<Symbol> type_id;
 public:
     RecordExp (RecordFieldList *fields, Symbol *type_id, Position pos) : Expression(pos), fields(fields), type_id(type_id) {}
-    void print(){}
+    void print(){ std::cout << "RecordExp ("; fields -> print(); std::cout << ") ("; type_id -> print(); std::cout << ")"; }
 };
 
 class SeqExp : public Expression {
