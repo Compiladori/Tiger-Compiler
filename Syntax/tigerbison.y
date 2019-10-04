@@ -80,7 +80,7 @@ exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
 	| BREAK					{ $$ = new BreakExp(Position(yylineno)); }
 	| l_value				{ $$ = new VarExp($1, Position(yylineno)); }
 	| l_value DOSPIG exp	{ $$ = new AssignExp($1, $3, Position(yylineno)); }
-	| PI exp PCOMA explist PD { $4 -> push_back($2);
+	| PI exp PCOMA explist PD { $4 -> push_front($2);
                                 $$ = new SeqExp($4, Position(yylineno)); }
 	| exp PIPE exp			{ $$ = new IfExp($1, new IntExp(1, Position(yylineno)), $3, Position(yylineno)); }
 	| exp AMPER exp			{ $$ = new IfExp($1, $3, new IntExp(0, Position(yylineno)), Position(yylineno)); }
@@ -110,12 +110,12 @@ exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
 explist: exp PCOMA explist	{ $3 -> push_back($1); $$ = $3; }
 	| exp					{ $$ = new ExpressionList($1); }
 	;
-rec_fields : id IGUAL exp COMA rec_fields { $5 -> push_back(new RecordField($1, $3));
+rec_fields : id IGUAL exp COMA rec_fields { $5 -> push_front(new RecordField($1, $3));
                                             $$ = $5; }
 	| id IGUAL exp			{ $$ = new RecordFieldList(new RecordField($1, $3)); }
 	|						{ $$ = new RecordFieldList(); }
 	;
-decs : dec decs		{ $2 -> appendDeclaration($1); $$ = $2;  }
+decs : dec decs		{ $2 -> frontAppendDeclaration($1); $$ = $2;  }
 	|						{ $$ = new GroupedDeclarations(); }
 	;
 dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4); }
@@ -128,7 +128,7 @@ ty : id						{ $$ = new NameType($1); }
 	;
 id : ID						{ $$ = new Symbol($1); }
 	;
-  tyflds : tyfield COMA tyflds { $3->push_back($1); $$ = $3; }
+  tyflds : tyfield COMA tyflds { $3->push_front($1); $$ = $3; }
 	| tyfield				   { $$ = new TypeFieldList($1); }
 	|						 { $$ = new TypeFieldList();   }
 	;
@@ -141,7 +141,7 @@ fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	;
 tyfield : id DOSP id		{ $$ = new TypeField($1, $3); }
 	;
-args : exp COMA args		{ $3 -> push_back($1); $$ = $3; }
+args : exp COMA args		{ $3 -> push_front($1); $$ = $3; }
 	| exp					{ $$ = new ExpressionList($1); }
 	|						{ $$ = new ExpressionList(); }
 	;

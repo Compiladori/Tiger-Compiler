@@ -74,14 +74,14 @@ void FunDec::print(){
     cout << ") ("; exp -> print(); cout << ")";
 }
 
-void GroupedDeclarations::appendDeclaration(Declaration *dec){
+void GroupedDeclarations::frontAppendDeclaration(Declaration *dec){
     if(this->empty() or dec->getKind() == DeclarationKind::VarDK) {
         // Create a new group if we had no group to join to, or we're a variable declaration
-        this->push_back(new DeclarationList(dec));
+        this->push_front(new DeclarationList(dec));
     } else {
         // Join last group if its Kind matches
-        if(this->back()->back()->getKind() == dec->getKind()) this->back()->push_back(dec);
-        else                                                  this->push_back(new DeclarationList(dec));
+        if(this->front()->front()->getKind() == dec->getKind()) this->front()->push_front(dec);
+        else                                                    this->push_front(new DeclarationList(dec));
     }
 }
 

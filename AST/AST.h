@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
+#include <deque>
 #include <memory>
 
 namespace ast {
@@ -28,20 +28,24 @@ enum DeclarationKind {VarDK, FunDK, TypeDK, NoDK};
 /** Utility **/
 template <class T>
 class GenericList {
-    std::vector<std::unique_ptr<T>> V;
+    std::deque<std::unique_ptr<T>> data;
 public:
-    GenericList()     : V() {}
+    GenericList()     : data() {}
     GenericList(T *e) : GenericList() { this->push_back(e); }
     
-    bool empty(){ return V.empty(); }
-    auto& back(){ return V.back(); }
+    bool empty(){ return data.empty(); }
+    auto& back(){ return data.back(); }
+    auto& front(){ return data.front(); }
     
-    void push_back(T *e){ V.push_back(std::move(std::unique_ptr<T>(e))); }
-    void push_back(std::unique_ptr<T> p){ V.push_back(std::move(p)); }
+    void push_back(T *e){ data.push_back(std::move(std::unique_ptr<T>(e))); }
+    void push_front(T *e){ data.push_front(std::move(std::unique_ptr<T>(e))); }
+    
+    void push_back(std::unique_ptr<T> p){ data.push_back(std::move(p)); }
+    void push_front(std::unique_ptr<T> p){ data.push_front(std::move(p)); }
     
     void print(){
         std::cout << "List ";
-        for(auto& p : V){
+        for(auto& p : data){
             std::cout << "(";
             p -> print(); 
             std::cout << ")";
@@ -340,7 +344,7 @@ public:
 
 class GroupedDeclarations : public GenericList<DeclarationList> {
 public:
-    void appendDeclaration(Declaration *dec);
+    void frontAppendDeclaration(Declaration *dec);
 };
 
 
