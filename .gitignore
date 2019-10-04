@@ -35,6 +35,7 @@
 *
 !*.*
 !*/
+
 # Ignore flex and bison
 *.tab.c
 *.tab.h

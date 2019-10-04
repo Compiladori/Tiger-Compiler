@@ -1,7 +1,5 @@
-/* error: initialize with unit and causing type mismatch in addition */
-
 let
-	var a := " some string "
+	var a := 3 + 5
 in
-	a; 0
+	nil
 end
