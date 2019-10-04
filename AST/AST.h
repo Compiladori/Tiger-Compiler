@@ -22,14 +22,17 @@ class Declaration;
 class GroupedDeclarations;
 
 
-typedef enum {VarDK, FunDK, TypeDK, NoDK} DeclarationKind;
+enum DeclarationKind {VarDK, FunDK, TypeDK, NoDK};
 
+
+/** Utility **/
 template <class T>
 class GenericList : public std::vector<std::unique_ptr<T>> {
 public:
     GenericList()     : std::vector<std::unique_ptr<T>>() {}
     GenericList(T *e) : GenericList() { this->push_back(e); }
     void push_back(T *e){ this->std::vector<std::unique_ptr<T>>::push_back(std::move(std::unique_ptr<T>(e))); }
+    void print(){} // TODO
 };
 
 typedef GenericList<TypeField> TypeFieldList;
@@ -41,7 +44,10 @@ typedef GenericList<RecordField> RecordFieldList;
 
 
 /** Operations **/
-typedef enum {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge} Operation;
+enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
+std::string operation_name[] = { [Plus] = "+", [Minus] = "-", [Times] = "*", [Divide] = "/",
+                                 [Eq] = "=", [Neq] = "!=", [Lt] = "<", [Le] = "<=" , [Gt] = ">", [Ge] = ">=" };
+std::ostream& operator<<(std::ostream& os, const Operation& op){ return os << operation_name[op]; }
 
 
 
@@ -62,6 +68,19 @@ class Position {
 public:
     Position (int pos) : pos(pos) {}
 };
+
+
+
+/** Expression definition (temporary placement) **/
+class Expression {
+    Position pos;
+public:
+    Expression(Position pos) : pos(pos) {}
+    Position getPosition(){ return pos; }
+
+    virtual void print() = 0;
+};
+
 
 
 
@@ -146,26 +165,19 @@ public:
 
 
 /** Expressions **/
-class Expression {
-    Position pos;
-public:
-    Expression(Position pos) : pos(pos) {}
-    Position getPosition(){ return pos; }
-
-    virtual void print() = 0;
-};
+/* Expression definition was here */
 
 class VarExp : public Expression {
     std::unique_ptr<Variable> var;
 public:
     VarExp (Variable *var, Position pos) : Expression(pos), var(var) {}
-    void print(){ std::cout << "VarExp (" << pos -> int << " )"; }
+    void print(){ std::cout << "VarExp ("; var -> print(); std::cout << " )"; }
 };
 
 class UnitExp : public Expression {
 public:
     UnitExp (Position pos) : Expression(pos) {}
-    void print(){ std::cout << "UnitExp (" << pos -> int << " )"; }
+    void print(){ std::cout << "UnitExp ( )"; }
 };
 
 class NilExp : public Expression {
@@ -180,7 +192,7 @@ class GenericValueExp : public Expression {
 public:
     GenericValueExp(T value, Position pos) : Expression(pos), value(value) {}
     T getValue(){ return value; }
-    void print(){}
+    void print(){} // TODO
 };
 
 typedef GenericValueExp<int> IntExp;
@@ -194,13 +206,6 @@ public:
     CallExp (Symbol *func, ExpressionList *exp_list, Position pos) : Expression(pos), func(func), exp_list(exp_list) {}
     void print(){ std::cout << "CallExp ("; func -> print(); std::cout << ") ("; exp_list -> print(); std::cout << ")"; }
 };
-/*
-operToText(Operation op){
-
-
-
-}
-*/
 
 class OpExp : public Expression {
     std::unique_ptr<Expression> left;
