@@ -1,4 +1,7 @@
 /* error: initialize with unit and causing type mismatch in addition */
 
 let
-	var a := "    
+	var a := " some string "
+in
+	a; 0
+end

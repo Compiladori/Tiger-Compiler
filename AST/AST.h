@@ -27,12 +27,26 @@ enum DeclarationKind {VarDK, FunDK, TypeDK, NoDK};
 
 /** Utility **/
 template <class T>
-class GenericList : public std::vector<std::unique_ptr<T>> {
+class GenericList {
+    std::vector<std::unique_ptr<T>> V;
 public:
-    GenericList()     : std::vector<std::unique_ptr<T>>() {}
+    GenericList()     : V() {}
     GenericList(T *e) : GenericList() { this->push_back(e); }
-    void push_back(T *e){ this->std::vector<std::unique_ptr<T>>::push_back(std::move(std::unique_ptr<T>(e))); }
-    void print(){} // TODO
+    
+    bool empty(){ return V.empty(); }
+    auto& back(){ return V.back(); }
+    
+    void push_back(T *e){ V.push_back(std::move(std::unique_ptr<T>(e))); }
+    void push_back(std::unique_ptr<T> p){ V.push_back(std::move(p)); }
+    
+    void print(){
+        std::cout << "List ";
+        for(auto& p : V){
+            std::cout << "(";
+            p -> print(); 
+            std::cout << ")";
+        }
+    }
 };
 
 typedef GenericList<TypeField> TypeFieldList;
@@ -45,9 +59,13 @@ typedef GenericList<RecordField> RecordFieldList;
 
 /** Operations **/
 enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
+/*
+ * TODO: Implement this into the .cpp file
+ * 
 std::string operation_name[] = { [Plus] = "+", [Minus] = "-", [Times] = "*", [Divide] = "/",
                                  [Eq] = "=", [Neq] = "!=", [Lt] = "<", [Le] = "<=" , [Gt] = ">", [Ge] = ">=" };
 std::ostream& operator<<(std::ostream& os, const Operation& op){ return os << operation_name[op]; }
+* */
 
 
 
@@ -57,7 +75,7 @@ class Symbol {
 public:
     Symbol(std::string name) : name(name) {}
     std::string getName(){ return name; }
-    void print() { std::cout << "Symbol " << name << std::endl; }
+    void print() { std::cout << "Symbol " << name; }
 };
 
 
@@ -171,19 +189,19 @@ class VarExp : public Expression {
     std::unique_ptr<Variable> var;
 public:
     VarExp (Variable *var, Position pos) : Expression(pos), var(var) {}
-    void print(){ std::cout << "VarExp ("; var -> print(); std::cout << " )"; }
+    void print(){ std::cout << "VarExp ("; var -> print(); std::cout << ")"; }
 };
 
 class UnitExp : public Expression {
 public:
     UnitExp (Position pos) : Expression(pos) {}
-    void print(){ std::cout << "UnitExp ( )"; }
+    void print(){ std::cout << "UnitExp ()"; }
 };
 
 class NilExp : public Expression {
 public:
     NilExp (Position pos) : Expression(pos) {}
-    void print(){ std::cout << "NilExp ( )"; }
+    void print(){ std::cout << "NilExp ()"; }
 };
 
 template<class T>
@@ -213,7 +231,7 @@ class OpExp : public Expression {
     std::unique_ptr<Expression> right;
 public:
     OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(pos), left(left), oper(oper), right(right) {}
-    void print(){ std::cout << "OpExp ("; left -> print(); std::cout << ") " << oper << "( "; right -> print(); std::cout << ")"; }
+    void print(){ std::cout << "OpExp ("; left -> print(); std::cout << ") " << oper << " ("; right -> print(); std::cout << ")"; }
 };
 
 class RecordExp : public Expression {
@@ -228,7 +246,7 @@ class SeqExp : public Expression {
     std::unique_ptr<ExpressionList> exp_list;
 public:
     SeqExp (ExpressionList *exp_list, Position pos) : Expression(pos), exp_list(exp_list) {}
-    void print(){}
+    void print(){ std::cout << "SeqExp ("; exp_list -> print(); std::cout << ")"; }
 };
 
 class AssignExp : public Expression {
@@ -236,7 +254,7 @@ class AssignExp : public Expression {
     std::unique_ptr<Expression> exp;
 public:
     AssignExp (Variable *var, Expression *exp, Position pos) : Expression(pos), var(var), exp(exp) {}
-    void print(){}
+    void print(){ std::cout << "AssignExp ("; var -> print(); std::cout << ") ("; exp -> print(); std::cout << ")"; }
 };
 
 class IfExp : public Expression {
@@ -244,14 +262,18 @@ class IfExp : public Expression {
 public:
     IfExp (Expression *test, Expression *then, Position pos) : Expression(pos), test(test), then(then), otherwise(nullptr) {}
     IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos) : Expression(pos), test(test), then(then), otherwise(otherwise) {}
-    void print(){}
+    void print(){
+        std::cout << "IfExp ("; test -> print(); std::cout << ") ("; then -> print(); std::cout << ") (";
+        if(otherwise) otherwise->print(); else std::cout << "None";
+        std::cout << ")";
+    }
 };
 
 class WhileExp : public Expression {
     std::unique_ptr<Expression> test, body;
 public:
     WhileExp (Expression *test, Expression *body, Position pos) : Expression(pos), test(test), body(body) {}
-    void print(){}
+    void print(){ std::cout << "WhileExp ("; test -> print(); std::cout << ") ("; body -> print(); std::cout << ")"; }
 };
 
 class ForExp : public Expression {
@@ -261,7 +283,7 @@ class ForExp : public Expression {
 public:
     ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), escape(escape), lo(lo), hi(hi), body(body) {}
     bool getEscape(){ return escape; };
-    void print(){}
+    void print(){ std::cout << "ForExp ("; var -> print(); std::cout << ") ("; lo -> print(); std::cout << ") ("; hi -> print(); std::cout << ") ("; body -> print(); std::cout << ")"; }
 };
 
 class LetExp : public Expression {
@@ -269,13 +291,18 @@ class LetExp : public Expression {
     std::unique_ptr<Expression> body;
 public:
     LetExp (GroupedDeclarations *decs, Expression *body, Position pos) : Expression(pos), decs(decs), body(body) {}
-    void print(){}
+    void print(){ std::cout << "LetExp ( TODO: stuff here )"; }
+    /*
+     * TODO: Fix dependencies by partitioning into definitions / implementations
+     * 
+    void print(){ std::cout << "LetExp (";  decs -> print(); std::cout << ")"; }
+    * */
 };
 
 class BreakExp : public Expression {
 public:
     BreakExp (Position pos) : Expression(pos) {}
-    void print(){}
+    void print(){ std::cout << "BreakExp ()"; }
 };
 
 class ArrayExp : public Expression {
@@ -283,7 +310,7 @@ class ArrayExp : public Expression {
     std::unique_ptr<Expression> size, init;
 public:
     ArrayExp (Symbol *ty, Expression *size, Expression *init, Position pos) : Expression(pos), ty(ty), size(size), init(init) {}
-    void print(){}
+    void print(){ std::cout << "ArrayExp ("; ty -> print(); std::cout << ") ("; size -> print(); std::cout << ") ("; init -> print(); std::cout << ")"; }
 };
 
 
@@ -309,7 +336,11 @@ public:
     VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : Declaration(DeclarationKind::VarDK), id(id), escape(escape), type_id(type_id), exp(exp) {}
 
     bool getEscape(){ return escape; }
-    void print(){}
+    void print(){
+        std::cout << "VarDec ("; id -> print(); std::cout << ") (";
+        if(type_id) type_id->print(); else std::cout << "None";
+        std::cout << ") ("; exp -> print(); std::cout << ")";
+    }
 };
 
 class TypeDec : public Declaration {
@@ -318,7 +349,7 @@ class TypeDec : public Declaration {
 public:
     TypeDec(Symbol *type_id, Type *ty) : Declaration(DeclarationKind::TypeDK), type_id(type_id), ty(ty) {}
 
-    void print(){}
+    void print(){ std::cout << "TypeDec ("; type_id -> print(); std::cout << ") ("; ty -> print(); std::cout << ")"; }
 };
 
 class FunDec : public Declaration {
@@ -330,12 +361,16 @@ public:
     FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : Declaration(DeclarationKind::FunDK), id(id), tyfields(tyfields), type_id(nullptr), exp(exp) {}
     FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : Declaration(DeclarationKind::FunDK), id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
 
-    void print(){}
+    void print(){
+        std::cout << "FunDec ("; id -> print(); std::cout << ") ("; tyfields -> print(); std::cout << ") (";
+        if(type_id) type_id->print(); else std::cout << "None";
+        std::cout << ") ("; exp -> print(); std::cout << ")";
+    }
 };
 
 class GroupedDeclarations : public GenericList<DeclarationList> {
 public:
-    void appendElement(Declaration *dec){
+    void appendDeclaration(Declaration *dec){
         if(this->empty() or dec->getKind() == DeclarationKind::VarDK) {
             // Create a new group if we had no group to join to, or we're a variable declaration
             this->push_back(new DeclarationList(dec));

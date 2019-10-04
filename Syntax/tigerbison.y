@@ -6,6 +6,7 @@
 %{
   #include <cstdio>
   #include <iostream>
+  #include "../AST/AST.h"
   using namespace std;
 
   // stuff from flex that bison needs to know about:
@@ -15,6 +16,8 @@
   extern int yylineno;
 
   void yyerror(const char *s);
+  
+  ast::Expression* final_ast;
 %}
 
 %union {
@@ -33,7 +36,6 @@
   Variable *var;
   ExpressionList *exp_list;
   RecordFieldList *recfieldlist;
-
 }
 
 %token TYPE ARRAY OF VAR FUNCTION
@@ -54,7 +56,7 @@
 %nonassoc IGUAL MENOR MENIG MAYOR MAYIG DIST
 %left MAS MENOS
 %left POR DIV
-%start exp
+%start prog
 %type <exp> exp
 %type <symbol> id
 %type <typefield> tyfield
@@ -69,6 +71,8 @@
 %type <exp_list> args explist
 
 %%
+prog : exp                  { final_ast = $1; }
+
 exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
 	| PI PD					{ $$ = new UnitExp(Position(yylineno)); }
 	| NIL					  { $$ = new NilExp(Position(yylineno)); }
@@ -111,7 +115,7 @@ rec_fields : id IGUAL exp COMA rec_fields { $5 -> push_back(new RecordField($1, 
 	| id IGUAL exp			{ $$ = new RecordFieldList(new RecordField($1, $3)); }
 	|						{ $$ = new RecordFieldList(); }
 	;
-decs : dec decs		{ $2 -> appendElement($1); $$ = $2;  }
+decs : dec decs		{ $2 -> appendDeclaration($1); $$ = $2;  }
 	|						{ $$ = new GroupedDeclarations(); }
 	;
 dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4); }
@@ -161,6 +165,9 @@ int main(int, char**) {
 
   // Parse through the input:
   yyparse();
+  
+  // Print the final built AST
+  final_ast -> print();
 }
 
 void yyerror(const char *s) {
