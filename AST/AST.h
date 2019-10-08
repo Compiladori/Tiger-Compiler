@@ -1,6 +1,13 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+/*** 
+ * Abstract Syntax Tree (AST)
+ * 
+ * Every abstraction of the AST is constructed by raw pointers, taking ownership over them.
+ * This is a special case to work along with the usual versions of Bison and Flex.
+ * ***/
+
 #include <iostream>
 #include <string>
 #include <deque>
@@ -8,9 +15,9 @@
 
 namespace ast {
 
-
-
-/** Forward declarations **/
+/**
+ * Forward declarations
+ * **/
 class Symbol;
 class Position;
 class Type;
@@ -21,11 +28,16 @@ class Expression;
 class Declaration;
 class GroupedDeclarations;
 
-
+/** 
+ * Kind flags 
+ * 
+ * Allows us to make "type comparisons" without using dynamic_cast<>
+ * **/
 enum DeclarationKind {VarDK, FunDK, TypeDK, NoDK};
 
-
-/** Utility **/
+/**
+ * Utility
+ * **/
 template <class T>
 class GenericList {
     std::deque<std::unique_ptr<T>> data;
@@ -59,14 +71,14 @@ typedef GenericList<Expression> ExpressionList;
 typedef GenericList<Declaration> DeclarationList;
 typedef GenericList<RecordField> RecordFieldList;
 
-
-
-/** Operations **/
+/**
+ * Operations
+ * **/
 enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
 
-
-
-/** Symbols (Identifiers) **/
+/**
+ * Symbols (Identifiers)
+ * **/
 class Symbol {
     std::string name;
 public:
@@ -75,19 +87,18 @@ public:
     void print(){ std::cout << "Symbol " << name; }
 };
 
-
-
-/** Position **/
+/**
+ * Position
+ * **/
 class Position {
     int pos;
 public:
     Position (int pos) : pos(pos) {}
 };
 
-
-
-
-/** Types **/
+/**
+ * Types
+ * **/
 class Type {
 public:
     virtual void print() = 0;
@@ -129,9 +140,9 @@ public:
     void print();
 };
 
-
-
-/** Variables **/
+/** 
+ * Variables
+ * **/
 class Variable {
 public:
     virtual void print() = 0;
@@ -164,9 +175,9 @@ public:
     void print();
 };
 
-
-
-/** Expressions **/
+/**
+ * Expressions
+ * **/
 class Expression {
     Position pos;
 public:
@@ -295,9 +306,9 @@ public:
     void print();
 };
 
-
-
-/** Declarations **/
+/**
+ * Declarations
+ * **/
 class Declaration {
     DeclarationKind DK;
 public:

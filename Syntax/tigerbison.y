@@ -103,11 +103,11 @@ exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
 	| FOR id DOSPIG exp TO exp DO exp  { $$ = new ForExp(new SimpleVar($2), false, $4, $6, $8, Position(yylineno)); }
 	| LET decs IN END		{ $$ = new LetExp($2, new UnitExp(Position(yylineno)), Position(yylineno)); }
 	| LET decs IN exp END	{ $$ = new LetExp($2, $4, Position(yylineno)); }
-	| LET decs IN exp PCOMA explist END  { $6 -> push_back($4); $$ = new LetExp($2, new SeqExp($6, Position(yylineno)), Position(yylineno)); }
+	| LET decs IN exp PCOMA explist END  { $6 -> push_front($4); $$ = new LetExp($2, new SeqExp($6, Position(yylineno)), Position(yylineno)); }
 	| id CI exp CD OF exp { $$ = new ArrayExp($1, $3, $6, Position(yylineno)); }
     | id LI rec_fields LD	{ $$ = new RecordExp($3, $1, Position(yylineno)); }
 	;
-explist: exp PCOMA explist	{ $3 -> push_back($1); $$ = $3; }
+explist: exp PCOMA explist	{ $3 -> push_front($1); $$ = $3; }
 	| exp					{ $$ = new ExpressionList($1); }
 	;
 rec_fields : id IGUAL exp COMA rec_fields { $5 -> push_front(new RecordField($1, $3));
