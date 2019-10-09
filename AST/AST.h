@@ -12,6 +12,7 @@
 #include <string>
 #include <deque>
 #include <memory>
+#include <functional>
 
 namespace ast {
 
@@ -65,6 +66,7 @@ public:
     }
 };
 
+typedef GenericList<Type> TypeList;
 typedef GenericList<TypeField> TypeFieldList;
 typedef GenericList<Variable> VariableList;
 typedef GenericList<Expression> ExpressionList;
@@ -79,13 +81,26 @@ enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
 /**
  * Symbols (Identifiers)
  * **/
+
 class Symbol {
     std::string name;
 public:
     Symbol(std::string name) : name(name) {}
-    std::string getName(){ return name; }
+    std::string getName() const { return name; }
+    
+    bool operator==(const Symbol& s) const { return name == s.name; }
+    
     void print(){ std::cout << "Symbol " << name; }
 };
+
+class SymbolHasher{
+    static std::hash<std::string> H;
+public:
+    std::size_t operator()(const Symbol& s) const {
+        return H(s.getName());
+    }
+};
+
 
 /**
  * Position
@@ -146,14 +161,14 @@ public:
 class Variable {
 public:
     virtual void print() = 0;
-    virtual std::string getName() = 0;
+    virtual std::string getName() const = 0;
 };
 
 class SimpleVar : public Variable {
     std::unique_ptr<Symbol> id;
 public:
     SimpleVar (Symbol *id) : id(id) {}
-    std::string getName(){ return id->getName(); };
+    std::string getName() const { return id->getName(); };
     void print();
 };
 
@@ -162,7 +177,7 @@ class FieldVar : public Variable {
     std::unique_ptr<Symbol> id;
 public:
     FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
-    std::string getName(){ return var->getName(); };
+    std::string getName() const { return var->getName(); };
     void print();
 };
 
@@ -171,7 +186,7 @@ class SubscriptVar : public Variable {
     std::unique_ptr<Expression> exp;
 public:
     SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
-    std::string getName(){ return var->getName(); };
+    std::string getName() const { return var->getName(); };
     void print();
 };
 
@@ -182,7 +197,7 @@ class Expression {
     Position pos;
 public:
     Expression(Position pos) : pos(pos) {}
-    Position getPosition(){ return pos; }
+    Position getPosition() const { return pos; }
 
     virtual void print() = 0;
 };
@@ -211,7 +226,7 @@ class GenericValueExp : public Expression {
     T value;
 public:
     GenericValueExp(T value, Position pos) : Expression(pos), value(value) {}
-    T getValue(){ return value; }
+    T getValue() const { return value; }
     void print(){ std::cout << "ValueExp (" << value << ")"; }
 };
 
@@ -280,7 +295,7 @@ class ForExp : public Expression {
     std::unique_ptr<Expression> lo, hi, body;
 public:
     ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), escape(escape), lo(lo), hi(hi), body(body) {}
-    bool getEscape(){ return escape; };
+    bool getEscape() const { return escape; };
     void print();
 };
 
@@ -314,7 +329,7 @@ class Declaration {
 public:
     Declaration () : DK(DeclarationKind::NoDK) {}
     Declaration (DeclarationKind DK) : DK(DK) {}
-    DeclarationKind getKind(){ return DK; }
+    DeclarationKind getKind() const { return DK; }
 
     virtual void print() = 0;
 };
@@ -328,7 +343,7 @@ public:
     VarDec(Symbol *id, bool escape, Expression *exp) : Declaration(DeclarationKind::VarDK), id(id), escape(escape), type_id(nullptr), exp(exp) {}
     VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : Declaration(DeclarationKind::VarDK), id(id), escape(escape), type_id(type_id), exp(exp) {}
 
-    bool getEscape(){ return escape; }
+    bool getEscape() const { return escape; }
     void print();
 };
 

@@ -1,23 +1,58 @@
 #ifndef __TRANSLATION_H__
 #define __TRANSLATION_H__
 
-#include <map>
+#include <unordered_map>
+#include <stack>
+#include <vector>
 #include "../AST/AST.h"
+#include "expressionType.h"
 
 namespace trans{
 
 
+/**
+ * Data structures
+ * **/
 template <class T>
 class BindingTable {
-    std::map<ast::Symbol, T> table;
+    std::unordered_map<ast::Symbol, std::stack<T>, ast::SymbolHasher> table;
 public:
-    BindingTable();
-    void insert(ast::Symbol&, T&);
-    T get(ast::Symbol&);
+    BindingTable() : table() {};
+    
+    T& operator[](const ast::Symbol& s) const { return table[s]; }
 };
 
-typedef BindingTable<ast::Type> TypeEnvironment; // Symbol -> Type
-// typedef BindingTable<> ValueEnvironment; // Symbol -> Value (?)
+enum EnvEntryKind {VarEEK, FunEEK, NoEEK};
+
+class EnvEntry {
+    EnvEntryKind EEK;
+public:
+    EnvEntry () : EEK(EnvEntryKind::NoEEK) {}
+    EnvEntry (EnvEntryKind EEK) : EEK(EEK) {}
+    EnvEntryKind getKind(){ return EEK; }
+
+    virtual void print() = 0;
+};
+
+class VarEntry : public EnvEntry {
+    trans::ExpType *ty;
+public:
+    VarEntry (trans::ExpType *ty) : EnvEntry(EnvEntryKind::VarEEK), ty(ty) {}
+
+    void print(){}
+};
+
+class FunEntry : public EnvEntry {
+    std::vector<trans::ExpType*> *formals;
+    trans::ExpType *result;
+public:
+    FunEntry (std::vector<trans::ExpType*> *formals, trans::ExpType *result) : EnvEntry(EnvEntryKind::FunEEK), formals(formals), result(result) {}
+    
+    void print(){}
+};
+
+typedef BindingTable<trans::ExpType*> TypeEnvironment; // Symbol -> ExpressionType
+typedef BindingTable<EnvEntry*> ValueEnvironment; // Symbol -> Value (EnvEntry)
 
 
 
