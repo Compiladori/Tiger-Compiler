@@ -118,15 +118,15 @@ void Translator::transVariable(ast::Variable* var){
 };
 
 ExpType* Translator::transType(ast::Type* type){
-    if(auto name_var = dynamic_cast<ast::NameType*>(type)){
+    if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         // TODO: ...
     }
         
-    if(auto record_var = dynamic_cast<ast::RecordType*>(type)){
+    if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
         // TODO: ...
     }
         
-    if(auto array_var = dynamic_cast<ast::ArrayType*>(type)){
+    if(auto array_type = dynamic_cast<ast::ArrayType*>(type)){
         // TODO: ...
     }
     
