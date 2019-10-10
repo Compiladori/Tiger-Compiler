@@ -32,8 +32,12 @@ class GroupedDeclarations;
 /** 
  * Kind flags 
  * 
- * Allows us to make "type comparisons" without using dynamic_cast<>
+ * Allows us to do "type comparisons" without using dynamic_cast<>
  * **/
+enum TypeKind {NameTK, RecordTK, ArrayTK, NoTK};
+enum VariableKind {SimpleVK, FieldVK, SubscriptVK, NoVK};
+enum ExpressionKind {VarEK, UnitEK, NilEK, IntEK, StringEK, CallEK, OpEK, RecordEK,
+                    SeqEK, AssignEK, IfEK, WhileEK, ForEK, LetEK, BreakEK, ArrayEK, NoEK};
 enum DeclarationKind {VarDK, FunDK, TypeDK, NoDK};
 
 /**
@@ -81,7 +85,6 @@ enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
 /**
  * Symbols (Identifiers)
  * **/
-
 class Symbol {
     std::string name;
 public:
@@ -115,7 +118,13 @@ public:
  * Types
  * **/
 class Type {
+    TypeKind TK;
 public:
+    Type() : TK(TypeKind::NoTK) {}
+    Type(TypeKind TK) : TK(TK) {}
+    
+    TypeKind getKind() const { return TK; }
+    
     virtual void print() = 0;
 };
 
@@ -137,21 +146,21 @@ public:
 class NameType : public Type {
     std::unique_ptr<Symbol> type_id;
 public:
-    NameType (Symbol *type_id) : type_id(type_id) {}
+    NameType (Symbol *type_id) : Type(TypeKind::NameTK), type_id(type_id) {}
     void print();
 };
 
 class RecordType : public Type {
     std::unique_ptr<TypeFieldList> tyfields;
 public:
-    RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
+    RecordType (TypeFieldList *tyfields) : Type(TypeKind::RecordTK), tyfields(tyfields) {}
     void print();
 };
 
 class ArrayType : public Type {
     std::unique_ptr<Symbol> type_id;
 public:
-    ArrayType (Symbol *type_id) : type_id(type_id) {}
+    ArrayType (Symbol *type_id) : Type(TypeKind::ArrayTK), type_id(type_id) {}
     void print();
 };
 
@@ -159,16 +168,20 @@ public:
  * Variables
  * **/
 class Variable {
+    VariableKind VK;
 public:
+    Variable() : VK(VariableKind::NoVK) {}
+    Variable(VariableKind VK) : VK(VK) {}
+    
+    VariableKind getKind() const { return VK; }
+    
     virtual void print() = 0;
-    virtual std::string getName() const = 0;
 };
 
 class SimpleVar : public Variable {
     std::unique_ptr<Symbol> id;
 public:
-    SimpleVar (Symbol *id) : id(id) {}
-    std::string getName() const { return id->getName(); };
+    SimpleVar (Symbol *id) : Variable(VariableKind::SimpleVK), id(id) {}
     void print();
 };
 
@@ -176,8 +189,7 @@ class FieldVar : public Variable {
     std::unique_ptr<Variable> var;
     std::unique_ptr<Symbol> id;
 public:
-    FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
-    std::string getName() const { return var->getName(); };
+    FieldVar (Variable *var, Symbol *id) : Variable(VariableKind::FieldVK), var(var), id(id) {}
     void print();
 };
 
@@ -185,8 +197,7 @@ class SubscriptVar : public Variable {
     std::unique_ptr<Variable> var;
     std::unique_ptr<Expression> exp;
 public:
-    SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
-    std::string getName() const { return var->getName(); };
+    SubscriptVar (Variable *var, Expression *exp) : Variable(VariableKind::SubscriptVK), var(var), exp(exp) {}
     void print();
 };
 
@@ -194,9 +205,13 @@ public:
  * Expressions
  * **/
 class Expression {
+    ExpressionKind EK;
     Position pos;
 public:
-    Expression(Position pos) : pos(pos) {}
+    Expression(Position pos) : EK(ExpressionKind::NoEK), pos(pos) {}
+    Expression(ExpressionKind EK, Position pos) : EK(EK), pos(pos) {}
+    
+    Position getKind() const { return EK; }
     Position getPosition() const { return pos; }
 
     virtual void print() = 0;
@@ -205,19 +220,19 @@ public:
 class VarExp : public Expression {
     std::unique_ptr<Variable> var;
 public:
-    VarExp (Variable *var, Position pos) : Expression(pos), var(var) {}
+    VarExp (Variable *var, Position pos) : Expression(ExpressionKind::VarEK, pos), var(var) {}
     void print();
 };
 
 class UnitExp : public Expression {
 public:
-    UnitExp (Position pos) : Expression(pos) {}
+    UnitExp (Position pos) : Expression(ExpressionKind::UnitEK, pos) {}
     void print();
 };
 
 class NilExp : public Expression {
 public:
-    NilExp (Position pos) : Expression(pos) {}
+    NilExp (Position pos) : Expression(ExpressionKind::NilEK, pos) {}
     void print();
 };
 
@@ -225,20 +240,22 @@ template<class T>
 class GenericValueExp : public Expression {
     T value;
 public:
-    GenericValueExp(T value, Position pos) : Expression(pos), value(value) {}
+    GenericValueExp(T value, Position pos) : Expression(pos), value(value) {
+        if(typeid(T) == typeid(int)) Expression(ExpressionKind::IntEK, pos);
+        if(typeid(T) == typeid(std::string)) Expression(ExpressionKind::StringEK, pos);
+    }
     T getValue() const { return value; }
     void print(){ std::cout << "ValueExp (" << value << ")"; }
 };
 
 typedef GenericValueExp<int> IntExp;
-typedef GenericValueExp<double> RealExp;
 typedef GenericValueExp<std::string> StringExp;
 
 class CallExp : public Expression {
     std::unique_ptr<Symbol> func;
     std::unique_ptr<ExpressionList> exp_list;
 public:
-    CallExp (Symbol *func, ExpressionList *exp_list, Position pos) : Expression(pos), func(func), exp_list(exp_list) {}
+    CallExp (Symbol *func, ExpressionList *exp_list, Position pos) : Expression(ExpressionKind::CallEK, pos), func(func), exp_list(exp_list) {}
     void print();
 };
 
@@ -247,7 +264,7 @@ class OpExp : public Expression {
     Operation oper;
     std::unique_ptr<Expression> right;
 public:
-    OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(pos), left(left), oper(oper), right(right) {}
+    OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(ExpressionKind::OpEK, pos), left(left), oper(oper), right(right) {}
     void print();
 };
 
@@ -255,14 +272,14 @@ class RecordExp : public Expression {
     std::unique_ptr<RecordFieldList> fields;
     std::unique_ptr<Symbol> type_id;
 public:
-    RecordExp (RecordFieldList *fields, Symbol *type_id, Position pos) : Expression(pos), fields(fields), type_id(type_id) {}
+    RecordExp (RecordFieldList *fields, Symbol *type_id, Position pos) : Expression(ExpressionKind::RecordEK, pos), fields(fields), type_id(type_id) {}
     void print();
 };
 
 class SeqExp : public Expression {
     std::unique_ptr<ExpressionList> exp_list;
 public:
-    SeqExp (ExpressionList *exp_list, Position pos) : Expression(pos), exp_list(exp_list) {}
+    SeqExp (ExpressionList *exp_list, Position pos) : Expression(ExpressionKind::SeqEK, pos), exp_list(exp_list) {}
     void print();
 };
 
@@ -270,22 +287,22 @@ class AssignExp : public Expression {
     std::unique_ptr<Variable> var;
     std::unique_ptr<Expression> exp;
 public:
-    AssignExp (Variable *var, Expression *exp, Position pos) : Expression(pos), var(var), exp(exp) {}
+    AssignExp (Variable *var, Expression *exp, Position pos) : Expression(ExpressionKind::AssignEK, pos), var(var), exp(exp) {}
     void print();
 };
 
 class IfExp : public Expression {
     std::unique_ptr<Expression> test, then, otherwise;
 public:
-    IfExp (Expression *test, Expression *then, Position pos) : Expression(pos), test(test), then(then), otherwise(nullptr) {}
-    IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos) : Expression(pos), test(test), then(then), otherwise(otherwise) {}
+    IfExp (Expression *test, Expression *then, Position pos) : Expression(ExpressionKind::IfEK, pos), test(test), then(then), otherwise(nullptr) {}
+    IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos) : Expression(ExpressionKind::IfEK, pos), test(test), then(then), otherwise(otherwise) {}
     void print();
 };
 
 class WhileExp : public Expression {
     std::unique_ptr<Expression> test, body;
 public:
-    WhileExp (Expression *test, Expression *body, Position pos) : Expression(pos), test(test), body(body) {}
+    WhileExp (Expression *test, Expression *body, Position pos) : Expression(ExpressionKind::WhileEK, pos), test(test), body(body) {}
     void print();
 };
 
@@ -294,7 +311,7 @@ class ForExp : public Expression {
     bool escape;
     std::unique_ptr<Expression> lo, hi, body;
 public:
-    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), escape(escape), lo(lo), hi(hi), body(body) {}
+    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(ExpressionKind::ForEK, pos), var(var), escape(escape), lo(lo), hi(hi), body(body) {}
     bool getEscape() const { return escape; };
     void print();
 };
@@ -303,13 +320,13 @@ class LetExp : public Expression {
     std::unique_ptr<GroupedDeclarations> decs;
     std::unique_ptr<Expression> body;
 public:
-    LetExp (GroupedDeclarations *decs, Expression *body, Position pos) : Expression(pos), decs(decs), body(body) {}
+    LetExp (GroupedDeclarations *decs, Expression *body, Position pos) : Expression(ExpressionKind::LetEK, pos), decs(decs), body(body) {}
     void print();
 };
 
 class BreakExp : public Expression {
 public:
-    BreakExp (Position pos) : Expression(pos) {}
+    BreakExp (Position pos) : Expression(ExpressionKind::BreakEK, pos) {}
     void print();
 };
 
@@ -317,7 +334,7 @@ class ArrayExp : public Expression {
     std::unique_ptr<Symbol> ty;
     std::unique_ptr<Expression> size, init;
 public:
-    ArrayExp (Symbol *ty, Expression *size, Expression *init, Position pos) : Expression(pos), ty(ty), size(size), init(init) {}
+    ArrayExp (Symbol *ty, Expression *size, Expression *init, Position pos) : Expression(ExpressionKind::ArrayEK, pos), ty(ty), size(size), init(init) {}
     void print();
 };
 

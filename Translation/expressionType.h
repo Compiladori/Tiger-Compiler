@@ -6,7 +6,9 @@
 namespace trans{
 
 
-
+/**
+ * Expression Types
+ * **/
 class ExpType {
 public:
     virtual void print() = 0;
@@ -64,6 +66,16 @@ public:
     CustomExpType(std::string name) : name(name) {}
     
     void print(){}
+};
+
+/**
+ * Expression associated with an Expression Type
+ * **/
+class AssociatedExpType {
+    ast::Expression *exp;
+    ExpType *exp_type;
+public:
+    AssociatedExpType(ast::Expression *exp, ExpType *exp_type) : exp(exp), exp_type(exp_type) {}
 };
 
 
