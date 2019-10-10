@@ -10,127 +10,88 @@ using namespace trans;
  * **/
 // TODO: Check if these return types are correct
 AssociatedExpType* Translator::transExpression(ast::Expression* exp){
-    switch(exp->getKind()){
-        // TODO: Complete all the cases
-        case ast::VarEK: {
-            // TODO: ...
-            break;
-        }
+    // TODO: Complete all the cases
+    if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
+        // TODO: ...
+    }
+    
+    if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::UnitEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto nil_exp = dynamic_cast<ast::NilExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::NilEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::IntEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::StringEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
+        // TODO: ...
+    }
+    
+    if(auto op_exp = dynamic_cast<ast::OpExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::CallEK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::OpEK: {
-            // auto op_exp = static_cast<ast::OpExp*>(exp);
-            // auto left = transExpression(op_exp->getLeft());
-            // auto right = transExpression(op_exp->getRight());
+    if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
+        // TODO: ...
+    }
             
-            // TODO: ...
-            break;
-        }
+    if(auto seq_exp = dynamic_cast<ast::SeqExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::RecordEK: {
-            // TODO: ...
-            break;
-        }
-            
-        case ast::SeqEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto assign_exp = dynamic_cast<ast::AssignExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::AssignEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto if_exp = dynamic_cast<ast::IfExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::IfEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto while_exp = dynamic_cast<ast::WhileExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::WhileEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::ForEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::LetEK: {
-            // TODO: ...
-            break;
-        }
+    if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){
+        // TODO: ...
+    }
         
-        case ast::BreakEK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::ArrayEK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::NoEK: {
-            // Error, expression should be of some kind
-            // TODO: ...
-            break;
-        }
+    if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
+        // TODO: ...
     }
     
     // TODO: Replace with custom error reporting
-    // It should have matched some clause of the switch
+    // It should have matched some clause of the above
     assert(false);
 };
 
 AssociatedExpType* Translator::transDeclaration(ast::Declaration* dec){
-    switch(dec->getKind()){
-        // TODO: Complete all the cases
-        case ast::VarDK: {
-            // TODO: ...
-            break;
-        }
+    // TODO: Complete all the cases
+    if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
+        // TODO: ...
+    }
         
-        case ast::FunDK: {
-            // TODO: ...
-            break;
-        }
+    if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){
+        // TODO: ...
+    }
         
-        case ast::TypeDK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::NoDK: {
-            // Error, declaration should be of some kind
-            // TODO: ...
-            break;
-        }
+    if(auto type_dec = dynamic_cast<ast::TypeDec*>(dec)){
+        // TODO: ...
     }
     
     // TODO: Replace with custom error reporting
@@ -139,28 +100,16 @@ AssociatedExpType* Translator::transDeclaration(ast::Declaration* dec){
 };
 
 void Translator::transVariable(ast::Variable* var){
-    switch(var->getKind()){
-        // TODO: Complete all the cases
-        case ast::SimpleVK: {
-            // TODO: ...
-            break;
-        }
+    if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
+        // TODO: ...
+    }
         
-        case ast::FieldVK: {
-            // TODO: ...
-            break;
-        }
+    if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
+        // TODO: ...
+    }
         
-        case ast::SubscriptVK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::NoVK: {
-            // Error, variable should be of some kind
-            // TODO: ...
-            break;
-        }
+    if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
+        // TODO: ...
     }
     
     // TODO: Replace with custom error reporting
@@ -169,28 +118,16 @@ void Translator::transVariable(ast::Variable* var){
 };
 
 ExpType* Translator::transType(ast::Type* type){
-    switch(type->getKind()){
-        // TODO: Complete all the cases
-        case ast::NameTK: {
-            // TODO: ...
-            break;
-        }
+    if(auto name_var = dynamic_cast<ast::NameType*>(type)){
+        // TODO: ...
+    }
         
-        case ast::RecordTK: {
-            // TODO: ...
-            break;
-        }
+    if(auto record_var = dynamic_cast<ast::RecordType*>(type)){
+        // TODO: ...
+    }
         
-        case ast::ArrayTK: {
-            // TODO: ...
-            break;
-        }
-        
-        case ast::NoTK: {
-            // Error, type should be of some kind
-            // TODO: ...
-            break;
-        }
+    if(auto array_var = dynamic_cast<ast::ArrayType*>(type)){
+        // TODO: ...
     }
     
     // TODO: Replace with custom error reporting

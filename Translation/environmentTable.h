@@ -22,34 +22,26 @@ public:
     T& operator[](const ast::Symbol& s) const { return table[s]; }
 };
 
-enum EnvEntryKind {VarEEK, FunEEK, NoEEK};
-
-class EnvEntry {
-    EnvEntryKind EEK;
-public:
-    EnvEntry () : EEK(EnvEntryKind::NoEEK) {}
-    EnvEntry (EnvEntryKind EEK) : EEK(EEK) {}
-    EnvEntryKind getKind(){ return EEK; }
-
-    virtual void print() = 0;
+struct EnvEntry {
+    virtual void print() const = 0;
 };
 
-class VarEntry : public EnvEntry {
+struct VarEntry : public EnvEntry {
     trans::ExpType *ty;
-public:
-    VarEntry (trans::ExpType *ty) : EnvEntry(EnvEntryKind::VarEEK), ty(ty) {}
 
-    void print(){}
+    VarEntry (trans::ExpType *ty) : ty(ty) {}
+
+    void print() const {}
 };
 
-class FunEntry : public EnvEntry {
+struct FunEntry : public EnvEntry {
     std::vector<trans::ExpType*> formals; // TODO: Verify if this is the correct type
     trans::ExpType *result;
-public:
-    FunEntry (std::vector<trans::ExpType*>& formals, trans::ExpType *result) : EnvEntry(EnvEntryKind::FunEEK), formals(formals), result(result) {}
-    // TODO: Complete with usage functions (in case formals is not directly built from outside)
+
+    FunEntry (std::vector<trans::ExpType*> formals, trans::ExpType *result) : formals(formals), result(result) {}
+    // TODO: Check if complete usage functions are needed (in case formals is not directly built from outside)
     
-    void print(){}
+    void print() const {}
 };
 
 typedef BindingTable<trans::ExpType*> TypeEnvironment; // Symbol -> Expression Type

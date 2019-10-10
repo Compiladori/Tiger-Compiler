@@ -9,79 +9,74 @@ namespace trans{
 /**
  * Expression Types
  * **/
-class ExpType {
-public:
-    virtual void print() = 0;
+struct ExpType {
+    virtual void print() const = 0;
 };
 
-class UnitExpType : public ExpType {
-public:
+struct UnitExpType : public ExpType {
     UnitExpType(){}
     
-    void print(){}
+    void print() const {}
 };
 
-class NilExpType : public ExpType {
-public:
+struct NilExpType : public ExpType {
     NilExpType(){}
     
-    void print(){}
+    void print() const {}
 };
 
-class IntExpType : public ExpType {
-public:
+struct IntExpType : public ExpType {
     IntExpType(){}
     
-    void print(){}
+    void print() const {}
 };
 
-class StringExpType : public ExpType {
-public:
+struct StringExpType : public ExpType {
     StringExpType(){}
     
-    void print(){}
+    void print() const {}
 };
 
-class ArrayExpType : public ExpType {
+struct ArrayExpType : public ExpType {
     ExpType *type;
-public:
+
     ArrayExpType(ExpType *type) : type(type) {}
     
-    void print(){}
+    void print() const {}
 };
 
-class RecordExpType : public ExpType {
+struct RecordExpType : public ExpType {
     std::string name;
     ExpType *type;
     int index;
-public:
+
     RecordExpType(std::string name, ExpType *type, int index) : name(name), type(type), index(index) {}
     
-    void print(){}
+    void print() const {}
 };
 
-class CustomExpType : public ExpType {
+struct CustomExpType : public ExpType {
     std::string name;
-public:
-    CustomExpType(std::string name) : name(name) {}
+
+    CustomExpType (std::string name) : name(name) {}
     
-    void print(){}
+    void print() const {}
 };
 
 /**
  * Translated Expression associated with an Expression Type
  * **/
-class TranslatedExp {
+struct TranslatedExp {
     // TODO: Incomplete dummy class for translated expressions
-public:
+
     TranslatedExp() {}
 };
 
-class AssociatedExpType {
+struct AssociatedExpType {
     TranslatedExp *tr_exp;
     ExpType *exp_type;
-public:
-    AssociatedExpType(TranslatedExp *tr_exp, ExpType *exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
+
+    AssociatedExpType (TranslatedExp *tr_exp, ExpType *exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
 };
 
 
