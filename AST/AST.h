@@ -32,7 +32,7 @@ class GroupedDeclarations;
 /** 
  * Kind flags 
  * 
- * Allows us to do "type comparisons" without using dynamic_cast<>
+ * Allows us to do "type comparisons"
  * **/
 enum TypeKind {NameTK, RecordTK, ArrayTK, NoTK};
 enum VariableKind {SimpleVK, FieldVK, SubscriptVK, NoVK};
@@ -211,7 +211,7 @@ public:
     Expression(Position pos) : EK(ExpressionKind::NoEK), pos(pos) {}
     Expression(ExpressionKind EK, Position pos) : EK(EK), pos(pos) {}
     
-    Position getKind() const { return EK; }
+    ExpressionKind getKind() const { return EK; }
     Position getPosition() const { return pos; }
 
     virtual void print() = 0;
@@ -265,6 +265,10 @@ class OpExp : public Expression {
     std::unique_ptr<Expression> right;
 public:
     OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(ExpressionKind::OpEK, pos), left(left), oper(oper), right(right) {}
+    
+    auto getLeft(){ return left.get(); }
+    auto getRight(){ return right.get(); }
+    
     void print();
 };
 

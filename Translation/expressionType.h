@@ -69,13 +69,19 @@ public:
 };
 
 /**
- * Expression associated with an Expression Type
+ * Translated Expression associated with an Expression Type
  * **/
+class TranslatedExp {
+    // TODO: Incomplete dummy class for translated expressions
+public:
+    TranslatedExp() {}
+};
+
 class AssociatedExpType {
-    ast::Expression *exp;
+    TranslatedExp *tr_exp;
     ExpType *exp_type;
 public:
-    AssociatedExpType(ast::Expression *exp, ExpType *exp_type) : exp(exp), exp_type(exp_type) {}
+    AssociatedExpType(TranslatedExp *tr_exp, ExpType *exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
 };
 
 
