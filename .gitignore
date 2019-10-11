@@ -37,6 +37,7 @@
 !*/
 
 # Ignore flex and bison
+tiger.exe
 *.tab.c
 *.tab.h
 *.yy.c

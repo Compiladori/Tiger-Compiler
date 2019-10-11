@@ -13,7 +13,7 @@ using namespace trans;
 AssociatedExpType Translator::transVariable(ast::Variable* var){
     // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
-        auto env_entry = VEnv.get(*simple_var->id);
+        auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
             // TODO: Fix 'var_entry->type' to the actual type expected (Page 117-118 Appel C)
             return AssociatedExpType(new TranslatedExp, var_entry->type);
@@ -110,6 +110,17 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
         // TODO: ...
+        beginScope();
+        
+        // Augment current scope by processing let declarations:
+        // for declist in *let_exp->decs
+        //   transDeclaration(declist)
+        
+        auto result = transExpression(let_exp->body.get());
+        
+        endScope();
+        
+        return result;
     }
         
     if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){
@@ -124,19 +135,19 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     assert(false);
 };
 
-void Translator::transDeclaration(ast::Declaration* dec){
+void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
         // TODO: Check if correct
         auto result = transExpression(var_dec->exp.get());
         
-        if(var_dec->type_id and TEnv.get(*var_dec->type_id) != result.exp_type){
+        if(var_dec->type_id and getTypeEntry(*var_dec->type_id) != result.exp_type){
             // Error, type-id was explicitly specified but it doesn't match the expression type
             assert(false);
         }
         
         // TODO: Watch out for scope support
-        VEnv[*var_dec->id].push(new VarEntry(result.exp_type));
+        insertValueEntry(*var_dec->id, new VarEntry(result.exp_type));
     }
     
     if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){

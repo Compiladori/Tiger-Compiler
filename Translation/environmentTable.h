@@ -19,7 +19,10 @@ class BindingTable {
 public:
     BindingTable() : table() {};
     
-    T* get(const ast::Symbol& s){ return (table.count(s) and table[s].size() ? table[s].top() : nullptr); };
+    auto empty()                     const { return table.empty(); }
+    auto size()                      const { return table.size(); }
+    auto count(const ast::Symbol& s) const { return table.count(s); }
+    
     auto& operator[](const ast::Symbol& s){ return table[s]; }
 };
 
@@ -45,8 +48,6 @@ struct FunEntry : public EnvEntry {
     void print() const {}
 };
 
-typedef BindingTable<trans::ExpType> TypeEnvironment; // Symbol -> Expression Type
-typedef BindingTable<EnvEntry> ValueEnvironment; // Symbol -> Value (an Environment Entry)
 
 
 
