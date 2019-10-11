@@ -15,11 +15,12 @@ namespace trans{
  * **/
 template <class T>
 class BindingTable {
-    std::unordered_map<ast::Symbol, std::stack<T>, ast::SymbolHasher> table;
+    std::unordered_map<ast::Symbol, std::stack<T*>, ast::SymbolHasher> table;
 public:
     BindingTable() : table() {};
     
-    T& operator[](const ast::Symbol& s) const { return table[s]; }
+    T* get(const ast::Symbol& s){ return (table.count(s) and table[s].size() ? table[s].top() : nullptr); };
+    auto& operator[](const ast::Symbol& s){ return table[s]; }
 };
 
 struct EnvEntry {
@@ -27,9 +28,9 @@ struct EnvEntry {
 };
 
 struct VarEntry : public EnvEntry {
-    trans::ExpType *ty;
+    trans::ExpType *type;
 
-    VarEntry (trans::ExpType *ty) : ty(ty) {}
+    VarEntry (trans::ExpType *type) : type(type) {}
 
     void print() const {}
 };
@@ -44,8 +45,8 @@ struct FunEntry : public EnvEntry {
     void print() const {}
 };
 
-typedef BindingTable<trans::ExpType*> TypeEnvironment; // Symbol -> Expression Type
-typedef BindingTable<EnvEntry*> ValueEnvironment; // Symbol -> Value (an Environment Entry)
+typedef BindingTable<trans::ExpType> TypeEnvironment; // Symbol -> Expression Type
+typedef BindingTable<EnvEntry> ValueEnvironment; // Symbol -> Value (an Environment Entry)
 
 
 

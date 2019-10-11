@@ -86,8 +86,9 @@ struct Symbol {
 };
 
 class SymbolHasher{
-    static std::hash<std::string> H;
+    std::hash<std::string> H;
 public:
+    SymbolHasher() : H() {}
     std::size_t operator()(const Symbol& s) const {
         return H(s.name);
     }

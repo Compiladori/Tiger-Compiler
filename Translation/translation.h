@@ -18,10 +18,10 @@ public:
     }
     
     // TODO: Check if these return types are correct
-    trans::AssociatedExpType* transExpression(ast::Expression* exp);
-    trans::AssociatedExpType* transDeclaration(ast::Declaration* dec);
-    void transVariable(ast::Variable* var);
-    trans::ExpType* transType(ast::Type* type);
+    trans::AssociatedExpType transVariable(ast::Variable* var);
+    trans::AssociatedExpType transExpression(ast::Expression* exp);
+    void                     transDeclaration(ast::Declaration* dec);
+    trans::ExpType*          transType(ast::Type* type);
 };
 
 

@@ -9,26 +9,51 @@ using namespace trans;
  * Translator
  * **/
 // TODO: Check if these return types are correct
-AssociatedExpType* Translator::transExpression(ast::Expression* exp){
+// TODO: Replace assert() with custom error reporting, including Position()
+AssociatedExpType Translator::transVariable(ast::Variable* var){
+    // TODO: Complete all the cases
+    if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
+        auto env_entry = VEnv.get(*simple_var->id);
+        if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
+            // TODO: Fix 'var_entry->type' to the actual type expected (Page 117-118 Appel C)
+            return AssociatedExpType(new TranslatedExp, var_entry->type);
+        }
+        // Error, undefined variable
+        assert(false);
+    }
+        
+    if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
+        // TODO: ...
+    }
+        
+    if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
+        // TODO: ...
+    }
+    
+    // Error, it should have matched some clause of the above
+    assert(false);
+};
+
+AssociatedExpType Translator::transExpression(ast::Expression* exp){
     // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         // TODO: ...
     }
     
     if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
-        // TODO: ...
+        return AssociatedExpType(new TranslatedExp, new UnitExpType);
     }
         
     if(auto nil_exp = dynamic_cast<ast::NilExp*>(exp)){
-        // TODO: ...
+        return AssociatedExpType(new TranslatedExp, new NilExpType);
     }
         
     if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
-        // TODO: ...
+        return AssociatedExpType(new TranslatedExp, new IntExpType);
     }
         
     if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
-        // TODO: ...
+        return AssociatedExpType(new TranslatedExp, new StringExpType);
     }
         
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
@@ -36,7 +61,27 @@ AssociatedExpType* Translator::transExpression(ast::Expression* exp){
     }
     
     if(auto op_exp = dynamic_cast<ast::OpExp*>(exp)){
-        // TODO: ...
+        auto oper = op_exp->oper;
+        auto result_left = transExpression(op_exp->left.get());
+        auto result_right = transExpression(op_exp->right.get());
+        
+        switch(oper){
+            case ast::Plus: {
+                if(result_left.exp_type->kind != ExpTypeKind::IntKind){
+                    // Error, integer required on the left
+                    assert(false);
+                }
+                if(result_right.exp_type->kind != ExpTypeKind::IntKind){
+                    // Error, integer required on the right
+                    assert(false);
+                }
+                return AssociatedExpType(new TranslatedExp, new IntExpType);
+            }
+            // TODO: Complete the rest of the operators
+        }
+        
+        // Error, the operator should have matched some clause of the switch
+        assert(false);
     }
         
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
@@ -75,49 +120,39 @@ AssociatedExpType* Translator::transExpression(ast::Expression* exp){
         // TODO: ...
     }
     
-    // TODO: Replace with custom error reporting
-    // It should have matched some clause of the above
+    // Error, it should have matched some clause
     assert(false);
 };
 
-AssociatedExpType* Translator::transDeclaration(ast::Declaration* dec){
+void Translator::transDeclaration(ast::Declaration* dec){
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
-        // TODO: ...
-    }
+        // TODO: Check if correct
+        auto result = transExpression(var_dec->exp.get());
         
+        if(var_dec->type_id and TEnv.get(*var_dec->type_id) != result.exp_type){
+            // Error, type-id was explicitly specified but it doesn't match the expression type
+            assert(false);
+        }
+        
+        // TODO: Watch out for scope support
+        VEnv[*var_dec->id].push(new VarEntry(result.exp_type));
+    }
+    
     if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){
         // TODO: ...
     }
-        
+    
     if(auto type_dec = dynamic_cast<ast::TypeDec*>(dec)){
         // TODO: ...
     }
     
-    // TODO: Replace with custom error reporting
-    // It should have matched some clause of the switch
-    assert(false);
-};
-
-void Translator::transVariable(ast::Variable* var){
-    if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
-        // TODO: ...
-    }
-        
-    if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
-        // TODO: ...
-    }
-        
-    if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
-        // TODO: ...
-    }
-    
-    // TODO: Replace with custom error reporting
-    // It should have matched some clause of the switch
+    // Error, it should have matched some clause
     assert(false);
 };
 
 ExpType* Translator::transType(ast::Type* type){
+    // TODO: Complete all the cases
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         // TODO: ...
     }
@@ -130,7 +165,6 @@ ExpType* Translator::transType(ast::Type* type){
         // TODO: ...
     }
     
-    // TODO: Replace with custom error reporting
-    // It should have matched some clause of the switch
+    // Error, it should have matched some clause
     assert(false);
 };

@@ -7,6 +7,7 @@
   #include <cstdio>
   #include <iostream>
   #include "../AST/AST.h"
+  #include "../Translation/translation.h"
   using namespace std;
 
   // stuff from flex that bison needs to know about:
@@ -166,8 +167,16 @@ int main(int, char**) {
   // Parse through the input:
   yyparse();
   
-  // Print the final built AST
-  final_ast -> print();
+  try {
+      // Print the final built AST
+      final_ast->print();
+      
+      // Semantic check
+      trans::Translator T;
+      auto res = T.transExpression(final_ast);
+  } catch (exception& e) {
+      cout << "Catched an exception: " << e.what() << endl;
+  }
 }
 
 void yyerror(const char *s) {
