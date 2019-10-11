@@ -18,7 +18,7 @@
 
   void yyerror(const char *s);
   
-  ast::Expression* final_ast;
+  std::unique_ptr<ast::Expression> final_ast;
 %}
 
 %union {
@@ -72,41 +72,41 @@
 %type <exp_list> args explist
 
 %%
-prog : exp                  { final_ast = $1; }
+prog : exp                  { final_ast($1); }
 
-exp : INT					{ $$ = new IntExp($1, Position(yylineno)); }
-	| PI PD					{ $$ = new UnitExp(Position(yylineno)); }
-	| NIL					  { $$ = new NilExp(Position(yylineno)); }
-    | LITERAL				{ $$ = new StringExp($1, Position(yylineno)); }
-	| BREAK					{ $$ = new BreakExp(Position(yylineno)); }
-	| l_value				{ $$ = new VarExp($1, Position(yylineno)); }
-	| l_value DOSPIG exp	{ $$ = new AssignExp($1, $3, Position(yylineno)); }
+exp : INT					{ $$ = new IntExp($1, yylineno); }
+	| PI PD					{ $$ = new UnitExp(yylineno); }
+	| NIL					  { $$ = new NilExp(yylineno); }
+    | LITERAL				{ $$ = new StringExp($1, yylineno); }
+	| BREAK					{ $$ = new BreakExp(yylineno); }
+	| l_value				{ $$ = new VarExp($1, yylineno); }
+	| l_value DOSPIG exp	{ $$ = new AssignExp($1, $3, yylineno); }
 	| PI exp PCOMA explist PD { $4 -> push_front($2);
-                                $$ = new SeqExp($4, Position(yylineno)); }
-	| exp PIPE exp			{ $$ = new IfExp($1, new IntExp(1, Position(yylineno)), $3, Position(yylineno)); }
-	| exp AMPER exp			{ $$ = new IfExp($1, $3, new IntExp(0, Position(yylineno)), Position(yylineno)); }
-	| exp IGUAL exp			{ $$ = new OpExp($1, Eq, $3, Position(yylineno)); }
-	| exp MENOR exp			{ $$ = new OpExp($1, Lt, $3, Position(yylineno)); }
-	| exp MENIG exp			{ $$ = new OpExp($1, Le, $3, Position(yylineno)); }
-	| exp MAYOR exp			{ $$ = new OpExp($1, Gt, $3, Position(yylineno)); }
-	| exp MAYIG exp			{ $$ = new OpExp($1, Ge, $3, Position(yylineno)); }
-	| exp DIST exp			{ $$ = new OpExp($1, Neq, $3, Position(yylineno)); }
-	| exp MAS exp			{ $$ = new OpExp($1, Plus, $3, Position(yylineno)); }
-	| exp MENOS exp			{ $$ = new OpExp($1, Minus, $3, Position(yylineno)); }
-	| exp POR exp			{ $$ = new OpExp($1, Times, $3, Position(yylineno)); }
-	| exp DIV exp			{ $$ = new OpExp($1, Divide, $3, Position(yylineno)); }
-	| MENOS exp				{ $$ = new OpExp(new IntExp(0, Position(yylineno)), Minus, $2, Position(yylineno)); }
+                                $$ = new SeqExp($4, yylineno); }
+	| exp PIPE exp			{ $$ = new IfExp($1, new IntExp(1, yylineno), $3, yylineno); }
+	| exp AMPER exp			{ $$ = new IfExp($1, $3, new IntExp(0, yylineno), yylineno); }
+	| exp IGUAL exp			{ $$ = new OpExp($1, Eq, $3, yylineno); }
+	| exp MENOR exp			{ $$ = new OpExp($1, Lt, $3, yylineno); }
+	| exp MENIG exp			{ $$ = new OpExp($1, Le, $3, yylineno); }
+	| exp MAYOR exp			{ $$ = new OpExp($1, Gt, $3, yylineno); }
+	| exp MAYIG exp			{ $$ = new OpExp($1, Ge, $3, yylineno); }
+	| exp DIST exp			{ $$ = new OpExp($1, Neq, $3, yylineno); }
+	| exp MAS exp			{ $$ = new OpExp($1, Plus, $3, yylineno); }
+	| exp MENOS exp			{ $$ = new OpExp($1, Minus, $3, yylineno); }
+	| exp POR exp			{ $$ = new OpExp($1, Times, $3, yylineno); }
+	| exp DIV exp			{ $$ = new OpExp($1, Divide, $3, yylineno); }
+	| MENOS exp				{ $$ = new OpExp(new IntExp(0, yylineno), Minus, $2, yylineno); }
 	| PI exp PD				{ $$ = $2; }
-	| id PI args PD			{ $$ = new CallExp($1, $3, Position(yylineno)); }
-	| IF exp THEN exp		{ $$ = new IfExp($2, $4, Position(yylineno)); }
-	| IF exp THEN exp ELSE exp { $$ = new IfExp($2, $4, $6, Position(yylineno)); }
-	| WHILE exp DO exp		{ $$ = new WhileExp($2, $4, Position(yylineno)); }
-	| FOR id DOSPIG exp TO exp DO exp  { $$ = new ForExp(new SimpleVar($2), false, $4, $6, $8, Position(yylineno)); }
-	| LET decs IN END		{ $$ = new LetExp($2, new UnitExp(Position(yylineno)), Position(yylineno)); }
-	| LET decs IN exp END	{ $$ = new LetExp($2, $4, Position(yylineno)); }
-	| LET decs IN exp PCOMA explist END  { $6 -> push_front($4); $$ = new LetExp($2, new SeqExp($6, Position(yylineno)), Position(yylineno)); }
-	| id CI exp CD OF exp { $$ = new ArrayExp($1, $3, $6, Position(yylineno)); }
-    | id LI rec_fields LD	{ $$ = new RecordExp($3, $1, Position(yylineno)); }
+	| id PI args PD			{ $$ = new CallExp($1, $3, yylineno); }
+	| IF exp THEN exp		{ $$ = new IfExp($2, $4, yylineno); }
+	| IF exp THEN exp ELSE exp { $$ = new IfExp($2, $4, $6, yylineno); }
+	| WHILE exp DO exp		{ $$ = new WhileExp($2, $4, yylineno); }
+	| FOR id DOSPIG exp TO exp DO exp  { $$ = new ForExp(new SimpleVar($2), $4, $6, $8, yylineno); }
+	| LET decs IN END		{ $$ = new LetExp($2, new UnitExp(yylineno), yylineno); }
+	| LET decs IN exp END	{ $$ = new LetExp($2, $4, yylineno); }
+	| LET decs IN exp PCOMA explist END  { $6 -> push_front($4); $$ = new LetExp($2, new SeqExp($6, yylineno), yylineno); }
+	| id CI exp CD OF exp { $$ = new ArrayExp($1, $3, $6, yylineno); }
+    | id LI rec_fields LD	{ $$ = new RecordExp($3, $1, yylineno); }
 	;
 explist: exp PCOMA explist	{ $3 -> push_front($1); $$ = $3; }
 	| exp					{ $$ = new ExpressionList($1); }
@@ -133,8 +133,8 @@ id : ID						{ $$ = new Symbol($1); }
 	| tyfield				   { $$ = new TypeFieldList($1); }
 	|						 { $$ = new TypeFieldList();   }
 	;
-vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, false, $4); }
-	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, false, $4, $6); }
+vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, $4); }
+	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, $4, $6); }
 	;
 fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
@@ -147,8 +147,8 @@ args : exp COMA args		{ $3 -> push_front($1); $$ = $3; }
 	|						{ $$ = new ExpressionList(); }
 	;
 l_value : id				{ $$ = new SimpleVar($1); }
-	| l_value PTO id		{ $$ = new FieldVar($1,$3); }
-	| l_value CI exp CD		{ $$ = new SubscriptVar($1,$3); }
+	| l_value PTO id		{ $$ = new FieldVar($1, $3); }
+	| l_value CI exp CD		{ $$ = new SubscriptVar($1, $3); }
 	;
 
 %%
@@ -172,8 +172,9 @@ int main(int, char**) {
       final_ast->print();
       
       // Semantic check
-      trans::Translator T;
-      auto res = T.transExpression(final_ast);
+      auto res = trans::Translator().transExpression(final_ast);
+      
+      // ...
   } catch (exception& e) {
       cout << "Catched an exception: " << e.what() << endl;
   }
@@ -182,7 +183,7 @@ int main(int, char**) {
 void yyerror(const char *s) {
   extern int yylineno;
   extern int line_num;
-  cout << s << " in line " << yylineno << endl;
+  cout << "Bison error: " << s << " in line " << yylineno << endl;
   // might as well halt now:
   exit(-1);
 }

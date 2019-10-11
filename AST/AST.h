@@ -85,12 +85,9 @@ struct Symbol {
     void print() const { std::cout << "Symbol " << name; }
 };
 
-class SymbolHasher{
-    std::hash<std::string> H;
-public:
-    SymbolHasher() : H() {}
+struct SymbolHasher{
     std::size_t operator()(const Symbol& s) const {
-        return H(s.name);
+        return std::hash<std::string>()(s.name);
     }
 };
 
@@ -275,10 +272,10 @@ struct WhileExp : public Expression {
 
 struct ForExp : public Expression {
     std::unique_ptr<Variable> var;
-    bool escape;
     std::unique_ptr<Expression> lo, hi, body;
+    bool escape = false;
 
-    ForExp (Variable *var, bool escape, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), escape(escape), lo(lo), hi(hi), body(body) {}
+    ForExp (Variable *var, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), lo(lo), hi(hi), body(body) {}
     void print() const;
 };
 
@@ -312,12 +309,12 @@ struct Declaration {
 
 struct VarDec : public Declaration {
     std::unique_ptr<Symbol> id;
-    bool escape;
     std::unique_ptr<Symbol> type_id;
     std::unique_ptr<Expression> exp;
+    bool escape = false;
 
-    VarDec(Symbol *id, bool escape, Expression *exp) : id(id), escape(escape), type_id(nullptr), exp(exp) {}
-    VarDec(Symbol *id, bool escape, Symbol *type_id, Expression *exp) : id(id), escape(escape), type_id(type_id), exp(exp) {}
+    VarDec(Symbol *id, Expression *exp) : id(id), escape(escape), type_id(nullptr), exp(exp) {}
+    VarDec(Symbol *id, Symbol *type_id, Expression *exp) : id(id), type_id(type_id), exp(exp) {}
     void print() const;
 };
 
