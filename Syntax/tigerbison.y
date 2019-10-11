@@ -18,7 +18,7 @@
 
   void yyerror(const char *s);
   
-  std::unique_ptr<ast::Expression> final_ast;
+  ast::Expression* ast_raw_ptr;
 %}
 
 %union {
@@ -72,7 +72,7 @@
 %type <exp_list> args explist
 
 %%
-prog : exp                  { final_ast($1); }
+prog : exp                  { ast_raw_ptr = $1; }
 
 exp : INT					{ $$ = new IntExp($1, yylineno); }
 	| PI PD					{ $$ = new UnitExp(yylineno); }
@@ -168,11 +168,14 @@ int main(int, char**) {
   yyparse();
   
   try {
+      unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
+      
       // Print the final built AST
       final_ast->print();
       
       // Semantic check
-      auto res = trans::Translator().transExpression(final_ast);
+      trans::Translator T;
+      auto result = T.transExpression(final_ast.get());
       
       // ...
   } catch (exception& e) {

@@ -8,8 +8,55 @@ using namespace trans;
 /**
  * Translator
  * **/
-// TODO: Check if these return types are correct
 // TODO: Replace assert() with custom error reporting, including Position()
+void Translator::beginScope(){
+    // Create a new scope without any initial insertions
+    type_insertions.push(std::stack<ast::Symbol>());
+    value_insertions.push(std::stack<ast::Symbol>());
+}
+
+void Translator::endScope(){
+    if(type_insertions.empty() or value_insertions.empty()){
+        // Error, there is no scope to end
+        assert(false);
+    }
+    
+    // Remove all registered scoped insertions
+    while(not type_insertions.top().empty()){
+        auto s = type_insertions.top().top();
+        TypeEnv[s].pop();
+        type_insertions.top().pop();
+    }
+    type_insertions.pop();
+    
+    while(not value_insertions.top().empty()){
+        auto s = value_insertions.top().top();
+        ValueEnv[s].pop();
+        value_insertions.top().pop();
+    }
+    value_insertions.pop();
+}
+
+void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type) {
+    if(type_insertions.empty()){
+        // Error, no scope was initialized
+        assert(false);
+    }
+    TypeEnv[s].push(exp_type);
+    type_insertions.top().push(s);
+}
+
+void Translator::insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry) {
+    if(value_insertions.empty()){
+        // Error, no scope was initialized
+        assert(false);
+    }
+    ValueEnv[s].push(env_entry);
+    value_insertions.top().push(s);
+}
+
+
+// TODO: Check if the transSomething() return types are correct
 AssociatedExpType Translator::transVariable(ast::Variable* var){
     // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
@@ -30,7 +77,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         // TODO: ...
     }
     
-    // Error, it should have matched some clause of the above
+    // Error, it should have matched some clause
     assert(false);
 };
 

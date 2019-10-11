@@ -10,66 +10,24 @@ namespace trans{
 
 // TODO: Replace assert() with custom error reporting
 class Translator {
-    BindingTable<trans::ExpType> TEnv;
-    BindingTable<trans::EnvEntry> VEnv;
+    BindingTable<trans::ExpType> TypeEnv;
+    BindingTable<trans::EnvEntry> ValueEnv;
     
-    std::stack<std::stack<ast::Symbol*>> tenv_insertions, venv_insertions;
+    std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
 public:
     Translator() {
         // TODO: Initialize tables with their initial values,
         // such as "int" and "string" basic types or runtime functions
     }
     
-    trans::ExpType* getTypeEntry(const ast::Symbol& s) {
-        return TEnv.getEntry(s);
-    }
-    trans::EnvEntry* getValueEntry(const ast::Symbol& s) { 
-        return VEnv.getEntry(s);
-    }
+    auto getTypeEntry(const ast::Symbol& s) { return TypeEnv.getEntry(s); }
+    auto getValueEntry(const ast::Symbol& s) { return ValueEnv.getEntry(s); }
     
-    void beginScope(){
-        // Create a new scope without any initial insertions
-        tenv_insertions.push(std::stack<ast::Symbol*>());
-        venv_insertions.push(std::stack<ast::Symbol*>());
-    }
-    void endScope(){
-        if(tenv_insertions.empty() or venv_insertions.empty()){
-            // Error, there is no scope to end
-            assert(false);
-        }
-        
-        // Remove all registered scoped insertions
-        while(not tenv_insertions.top().empty()){
-            auto s = tenv_insertions.top().top();
-            tenv_insertions.top().pop();
-            TEnv[*s].pop();
-        }
-        tenv_insertions.pop();
-        
-        while(not venv_insertions.top().empty()){
-            auto s = venv_insertions.top().top();
-            venv_insertions.top().pop();
-            VEnv[*s].pop();
-        }
-        venv_insertions.pop();
-    }
+    void beginScope();
+    void endScope();
     
-    void insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type) {
-        if(tenv_insertions.empty()){
-            // Error, no scope was initialized
-            assert(false);
-        }
-        tenv_insertions.top().push(&s);
-        TEnv[s].push(exp_type);
-    }
-    void insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry) {
-        if(venv_insertions.empty()){
-            // Error, no scope was initialized
-            assert(false);
-        }
-        venv_insertions.top().push(&s);
-        VEnv[s].push(env_entry);
-    }
+    void insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type);
+    void insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry);
     
     // TODO: Check if these return types are correct
     trans::AssociatedExpType transVariable(ast::Variable* var);
