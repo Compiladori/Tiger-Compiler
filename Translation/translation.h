@@ -20,30 +20,15 @@ public:
         // such as "int" and "string" basic types or runtime functions
     }
     
-    trans::ExpType* getTypeEntry(const ast::Symbol& s) { 
-        if(TEnv.count(s) and TEnv[s].size()){
-            if(TEnv[s].empty()){
-                // Error, trying to access non-existing entry
-                return nullptr;
-            }
-            return TEnv[s].top();
-        }
-        // Error, trying to access non-existing symbol in the table
-        return nullptr;
+    trans::ExpType* getTypeEntry(const ast::Symbol& s) {
+        return TEnv.getEntry(s);
     }
     trans::EnvEntry* getValueEntry(const ast::Symbol& s) { 
-        if(VEnv.count(s) and VEnv[s].size()){
-            if(VEnv[s].empty()){
-                // Error, trying to access non-existing entry
-                return nullptr;
-            }
-            return VEnv[s].top();
-        }
-        // Error, trying to access non-existing symbol in the table
-        return nullptr;
+        return VEnv.getEntry(s);
     }
     
     void beginScope(){
+        // Create a new scope without any initial insertions
         tenv_insertions.push(std::stack<ast::Symbol*>());
         venv_insertions.push(std::stack<ast::Symbol*>());
     }
@@ -53,6 +38,7 @@ public:
             assert(false);
         }
         
+        // Remove all registered scoped insertions
         while(not tenv_insertions.top().empty()){
             auto s = tenv_insertions.top().top();
             tenv_insertions.top().pop();
@@ -71,16 +57,16 @@ public:
             // Error, no scope was initialized
             assert(false);
         }
-        TEnv[s].push(exp_type);
         tenv_insertions.top().push(&s);
+        TEnv[s].push(exp_type);
     }
     void insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry) {
         if(venv_insertions.empty()){
             // Error, no scope was initialized
             assert(false);
         }
-        VEnv[s].push(env_entry);
         venv_insertions.top().push(&s);
+        VEnv[s].push(env_entry);
     }
     
     // TODO: Check if these return types are correct

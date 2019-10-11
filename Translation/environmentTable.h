@@ -23,6 +23,18 @@ public:
     auto size()                      const { return table.size(); }
     auto count(const ast::Symbol& s) const { return table.count(s); }
     
+    T* getEntry(const ast::Symbol& s){
+        if(table.count(s) and table[s].size()){
+            if(table[s].empty()){
+                // Error, trying to access non-existing entry
+                return nullptr;
+            }
+            return table[s].top();
+        }
+        // Error, trying to access non-existing symbol in the table
+        return nullptr;
+    }
+    
     auto& operator[](const ast::Symbol& s){ return table[s]; }
 };
 

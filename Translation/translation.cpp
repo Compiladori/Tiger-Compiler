@@ -109,7 +109,6 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
         
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
-        // TODO: ...
         beginScope();
         
         // Augment current scope by processing let declarations:
@@ -138,15 +137,14 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
-        // TODO: Check if correct
         auto result = transExpression(var_dec->exp.get());
         
+        // TODO: Check how to correctly verify the equality of the types
         if(var_dec->type_id and getTypeEntry(*var_dec->type_id) != result.exp_type){
-            // Error, type-id was explicitly specified but it doesn't match the expression type
+            // Error, type-id was explicitly specified but doesn't match the expression type
             assert(false);
         }
         
-        // TODO: Watch out for scope support
         insertValueEntry(*var_dec->id, new VarEntry(result.exp_type));
     }
     
