@@ -44,12 +44,14 @@ public:
             tenv_insertions.top().pop();
             TEnv[*s].pop();
         }
+        tenv_insertions.pop();
         
         while(not venv_insertions.top().empty()){
             auto s = venv_insertions.top().top();
             venv_insertions.top().pop();
             VEnv[*s].pop();
         }
+        venv_insertions.pop();
     }
     
     void insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type) {
