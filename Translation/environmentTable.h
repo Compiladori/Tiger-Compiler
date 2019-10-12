@@ -13,9 +13,10 @@ namespace trans{
 /**
  * Data structures
  * **/
+
 template <class T>
 class BindingTable {
-    std::unordered_map<ast::Symbol, std::stack<T*>, ast::SymbolHasher> table;
+    std::unordered_map<ast::Symbol, std::stack<T>, ast::SymbolHasher> table;
 public:
     BindingTable() : table() {};
     
@@ -23,16 +24,16 @@ public:
     auto size()                      const { return table.size(); }
     auto count(const ast::Symbol& s) const { return table.count(s); }
     
-    T* getEntry(const ast::Symbol& s){
+    T getEntry(const ast::Symbol& s){
         if(table.count(s) and table[s].size()){
             if(table[s].empty()){
                 // Error, trying to access non-existing entry
-                return nullptr;
+                throw std::exception();
             }
             return table[s].top();
         }
         // Error, trying to access non-existing symbol in the table
-        return nullptr;
+        throw std::exception();
     }
     
     auto& operator[](const ast::Symbol& s){ return table[s]; }

@@ -8,6 +8,7 @@
   #include <iostream>
   #include "../AST/AST.h"
   #include "../Translation/translation.h"
+  #include "../Escapes/escapes.h"
   using namespace std;
 
   // stuff from flex that bison needs to know about:
@@ -167,19 +168,24 @@ int main(int, char**) {
   // Parse through the input:
   yyparse();
   
+  // TODO: Separate into a different main file
   try {
-      unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
+    unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
+    
+    // Print the final built AST
+    final_ast->print();
+    
+    // Set variable escapes
+    esc::Escapator E;
+    E.setEscapes(final_ast.get());
+    
+    // Semantic check
+    trans::Translator T;
+    auto result = T.transExpression(final_ast.get());
       
-      // Print the final built AST
-      final_ast->print();
-      
-      // Semantic check
-      trans::Translator T;
-      auto result = T.transExpression(final_ast.get());
-      
-      // ...
+    // ...
   } catch (exception& e) {
-      cout << "Catched an exception: " << e.what() << endl;
+    cout << "Catched an exception: " << e.what() << endl;
   }
 }
 

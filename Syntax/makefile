@@ -1,5 +1,5 @@
 tiger.exe: lexer parser
-	g++  --std=c++14 tigerbison.tab.c lex.yy.c ../AST/AST.cpp ../Translation/translation.cpp -lfl -o tiger.exe
+	g++  --std=c++14 tigerbison.tab.c lex.yy.c ../AST/AST.cpp ../Translation/translation.cpp ../Escapes/escapes.cpp -lfl -o tiger.exe
 
 lexer:
 	flex --debug tigerflex.l

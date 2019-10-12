@@ -1,6 +1,12 @@
 #ifndef __TRANSLATION_H__
 #define __TRANSLATION_H__
 
+/**
+ * Translation and semantic check
+ * 
+ * Described in Chapter 5 Appel C (2004)
+ * **/
+
 #include <cassert>
 #include "../AST/AST.h"
 #include "environmentTable.h"
@@ -10,8 +16,8 @@ namespace trans{
 
 // TODO: Replace assert() with custom error reporting
 class Translator {
-    BindingTable<trans::ExpType> TypeEnv;
-    BindingTable<trans::EnvEntry> ValueEnv;
+    BindingTable<trans::ExpType*> TypeEnv;
+    BindingTable<trans::EnvEntry*> ValueEnv;
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
 public:
@@ -20,8 +26,14 @@ public:
         // such as "int" and "string" basic types or runtime functions
     }
     
-    auto getTypeEntry(const ast::Symbol& s) { return TypeEnv.getEntry(s); }
-    auto getValueEntry(const ast::Symbol& s) { return ValueEnv.getEntry(s); }
+    trans::ExpType* getTypeEntry(const ast::Symbol& s) {
+        try { return TypeEnv.getEntry(s); }
+        catch (std::exception& e) { return nullptr; }
+    }
+    trans::EnvEntry* getValueEntry(const ast::Symbol& s) {
+        try { return ValueEnv.getEntry(s); }
+        catch (std::exception& e) { return nullptr; }
+    }
     
     void beginScope();
     void endScope();

@@ -4,6 +4,8 @@
 /*** 
  * Abstract Syntax Tree (AST)
  * 
+ * Described in Chapter 4 Appel C (2004)
+ * 
  * Every abstraction of the AST is constructed by raw pointers, taking ownership over them.
  * This is a special case to work along with the usual versions of Bison and Flex.
  * ***/
@@ -276,6 +278,8 @@ struct ForExp : public Expression {
     bool escape = false;
 
     ForExp (Variable *var, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), lo(lo), hi(hi), body(body) {}
+
+    void setEscape(auto new_escape) { escape = new_escape; } 
     void print() const;
 };
 
@@ -313,8 +317,10 @@ struct VarDec : public Declaration {
     std::unique_ptr<Expression> exp;
     bool escape = false;
 
-    VarDec(Symbol *id, Expression *exp) : id(id), escape(escape), type_id(nullptr), exp(exp) {}
+    VarDec(Symbol *id, Expression *exp) : id(id), type_id(nullptr), exp(exp) {}
     VarDec(Symbol *id, Symbol *type_id, Expression *exp) : id(id), type_id(type_id), exp(exp) {}
+    
+    void setEscape(auto new_escape) { escape = new_escape; }
     void print() const;
 };
 

@@ -37,7 +37,7 @@ void Translator::endScope(){
     value_insertions.pop();
 }
 
-void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type) {
+void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type){
     if(type_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
@@ -46,7 +46,7 @@ void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type) {
     type_insertions.top().push(s);
 }
 
-void Translator::insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry) {
+void Translator::insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry){
     if(value_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
@@ -79,7 +79,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
     
     // Error, it should have matched some clause
     assert(false);
-};
+}
 
 AssociatedExpType Translator::transExpression(ast::Expression* exp){
     // TODO: Complete all the cases
@@ -179,7 +179,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     
     // Error, it should have matched some clause
     assert(false);
-};
+}
 
 void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
@@ -193,19 +193,22 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
         }
         
         insertValueEntry(*var_dec->id, new VarEntry(result.exp_type));
+        return;
     }
     
     if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){
         // TODO: ...
+        return;
     }
     
     if(auto type_dec = dynamic_cast<ast::TypeDec*>(dec)){
         // TODO: ...
+        return;
     }
     
     // Error, it should have matched some clause
     assert(false);
-};
+}
 
 ExpType* Translator::transType(ast::Type* type){
     // TODO: Complete all the cases
@@ -223,4 +226,4 @@ ExpType* Translator::transType(ast::Type* type){
     
     // Error, it should have matched some clause
     assert(false);
-};
+}
