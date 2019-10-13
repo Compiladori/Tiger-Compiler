@@ -82,8 +82,8 @@ void GroupedDeclarations::frontAppendDeclaration(Declaration *dec){
         // Join last group if their types match
         auto p = this->front()->front().get();
         
-        bool matchTypeDec = dynamic_cast<TypeDec*>(p) and dynamic_cast<TypeDec*>(dec);
-        bool matchFunDec = dynamic_cast<FunDec*>(p) and dynamic_cast<FunDec*>(dec);
+        bool matchTypeDec = util::testSameDerivatedTypes<Declaration*, TypeDec*>(p, dec);
+        bool matchFunDec  = util::testSameDerivatedTypes<Declaration*, FunDec*>(p, dec);
         
         if(matchTypeDec or matchFunDec) this->front()->push_front(dec);
         else                            this->push_front(new DeclarationList(dec));
