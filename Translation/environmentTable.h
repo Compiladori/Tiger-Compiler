@@ -38,7 +38,6 @@ public:
     }
     
     auto& operator[](const ast::Symbol& s){ return table[s]; }
-    auto& operator[](const char* s)       { return table[ast::Symbol(s)]; }
 };
 
 struct EnvEntry {

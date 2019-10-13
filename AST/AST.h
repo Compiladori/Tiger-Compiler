@@ -73,12 +73,12 @@ public:
     }
 };
 
-typedef GenericList<Type> TypeList;
-typedef GenericList<TypeField> TypeFieldList;
-typedef GenericList<Variable> VariableList;
-typedef GenericList<Expression> ExpressionList;
-typedef GenericList<Declaration> DeclarationList;
-typedef GenericList<RecordField> RecordFieldList;
+using TypeList        = GenericList<Type>;
+using TypeFieldList   = GenericList<TypeField>;
+using VariableList    = GenericList<Variable>;
+using ExpressionList  = GenericList<Expression>;
+using DeclarationList = GenericList<Declaration>;
+using RecordFieldList = GenericList<RecordField>;
 
 /**
  * Operations
@@ -91,6 +91,7 @@ enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
 struct Symbol {
     std::string name;
     
+    Symbol (const char* name) : name(name) {}
     Symbol (std::string name) : name(name) {}
     
     bool operator==(const Symbol& s) const { return name == s.name; }
