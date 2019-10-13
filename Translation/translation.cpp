@@ -11,7 +11,11 @@ using namespace trans;
 // TODO: Replace assert() with custom error reporting, including Position()
 // TODO: Verify ownership of pointers!
 
-trans::AssociatedExpType Translator::translate(ast::Expression *exp){
+using std::unique_ptr, std::make_unique;
+using std::shared_ptr, std::make_shared;
+using std::move;
+
+trans::AssociatedExpType Translator::translate(ast::Expression* exp){
     this->clear();
     return transExpression(exp);
 }
@@ -44,22 +48,24 @@ void Translator::endScope(){
     value_insertions.pop();
 }
 
-void Translator::insertTypeEntry(ast::Symbol s, trans::ExpType *exp_type){
-    if(type_insertions.empty()){
+void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_entry, bool ignore_scope){
+    if((not ignore_scope) and type_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
     }
-    TypeEnv[s].emplace(std::unique_ptr<trans::ExpType>(exp_type));
-    type_insertions.top().push(s);
+    TypeEnv[s].emplace(make_unique<trans::TypeEntry>(type_entry));
+    if(not ignore_scope)
+        type_insertions.top().push(s);
 }
 
-void Translator::insertValueEntry(ast::Symbol s, trans::EnvEntry *env_entry){
-    if(value_insertions.empty()){
+void Translator::insertValueEntry(ast::Symbol s, unique_ptr<trans::ValueEntry> value_entry, bool ignore_scope){
+    if((not ignore_scope) and value_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
     }
-    ValueEnv[s].emplace(std::unique_ptr<trans::EnvEntry>(env_entry));
-    value_insertions.top().push(s);
+    ValueEnv[s].push(move(value_entry));
+    if(not ignore_scope)
+        value_insertions.top().push(s);
 }
 
 
@@ -70,7 +76,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
             // TODO: Fix 'var_entry->type' to the actual type expected (Page 117-118 Appel C)
-            return AssociatedExpType(new TranslatedExp, var_entry->type);
+            return AssociatedExpType(make_shared<TranslatedExp>(), var_entry->type);
         }
         // Error, undefined variable
         assert(false);
@@ -95,19 +101,19 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
     
     if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
-        return AssociatedExpType(new TranslatedExp, new UnitExpType);
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
     
     if(auto nil_exp = dynamic_cast<ast::NilExp*>(exp)){
-        return AssociatedExpType(new TranslatedExp, new NilExpType);
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<NilExpType>());
     }
     
     if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
-        return AssociatedExpType(new TranslatedExp, new IntExpType);
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
     }
     
     if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
-        return AssociatedExpType(new TranslatedExp, new StringExpType);
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<StringExpType>());
     }
     
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
@@ -129,7 +135,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                     // Error, integer required on the right
                     assert(false);
                 }
-                return AssociatedExpType(new TranslatedExp, new IntExpType);
+                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
             // TODO: Complete the rest of the operators
         }
@@ -194,12 +200,14 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
         auto result = transExpression(var_dec->exp.get());
         
         // TODO: Check how to correctly verify the equality of the types
-        if(var_dec->type_id and getTypeEntry(*var_dec->type_id) != result.exp_type){
+        /*
+        if(var_dec->type_id and getTypeEntry(*var_dec->type_id) != result.exp_type.get()){
             // Error, type-id was explicitly specified but doesn't match the expression type
             assert(false);
         }
         
-        insertValueEntry(*var_dec->id, new VarEntry(result.exp_type));
+        insertValueEntry(*var_dec->id, make_unique<VarEntry>(result.exp_type));
+        */
         return;
     }
     
@@ -217,7 +225,7 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
     assert(false);
 }
 
-ExpType* Translator::transType(ast::Type* type){
+std::shared_ptr<ExpType> Translator::transType(ast::Type* type){
     // TODO: Complete all the cases
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         // TODO: ...

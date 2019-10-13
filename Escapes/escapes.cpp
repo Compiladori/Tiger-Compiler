@@ -7,18 +7,16 @@ using namespace esc;
  * Escapator
  * **/
 // TODO: Replace assert() with custom error reporting
-// TODO: Verify ownership of pointers!
 
-void Escapator::setEscapes(ast::Expression *exp){
+using std::make_unique, std::unique_ptr;
+using std::move;
+
+void Escapator::setEscapes(ast::Expression* exp){
     this->clear();
     traverseExpression(exp);
 }
 
-void Escapator::insertEscapeEntry(ast::Symbol s, EscapeEntry *escape_entry){
-    EscapeEnv[s].emplace(std::unique_ptr<EscapeEntry>(escape_entry));
-}
-
-void Escapator::traverseExpression(ast::Expression *exp){
+void Escapator::traverseExpression(ast::Expression* exp){
     // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         traverseVariable(var_exp->var.get());
@@ -82,7 +80,7 @@ void Escapator::traverseExpression(ast::Expression *exp){
             traverseExpression(for_exp->lo.get());
             traverseExpression(for_exp->hi.get());
             
-            insertEscapeEntry(*for_var->id, new EscapeEntry(current_depth, &for_exp->escape));
+            //insertEscapeEntry(*for_var->id, move(make_unique<EscapeEntry>(current_depth, &for_exp->escape)));
             traverseExpression(for_exp->body.get());
             return;
         }
@@ -107,7 +105,7 @@ void Escapator::traverseExpression(ast::Expression *exp){
     assert(false);
 }
 
-void Escapator::traverseDeclaration(ast::Declaration *dec){ // TODO: Modify and adapt to DeclarationList
+void Escapator::traverseDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
         // TODO: ...
@@ -128,7 +126,7 @@ void Escapator::traverseDeclaration(ast::Declaration *dec){ // TODO: Modify and 
     assert(false);
 }
 
-void Escapator::traverseVariable(ast::Variable *var){
+void Escapator::traverseVariable(ast::Variable* var){
     // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         // TODO: Check if correct

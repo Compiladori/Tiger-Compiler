@@ -8,6 +8,7 @@
  * **/
 
 #include <cassert>
+#include <memory>
 #include "../AST/AST.h"
 #include "environmentTable.h"
 #include "expressionType.h"
@@ -16,8 +17,8 @@ namespace trans{
 
 // TODO: Replace assert() with custom error reporting
 class Translator {
-    BindingTable<trans::ExpType> TypeEnv;
-    BindingTable<trans::EnvEntry> ValueEnv;
+    BindingTable<trans::TypeEntry> TypeEnv;
+    BindingTable<trans::ValueEntry> ValueEnv;
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
     
@@ -27,25 +28,25 @@ class Translator {
     void beginScope();
     void endScope();
     
-    void insertTypeEntry(ast::Symbol s, trans::ExpType *exp_type);
-    void insertValueEntry(ast::Symbol s, trans::EnvEntry *env_entry);
+    void insertTypeEntry(ast::Symbol s, std::shared_ptr<trans::ExpType> type_entry, bool ignore_scope = false);
+    void insertValueEntry(ast::Symbol s, std::unique_ptr<trans::ValueEntry> value_entry, bool ignore_scope = false);
     
     void load_initial_values(){
         // Basic types
-        TypeEnv["int"].emplace(std::make_unique<trans::IntExpType>());
-        TypeEnv["string"].emplace(std::make_unique<trans::StringExpType>());
+        insertTypeEntry("int",    std::make_shared<trans::IntExpType>(), true);
+        insertTypeEntry("string", std::make_shared<trans::StringExpType>(), true);
         
         // Runtime functions
-        // ValueEnv["print"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["flush"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["getchar"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["ord"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["chr"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["size"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["substring"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["concat"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["not"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
-        // ValueEnv["exit"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // insertValueEntry("print",     std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("flush",     std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("getchar",   std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("ord",       std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("chr",       std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("size",      std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("substring", std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("concat",    std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("not",       std::make_unique<trans::FunEntry>(???), true);
+        // insertValueEntry("exit",      std::make_unique<trans::FunEntry>(???), true);
     }
     
     void clear(){
@@ -57,14 +58,14 @@ class Translator {
     }
     
     // TODO: Check if these return types are correct
-    trans::AssociatedExpType transVariable(ast::Variable *var);
-    trans::AssociatedExpType transExpression(ast::Expression *exp);
-    void                     transDeclaration(ast::Declaration *dec);
-    trans::ExpType*          transType(ast::Type *type);
+    trans::AssociatedExpType transVariable(ast::Variable* var);
+    trans::AssociatedExpType transExpression(ast::Expression* exp);
+    void                     transDeclaration(ast::Declaration* dec);
+    std::shared_ptr<ExpType> transType(ast::Type* type);
 public:
     Translator() { load_initial_values(); }
     
-    trans::AssociatedExpType translate(ast::Expression *exp);
+    trans::AssociatedExpType translate(ast::Expression* exp);
 };
 
 

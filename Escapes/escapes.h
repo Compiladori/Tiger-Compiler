@@ -7,21 +7,15 @@
  * Described in Page 140-141 Appel C (2004)
  * */
 
+#include <memory>
 #include "../AST/AST.h"
 #include "../Translation/environmentTable.h"
 
 namespace esc {
 
 
-struct EscapeEntry {
-    int depth;
-    bool *escape;
-    
-    EscapeEntry(int depth, bool *escape) : depth(depth), escape(escape) {}
-};
-
 class Escapator {
-    trans::BindingTable<EscapeEntry> EscapeEnv;
+    trans::BindingTable<trans::EscapeEntry> EscapeEnv;
     int current_depth = 0;
     
     void clear(){
@@ -29,19 +23,18 @@ class Escapator {
         current_depth = 0;
     }
     
-    auto getEscapeEntry(const ast::Symbol& s) {
-        return EscapeEnv.getEntry(s);
+    auto getEscapeEntry(ast::Symbol s){ return EscapeEnv.getEntry(s); }
+    void insertEscapeEntry(ast::Symbol s, std::unique_ptr<trans::EscapeEntry> escape_entry){
+        EscapeEnv[s].push(std::move(escape_entry));
     }
     
-    void insertEscapeEntry(ast::Symbol s, EscapeEntry *escape_entry);
-    
-    void traverseExpression(ast::Expression *exp);
-    void traverseDeclaration(ast::Declaration *exp);
-    void traverseVariable(ast::Variable *exp);
+    void traverseExpression(ast::Expression* exp);
+    void traverseDeclaration(ast::Declaration* exp);
+    void traverseVariable(ast::Variable* exp);
 public:
     Escapator() : current_depth(0) {}
     
-    void setEscapes(ast::Expression *exp);
+    void setEscapes(ast::Expression* exp);
 };
 
 

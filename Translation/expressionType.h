@@ -2,6 +2,7 @@
 #define __EXPRESSION_TYPE_H__
 
 #include <string>
+#include <memory>
 
 namespace trans{
 
@@ -45,19 +46,19 @@ struct StringExpType : public ExpType {
 };
 
 struct ArrayExpType : public ExpType {
-    ExpType *type;
+    std::shared_ptr<ExpType> type;
 
-    ArrayExpType(ExpType *type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
+    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(std::move(type)) {}
     
     void print() const {}
 };
 
 struct RecordExpType : public ExpType {
     std::string name;
-    ExpType *type;
+    std::shared_ptr<ExpType> type;
     int index;
 
-    RecordExpType(std::string name, ExpType *type, int index) : ExpType(ExpTypeKind::RecordKind), name(name), type(type), index(index) {}
+    RecordExpType(std::string name, std::shared_ptr<ExpType> type, int index) : ExpType(ExpTypeKind::RecordKind), name(name), type(type), index(index) {}
     
     void print() const {}
 };
@@ -81,10 +82,10 @@ struct TranslatedExp {
 
 struct AssociatedExpType {
     // TODO: Determine ownership and implement unique_ptr
-    TranslatedExp* tr_exp;
-    ExpType* exp_type;
+    std::shared_ptr<TranslatedExp> tr_exp;
+    std::shared_ptr<ExpType> exp_type;
 
-    AssociatedExpType (TranslatedExp *tr_exp, ExpType *exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
+    AssociatedExpType (std::shared_ptr<TranslatedExp> tr_exp, std::shared_ptr<ExpType> exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
 };
 
 

@@ -6,7 +6,7 @@ namespace util {
 /**
  * Unique pointer list
  * 
- * Mainly to manage AST pointers
+ * Mainly to manage AST + Flex/Bison pointers, claims ownership over raw pointers
  * **/
 template <class T>
 class GenericList {

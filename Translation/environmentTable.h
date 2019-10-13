@@ -2,16 +2,20 @@
 #define __ENVIRONMENT_TABLE_H__
 
 #include <unordered_map>
+#include <memory>
 #include <stack>
 #include <vector>
 #include "../AST/AST.h"
+#include "../Utility/utility.h"
 #include "expressionType.h"
 
 namespace trans{
 
 
 /**
- * Data structures
+ * Binding table data structure
+ * 
+ * Maps Symbols to a stack of unique_ptr<T> entries that will be used to keep track of scopes
  * **/
 
 template <class T>
@@ -40,24 +44,42 @@ public:
     auto& operator[](const ast::Symbol& s){ return table[s]; }
 };
 
-struct EnvEntry {
+/** 
+ * Table entries
+ * **/
+
+struct TypeEntry {
+    std::shared_ptr<trans::ExpType> type;
+    
+    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    
+    void print() const {}
+};
+
+struct EscapeEntry {
+    int depth;
+    bool* escape;
+    
+    EscapeEntry(int depth, bool* escape) : depth(depth), escape(escape) {}
+};
+
+struct ValueEntry {
     virtual void print() const = 0;
 };
 
-struct VarEntry : public EnvEntry {
-    trans::ExpType *type;
+struct VarEntry : public ValueEntry {
+    std::shared_ptr<trans::ExpType> type;
 
-    VarEntry (trans::ExpType *type) : type(type) {}
+    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
 
     void print() const {}
 };
 
-struct FunEntry : public EnvEntry {
-    std::vector<trans::ExpType*> formals; // TODO: Verify if this is the correct type
-    trans::ExpType *result;
+struct FunEntry : public ValueEntry {
+    std::vector<std::shared_ptr<trans::ExpType>> formals; // TODO: Verify if this is the correct type
+    std::shared_ptr<trans::ExpType> result;
 
-    FunEntry (std::vector<trans::ExpType*> formals, trans::ExpType *result) : formals(formals), result(result) {}
-    // TODO: Check if complete usage functions are needed (in case formals is not directly built from outside)
+    FunEntry (auto formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
     
     void print() const {}
 };

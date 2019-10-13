@@ -74,7 +74,7 @@ void FunDec::print()    const {
     cout << ") ("; exp -> print(); cout << ")";
 }
 
-void GroupedDeclarations::frontAppendDeclaration(Declaration *dec){
+void GroupedDeclarations::frontAppendDeclaration(Declaration* dec){
     if(this->empty() or dynamic_cast<VarDec*>(dec)) {
         // Create a new group if we had no group to join to, or we're a variable declaration
         this->push_front(new DeclarationList(dec));
