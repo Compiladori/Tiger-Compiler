@@ -21,24 +21,40 @@ class Translator {
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
     
-    void clear(){
-        TypeEnv.clear(), ValueEnv.clear();
-        type_insertions = std::stack<std::stack<ast::Symbol>>();
-        value_insertions = std::stack<std::stack<ast::Symbol>>();
-    }
-    
-    auto getTypeEntry(const ast::Symbol& s) {
-        return TypeEnv.getEntry(s);
-    }
-    auto getValueEntry(const ast::Symbol& s) {
-        return ValueEnv.getEntry(s);
-    }
+    auto getTypeEntry(const ast::Symbol& s)  { return TypeEnv.getEntry(s); }
+    auto getValueEntry(const ast::Symbol& s) { return ValueEnv.getEntry(s); }
     
     void beginScope();
     void endScope();
     
-    void insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type);
-    void insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry);
+    void insertTypeEntry(ast::Symbol s, trans::ExpType *exp_type);
+    void insertValueEntry(ast::Symbol s, trans::EnvEntry *env_entry);
+    
+    void load_initial_values(){
+        // Basic types
+        TypeEnv["int"].emplace(std::make_unique<trans::IntExpType>());
+        TypeEnv["string"].emplace(std::make_unique<trans::StringExpType>());
+        
+        // Runtime functions
+        // ValueEnv["print"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["flush"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["getchar"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["ord"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["chr"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["size"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["substring"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["concat"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["not"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+        // ValueEnv["exit"].emplace(std::make_unique< trans::FunEntry ??? >( ??? ))
+    }
+    
+    void clear(){
+        TypeEnv.clear(), ValueEnv.clear();
+        type_insertions = std::stack<std::stack<ast::Symbol>>();
+        value_insertions = std::stack<std::stack<ast::Symbol>>();
+        
+        load_initial_values();
+    }
     
     // TODO: Check if these return types are correct
     trans::AssociatedExpType transVariable(ast::Variable *var);
@@ -46,10 +62,7 @@ class Translator {
     void                     transDeclaration(ast::Declaration *dec);
     trans::ExpType*          transType(ast::Type *type);
 public:
-    Translator() {
-        // TODO: Initialize tables with their initial values,
-        // such as "int" and "string" basic types or runtime functions
-    }
+    Translator() { load_initial_values(); }
     
     trans::AssociatedExpType translate(ast::Expression *exp);
 };

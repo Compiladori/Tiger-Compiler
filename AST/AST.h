@@ -55,11 +55,11 @@ public:
     auto& back()    const { return data.back(); }
     auto& front()   const { return data.front(); }
     
-    void push_back(T *e){ data.push_back(std::move(std::unique_ptr<T>(e))); }
-    void push_front(T *e){ data.push_front(std::move(std::unique_ptr<T>(e))); }
+    void push_back(T *e){ data.emplace_back(std::unique_ptr<T>(e)); }
+    void push_front(T *e){ data.emplace_front(std::unique_ptr<T>(e)); }
     
-    void push_back(std::unique_ptr<T> p){ data.push_back(std::move(p)); }
-    void push_front(std::unique_ptr<T> p){ data.push_front(std::move(p)); }
+    void push_back(std::unique_ptr<T> p){ data.emplace_back(p); }
+    void push_front(std::unique_ptr<T> p){ data.emplace_front(p); }
     
     auto& operator[](int i){ return data[i]; }
     

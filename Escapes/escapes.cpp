@@ -14,8 +14,8 @@ void Escapator::setEscapes(ast::Expression *exp){
     traverseExpression(exp);
 }
 
-void Escapator::insertEscapeEntry(ast::Symbol& s, EscapeEntry *escape_entry){
-    EscapeEnv[s].push(std::move(std::unique_ptr<EscapeEntry>(escape_entry)));
+void Escapator::insertEscapeEntry(ast::Symbol s, EscapeEntry *escape_entry){
+    EscapeEnv[s].emplace(std::unique_ptr<EscapeEntry>(escape_entry));
 }
 
 void Escapator::traverseExpression(ast::Expression *exp){

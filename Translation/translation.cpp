@@ -44,21 +44,21 @@ void Translator::endScope(){
     value_insertions.pop();
 }
 
-void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type){
+void Translator::insertTypeEntry(ast::Symbol s, trans::ExpType *exp_type){
     if(type_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
     }
-    TypeEnv[s].push(std::move(std::unique_ptr<trans::ExpType>(exp_type)));
+    TypeEnv[s].emplace(std::unique_ptr<trans::ExpType>(exp_type));
     type_insertions.top().push(s);
 }
 
-void Translator::insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry){
+void Translator::insertValueEntry(ast::Symbol s, trans::EnvEntry *env_entry){
     if(value_insertions.empty()){
         // Error, no scope was initialized
         assert(false);
     }
-    ValueEnv[s].push(std::move(std::unique_ptr<trans::EnvEntry>(env_entry)));
+    ValueEnv[s].emplace(std::unique_ptr<trans::EnvEntry>(env_entry));
     value_insertions.top().push(s);
 }
 

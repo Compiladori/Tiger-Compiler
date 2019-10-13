@@ -22,7 +22,7 @@ struct EscapeEntry {
 
 class Escapator {
     trans::BindingTable<EscapeEntry> EscapeEnv;
-    int current_depth;
+    int current_depth = 0;
     
     void clear(){
         EscapeEnv.clear();
@@ -33,13 +33,13 @@ class Escapator {
         return EscapeEnv.getEntry(s);
     }
     
-    void insertEscapeEntry(ast::Symbol& s, EscapeEntry *escape_entry);
+    void insertEscapeEntry(ast::Symbol s, EscapeEntry *escape_entry);
     
     void traverseExpression(ast::Expression *exp);
     void traverseDeclaration(ast::Declaration *exp);
     void traverseVariable(ast::Variable *exp);
 public:
-    Escapator() : EscapeEnv(), current_depth(0) {}
+    Escapator() : current_depth(0) {}
     
     void setEscapes(ast::Expression *exp);
 };
