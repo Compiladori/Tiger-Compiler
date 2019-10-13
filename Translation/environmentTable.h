@@ -13,13 +13,14 @@ namespace trans{
 /**
  * Data structures
  * **/
-
+// TODO: Implement pointer ownership!
 template <class T>
 class BindingTable {
     std::unordered_map<ast::Symbol, std::stack<T>, ast::SymbolHasher> table;
 public:
-    BindingTable() : table() {};
+    BindingTable() {};
     
+    auto clear()                           { table.clear(); }
     auto empty()                     const { return table.empty(); }
     auto size()                      const { return table.size(); }
     auto count(const ast::Symbol& s) const { return table.count(s); }

@@ -181,7 +181,7 @@ int main(int, char**) {
     
     // Semantic check
     trans::Translator T;
-    auto result = T.transExpression(final_ast.get());
+    auto result = T.translate(final_ast.get());
       
     // ...
   } catch (exception& e) {

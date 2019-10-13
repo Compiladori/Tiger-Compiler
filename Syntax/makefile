@@ -8,4 +8,4 @@ parser:
 	bison -d tigerbison.y
 
 clean:
-	rm -f tigerbison.tab.c lex.yy.c tiger.exe tigerbison.tab.h
+	rm -f tigerbison.tab.c lex.yy.c tiger.exe tigerbison.tab.h ../AST/AST ../Translation/translation ../Escapes/escapes

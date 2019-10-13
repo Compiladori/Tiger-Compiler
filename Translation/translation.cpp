@@ -9,6 +9,12 @@ using namespace trans;
  * Translator
  * **/
 // TODO: Replace assert() with custom error reporting, including Position()
+// TODO: Check ownership of pointers, specially in the binding tables
+trans::AssociatedExpType Translator::translate(ast::Expression *exp){
+    this->clear();
+    return transExpression(exp);
+}
+
 void Translator::beginScope(){
     // Create a new scope without any initial insertions
     type_insertions.push(std::stack<ast::Symbol>());
@@ -17,7 +23,7 @@ void Translator::beginScope(){
 
 void Translator::endScope(){
     if(type_insertions.empty() or value_insertions.empty()){
-        // Error, there is no scope to end
+        // Internal error, there is no scope to end
         assert(false);
     }
     
@@ -77,7 +83,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         // TODO: ...
     }
     
-    // Error, it should have matched some clause
+    // Internal error, it should have matched some clause
     assert(false);
 }
 
@@ -90,19 +96,19 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
         return AssociatedExpType(new TranslatedExp, new UnitExpType);
     }
-        
+    
     if(auto nil_exp = dynamic_cast<ast::NilExp*>(exp)){
         return AssociatedExpType(new TranslatedExp, new NilExpType);
     }
-        
+    
     if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
         return AssociatedExpType(new TranslatedExp, new IntExpType);
     }
-        
+    
     if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
         return AssociatedExpType(new TranslatedExp, new StringExpType);
     }
-        
+    
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
         // TODO: ...
     }
@@ -127,34 +133,34 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             // TODO: Complete the rest of the operators
         }
         
-        // Error, the operator should have matched some clause of the switch
+        // Internal error, the operator should have matched some clause of the switch
         assert(false);
     }
-        
+    
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
         // TODO: ...
     }
-            
+    
     if(auto seq_exp = dynamic_cast<ast::SeqExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto assign_exp = dynamic_cast<ast::AssignExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto if_exp = dynamic_cast<ast::IfExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto while_exp = dynamic_cast<ast::WhileExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
         beginScope();
         
@@ -168,16 +174,16 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         
         return result;
     }
-        
+    
     if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){
         // TODO: ...
     }
-        
+    
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
         // TODO: ...
     }
     
-    // Error, it should have matched some clause
+    // Internal error, it should have matched some clause
     assert(false);
 }
 
@@ -206,7 +212,7 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
         return;
     }
     
-    // Error, it should have matched some clause
+    // Internal error, it should have matched some clause
     assert(false);
 }
 
@@ -215,15 +221,15 @@ ExpType* Translator::transType(ast::Type* type){
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         // TODO: ...
     }
-        
+    
     if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
         // TODO: ...
     }
-        
+    
     if(auto array_type = dynamic_cast<ast::ArrayType*>(type)){
         // TODO: ...
     }
     
-    // Error, it should have matched some clause
+    // Internal error, it should have matched some clause
     assert(false);
 }

@@ -15,18 +15,32 @@ namespace esc {
 
 struct EscapeEntry {
     int depth;
-    bool* escape; // TODO: Check if a pointer is actually necessary
+    bool *escape;
+    
+    EscapeEntry(int depth, bool *escape) : depth(depth), escape(escape) {}
 };
 
 class Escapator {
-    trans::BindingTable<EscapeEntry> EscapeEnv;
-    int current_depth = 0;
+    trans::BindingTable<EscapeEntry*> EscapeEnv;
+    int current_depth;
+    
+    void clear(){
+        EscapeEnv.clear();
+        current_depth = 0;
+    }
+    
+    EscapeEntry* getEscapeEntry(const ast::Symbol& s) {
+        try { return EscapeEnv.getEntry(s); }
+        catch (std::exception& e) { return nullptr; }
+    }
+    
+    void insertEscapeEntry(ast::Symbol& s, EscapeEntry *escape_entry);
     
     void traverseExpression(ast::Expression *exp);
     void traverseDeclaration(ast::Declaration *exp);
     void traverseVariable(ast::Variable *exp);
 public:
-    Escapator() {}
+    Escapator() : EscapeEnv(), current_depth(0) {}
     
     void setEscapes(ast::Expression *exp);
 };

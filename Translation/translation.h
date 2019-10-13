@@ -20,10 +20,11 @@ class Translator {
     BindingTable<trans::EnvEntry*> ValueEnv;
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
-public:
-    Translator() {
-        // TODO: Initialize tables with their initial values,
-        // such as "int" and "string" basic types or runtime functions
+    
+    void clear(){
+        TypeEnv.clear(), ValueEnv.clear();
+        type_insertions = std::stack<std::stack<ast::Symbol>>();
+        value_insertions = std::stack<std::stack<ast::Symbol>>();
     }
     
     trans::ExpType* getTypeEntry(const ast::Symbol& s) {
@@ -42,10 +43,17 @@ public:
     void insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry);
     
     // TODO: Check if these return types are correct
-    trans::AssociatedExpType transVariable(ast::Variable* var);
-    trans::AssociatedExpType transExpression(ast::Expression* exp);
-    void                     transDeclaration(ast::Declaration* dec);
-    trans::ExpType*          transType(ast::Type* type);
+    trans::AssociatedExpType transVariable(ast::Variable *var);
+    trans::AssociatedExpType transExpression(ast::Expression *exp);
+    void                     transDeclaration(ast::Declaration *dec);
+    trans::ExpType*          transType(ast::Type *type);
+public:
+    Translator() {
+        // TODO: Initialize tables with their initial values,
+        // such as "int" and "string" basic types or runtime functions
+    }
+    
+    trans::AssociatedExpType translate(ast::Expression *exp);
 };
 
 
