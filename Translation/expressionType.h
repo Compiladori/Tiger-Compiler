@@ -18,6 +18,17 @@ struct ExpType {
     ExpType() : kind(ExpTypeKind::NoKind) {}
     ExpType(ExpTypeKind kind) : kind(kind) {}
     
+    bool operator==(const ExpType& exp_type) const {
+        if(this->kind != exp_type.kind){
+            // For types of the same kind, records are compared by their memory address
+            if(this->kind == RecordKind)
+                return this == &exp_type;
+            else
+                return true;
+        }
+        return false;
+    }
+    
     virtual void print() const = 0;
 };
 

@@ -198,20 +198,18 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
-        /*
         auto result = transExpression(var_dec->exp.get());
         
-        // TODO: Correctly verify the equality of the types
         if(var_dec->type_id){
-            // Check if the specified type_id matches the type of the expression
-            // if(type_id's type doesn't match var_dec->exp's type) {
-            //     Error, type-id was explicitly specified but doesn't match the expression type
-            //     assert(false);
-            // }
+            // Check if the explicitly specified type_id matches the type of the expression
+            auto var_type = getTypeEntry(*var_dec->type_id)->type.get();
+            if(var_type and *var_type == *result.exp_type) {
+                // Error, type-id was explicitly specified but doesn't match the expression type
+                assert(false);
+            }
         }
         
         insertValueEntry(*var_dec->id, make_unique<VarEntry>(result.exp_type));
-        */
         
         return;
     }
