@@ -226,8 +226,8 @@ struct GenericValueExp : public Expression {
     void print() const { std::cout << "ValueExp (" << value << ")"; }
 };
 
-typedef GenericValueExp<int> IntExp;
-typedef GenericValueExp<std::string> StringExp;
+using IntExp    = GenericValueExp<int>;
+using StringExp = GenericValueExp<std::string>;
 
 struct CallExp : public Expression {
     std::unique_ptr<Symbol> func;
