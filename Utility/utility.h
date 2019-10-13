@@ -1,5 +1,5 @@
-#ifndef __GENERIC_LIST_H__
-#define __GENERIC_LIST_H__
+#ifndef __UTILITY_H__
+#define __UTILITY_H__
 
 namespace util {
 

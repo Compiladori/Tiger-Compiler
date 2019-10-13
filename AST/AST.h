@@ -15,7 +15,7 @@
 #include <deque>
 #include <memory>
 #include <functional>
-#include "../Utility/genericList.h"
+#include "../Utility/utility.h"
 
 namespace ast {
 
