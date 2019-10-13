@@ -13,10 +13,10 @@ namespace trans{
 /**
  * Data structures
  * **/
-// TODO: Implement pointer ownership!
+
 template <class T>
 class BindingTable {
-    std::unordered_map<ast::Symbol, std::stack<T>, ast::SymbolHasher> table;
+    std::unordered_map<ast::Symbol, std::stack<std::unique_ptr<T>>, ast::SymbolHasher> table;
 public:
     BindingTable() {};
     
@@ -25,16 +25,16 @@ public:
     auto size()                      const { return table.size(); }
     auto count(const ast::Symbol& s) const { return table.count(s); }
     
-    T getEntry(const ast::Symbol& s){
+    T* getEntry(const ast::Symbol& s){
         if(table.count(s) and table[s].size()){
             if(table[s].empty()){
                 // Error, trying to access non-existing entry
-                throw std::exception();
+                return nullptr;
             }
-            return table[s].top();
+            return table[s].top().get();
         }
         // Error, trying to access non-existing symbol in the table
-        throw std::exception();
+        return nullptr;
     }
     
     auto& operator[](const ast::Symbol& s){ return table[s]; }

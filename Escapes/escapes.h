@@ -21,7 +21,7 @@ struct EscapeEntry {
 };
 
 class Escapator {
-    trans::BindingTable<EscapeEntry*> EscapeEnv;
+    trans::BindingTable<EscapeEntry> EscapeEnv;
     int current_depth;
     
     void clear(){
@@ -29,9 +29,8 @@ class Escapator {
         current_depth = 0;
     }
     
-    EscapeEntry* getEscapeEntry(const ast::Symbol& s) {
-        try { return EscapeEnv.getEntry(s); }
-        catch (std::exception& e) { return nullptr; }
+    auto getEscapeEntry(const ast::Symbol& s) {
+        return EscapeEnv.getEntry(s);
     }
     
     void insertEscapeEntry(ast::Symbol& s, EscapeEntry *escape_entry);

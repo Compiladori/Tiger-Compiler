@@ -9,7 +9,8 @@ using namespace trans;
  * Translator
  * **/
 // TODO: Replace assert() with custom error reporting, including Position()
-// TODO: Check ownership of pointers, specially in the binding tables
+// TODO: Verify ownership of pointers!
+
 trans::AssociatedExpType Translator::translate(ast::Expression *exp){
     this->clear();
     return transExpression(exp);
@@ -48,7 +49,7 @@ void Translator::insertTypeEntry(ast::Symbol& s, trans::ExpType *exp_type){
         // Error, no scope was initialized
         assert(false);
     }
-    TypeEnv[s].push(exp_type);
+    TypeEnv[s].push(std::move(std::unique_ptr<trans::ExpType>(exp_type)));
     type_insertions.top().push(s);
 }
 
@@ -57,7 +58,7 @@ void Translator::insertValueEntry(ast::Symbol& s, trans::EnvEntry *env_entry){
         // Error, no scope was initialized
         assert(false);
     }
-    ValueEnv[s].push(env_entry);
+    ValueEnv[s].push(std::move(std::unique_ptr<trans::EnvEntry>(env_entry)));
     value_insertions.top().push(s);
 }
 

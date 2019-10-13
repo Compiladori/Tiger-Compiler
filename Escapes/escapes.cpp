@@ -7,14 +7,15 @@ using namespace esc;
  * Escapator
  * **/
 // TODO: Replace assert() with custom error reporting
-// TODO: Check ownership of pointers, specially in the binding tables
+// TODO: Verify ownership of pointers!
+
 void Escapator::setEscapes(ast::Expression *exp){
     this->clear();
     traverseExpression(exp);
 }
 
 void Escapator::insertEscapeEntry(ast::Symbol& s, EscapeEntry *escape_entry){
-    EscapeEnv[s].push(escape_entry);
+    EscapeEnv[s].push(std::move(std::unique_ptr<EscapeEntry>(escape_entry)));
 }
 
 void Escapator::traverseExpression(ast::Expression *exp){

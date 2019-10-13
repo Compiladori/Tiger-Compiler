@@ -16,8 +16,8 @@ namespace trans{
 
 // TODO: Replace assert() with custom error reporting
 class Translator {
-    BindingTable<trans::ExpType*> TypeEnv;
-    BindingTable<trans::EnvEntry*> ValueEnv;
+    BindingTable<trans::ExpType> TypeEnv;
+    BindingTable<trans::EnvEntry> ValueEnv;
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
     
@@ -27,13 +27,11 @@ class Translator {
         value_insertions = std::stack<std::stack<ast::Symbol>>();
     }
     
-    trans::ExpType* getTypeEntry(const ast::Symbol& s) {
-        try { return TypeEnv.getEntry(s); }
-        catch (std::exception& e) { return nullptr; }
+    auto getTypeEntry(const ast::Symbol& s) {
+        return TypeEnv.getEntry(s);
     }
-    trans::EnvEntry* getValueEntry(const ast::Symbol& s) {
-        try { return ValueEnv.getEntry(s); }
-        catch (std::exception& e) { return nullptr; }
+    auto getValueEntry(const ast::Symbol& s) {
+        return ValueEnv.getEntry(s);
     }
     
     void beginScope();
