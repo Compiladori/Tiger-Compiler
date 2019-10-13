@@ -203,7 +203,11 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
         if(var_dec->type_id){
             // Check if the explicitly specified type_id matches the type of the expression
             auto var_type = getTypeEntry(*var_dec->type_id)->type.get();
-            if(var_type and *var_type == *result.exp_type) {
+            if(!var_type){
+                // Error, type_id was not declared
+                assert(false);
+            }
+            if(*var_type == *result.exp_type) {
                 // Error, type-id was explicitly specified but doesn't match the expression type
                 assert(false);
             }
