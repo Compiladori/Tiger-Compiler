@@ -81,7 +81,6 @@ struct TranslatedExp {
 };
 
 struct AssociatedExpType {
-    // TODO: Determine ownership and implement unique_ptr
     std::shared_ptr<TranslatedExp> tr_exp;
     std::shared_ptr<ExpType> exp_type;
 

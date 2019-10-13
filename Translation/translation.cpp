@@ -2,6 +2,8 @@
 #include "../AST/AST.h"
 
 #include <cassert>
+#include <stack>
+#include <memory>
 
 using namespace trans;
 
@@ -9,7 +11,6 @@ using namespace trans;
  * Translator
  * **/
 // TODO: Replace assert() with custom error reporting, including Position()
-// TODO: Verify ownership of pointers!
 
 using std::unique_ptr, std::make_unique;
 using std::shared_ptr, std::make_shared;
@@ -197,17 +198,21 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
+        /*
         auto result = transExpression(var_dec->exp.get());
         
-        // TODO: Check how to correctly verify the equality of the types
-        /*
-        if(var_dec->type_id and getTypeEntry(*var_dec->type_id) != result.exp_type.get()){
-            // Error, type-id was explicitly specified but doesn't match the expression type
-            assert(false);
+        // TODO: Correctly verify the equality of the types
+        if(var_dec->type_id){
+            // Check if the specified type_id matches the type of the expression
+            // if(type_id's type doesn't match var_dec->exp's type) {
+            //     Error, type-id was explicitly specified but doesn't match the expression type
+            //     assert(false);
+            // }
         }
         
         insertValueEntry(*var_dec->id, make_unique<VarEntry>(result.exp_type));
         */
+        
         return;
     }
     
