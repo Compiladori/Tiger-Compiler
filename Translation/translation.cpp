@@ -54,12 +54,12 @@ void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_
         // Error, no scope was initialized
         assert(false);
     }
-    TypeEnv[s].emplace(make_unique<trans::TypeEntry>(type_entry));
+    TypeEnv[s].emplace(make_unique<TypeEntry>(type_entry));
     if(not ignore_scope)
         type_insertions.top().push(s);
 }
 
-void Translator::insertValueEntry(ast::Symbol s, unique_ptr<trans::ValueEntry> value_entry, bool ignore_scope){
+void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
     if((not ignore_scope) and value_insertions.empty()){
         // Error, no scope was initialized
         assert(false);

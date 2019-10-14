@@ -44,47 +44,6 @@ public:
     auto& operator[](const ast::Symbol& s){ return table[s]; }
 };
 
-/** 
- * Table entries
- * **/
-
-struct TypeEntry {
-    std::shared_ptr<trans::ExpType> type;
-    
-    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
-    
-    void print() const {}
-};
-
-struct EscapeEntry {
-    int depth;
-    bool* escape;
-    
-    EscapeEntry(int depth, bool* escape) : depth(depth), escape(escape) {}
-};
-
-struct ValueEntry {
-    virtual void print() const = 0;
-};
-
-struct VarEntry : public ValueEntry {
-    std::shared_ptr<trans::ExpType> type;
-
-    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
-
-    void print() const {}
-};
-
-struct FunEntry : public ValueEntry {
-    std::vector<std::shared_ptr<trans::ExpType>> formals; // TODO: Verify if this is the correct type
-    std::shared_ptr<trans::ExpType> result;
-
-    FunEntry (auto formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
-    
-    void print() const {}
-};
-
-
 
 
 };

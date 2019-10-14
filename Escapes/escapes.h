@@ -13,9 +13,22 @@
 
 namespace esc {
 
+/**
+ * Table entries
+ * **/
+struct EscapeEntry {
+    int depth;
+    bool* escape;
+    
+    EscapeEntry(int depth, bool* escape) : depth(depth), escape(escape) {}
+};
 
+
+/**
+ * Main escaping class
+ * **/
 class Escapator {
-    trans::BindingTable<trans::EscapeEntry> EscapeEnv;
+    trans::BindingTable<EscapeEntry> EscapeEnv;
     int current_depth = 0;
     
     void clear(){
@@ -24,7 +37,7 @@ class Escapator {
     }
     
     auto getEscapeEntry(ast::Symbol s){ return EscapeEnv.getEntry(s); }
-    void insertEscapeEntry(ast::Symbol s, std::unique_ptr<trans::EscapeEntry> escape_entry){
+    void insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry){
         EscapeEnv[s].push(std::move(escape_entry));
     }
     

@@ -12,7 +12,7 @@ using std::make_unique, std::unique_ptr;
 using std::move;
 
 void Escapator::setEscapes(ast::Expression* exp){
-    this->clear();
+    clear();
     traverseExpression(exp);
 }
 
@@ -80,7 +80,7 @@ void Escapator::traverseExpression(ast::Expression* exp){
             traverseExpression(for_exp->lo.get());
             traverseExpression(for_exp->hi.get());
             
-            //insertEscapeEntry(*for_var->id, move(make_unique<EscapeEntry>(current_depth, &for_exp->escape)));
+            insertEscapeEntry(*for_var->id, make_unique<EscapeEntry>(current_depth, &for_exp->escape));
             traverseExpression(for_exp->body.get());
             return;
         }

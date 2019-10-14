@@ -14,11 +14,47 @@
 #include "expressionType.h"
 
 namespace trans{
+    
+/** 
+ * Table entries
+ * **/
+struct TypeEntry {
+    std::shared_ptr<trans::ExpType> type;
+    
+    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    
+    void print() const {}
+};
+
+struct ValueEntry {
+    virtual void print() const = 0;
+};
+
+struct VarEntry : public ValueEntry {
+    std::shared_ptr<trans::ExpType> type;
+
+    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+
+    void print() const {}
+};
+
+struct FunEntry : public ValueEntry {
+    std::vector<std::shared_ptr<trans::ExpType>> formals; // TODO: Verify if this is the correct type
+    std::shared_ptr<trans::ExpType> result;
+
+    FunEntry (auto formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
+    
+    void print() const {}
+};
+
+/**
+ * Main translating class
+ * **/
 
 // TODO: Replace assert() with custom error reporting
 class Translator {
-    BindingTable<trans::TypeEntry> TypeEnv;
-    BindingTable<trans::ValueEntry> ValueEnv;
+    BindingTable<TypeEntry> TypeEnv;
+    BindingTable<ValueEntry> ValueEnv;
     
     std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
     
@@ -29,7 +65,7 @@ class Translator {
     void endScope();
     
     void insertTypeEntry(ast::Symbol s, std::shared_ptr<trans::ExpType> type_entry, bool ignore_scope = false);
-    void insertValueEntry(ast::Symbol s, std::unique_ptr<trans::ValueEntry> value_entry, bool ignore_scope = false);
+    void insertValueEntry(ast::Symbol s, std::unique_ptr<ValueEntry> value_entry, bool ignore_scope = false);
     
     void load_initial_values(){
         // Basic types
