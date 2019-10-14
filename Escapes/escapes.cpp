@@ -105,19 +105,21 @@ void Escapator::traverseExpression(ast::Expression* exp){
     assert(false);
 }
 
-void Escapator::traverseDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
+void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
+    auto first_dec = dec_list->begin()->get();
+    
     // TODO: Complete all the cases
-    if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
+    if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
         // TODO: ...
         return;
     }
     
-    if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){
+    if(auto fun_dec = dynamic_cast<ast::FunDec*>(first_dec)){
         // TODO: ...
         return;
     }
     
-    if(auto type_dec = dynamic_cast<ast::TypeDec*>(dec)){
+    if(auto type_dec = dynamic_cast<ast::TypeDec*>(first_dec)){
         // TODO: ...
         return;
     }
@@ -129,17 +131,16 @@ void Escapator::traverseDeclaration(ast::Declaration* dec){ // TODO: Modify and 
 void Escapator::traverseVariable(ast::Variable* var){
     // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
-        // TODO: Check if correct
         if(auto escape_entry = getEscapeEntry(*simple_var->id)){
             // simple_var escape found
             if(current_depth > escape_entry->depth){
                 *escape_entry->escape = true;
             } else {
-                // Do something ?
+                // TODO: Do something ?
             }
         } else {
             // simple_var escape doesn't exist
-            // Error? Insert new entry?
+            // TODO: Error? Insert new entry?
         }
         return;
     }

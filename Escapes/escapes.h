@@ -42,8 +42,8 @@ class Escapator {
     }
     
     void traverseExpression(ast::Expression* exp);
-    void traverseDeclaration(ast::Declaration* exp);
-    void traverseVariable(ast::Variable* exp);
+    void traverseDeclarations(ast::DeclarationList* dec_list);
+    void traverseVariable(ast::Variable* var);
 public:
     Escapator() : current_depth(0) {}
     

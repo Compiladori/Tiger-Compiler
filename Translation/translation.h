@@ -96,7 +96,7 @@ class Translator {
     // TODO: Check if these return types are correct
     trans::AssociatedExpType transVariable(ast::Variable* var);
     trans::AssociatedExpType transExpression(ast::Expression* exp);
-    void                     transDeclaration(ast::Declaration* dec);
+    void                     transDeclarations(ast::DeclarationList* dec_list);
     std::shared_ptr<ExpType> transType(ast::Type* type);
 public:
     Translator() { load_initial_values(); }

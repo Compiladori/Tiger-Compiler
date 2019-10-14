@@ -195,15 +195,23 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     assert(false);
 }
 
-void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and adapt to DeclarationList
+void Translator::transDeclarations(ast::DeclarationList* dec_list){
+    if(dec_list->empty()){
+        // TODO: Check if this is an actual error, or if we should simply do nothing instead
+        // Internal error, declaration lists shouldn't be empty
+        assert(false);
+    }
+    
+    auto first_dec = dec_list->begin()->get();
+    
     // TODO: Complete all the cases
-    if(auto var_dec = dynamic_cast<ast::VarDec*>(dec)){
+    if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
         auto result = transExpression(var_dec->exp.get());
         
         if(var_dec->type_id){
             // Check if the explicitly specified type_id matches the type of the expression
             auto var_type = getTypeEntry(*var_dec->type_id)->type.get();
-            if(!var_type){
+            if(not var_type){
                 // Error, type_id was not declared
                 assert(false);
             }
@@ -218,12 +226,12 @@ void Translator::transDeclaration(ast::Declaration* dec){ // TODO: Modify and ad
         return;
     }
     
-    if(auto fun_dec = dynamic_cast<ast::FunDec*>(dec)){
+    if(auto fun_dec = dynamic_cast<ast::FunDec*>(first_dec)){
         // TODO: ...
         return;
     }
     
-    if(auto type_dec = dynamic_cast<ast::TypeDec*>(dec)){
+    if(auto type_dec = dynamic_cast<ast::TypeDec*>(first_dec)){
         // TODO: ...
         return;
     }
