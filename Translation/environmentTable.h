@@ -30,7 +30,7 @@ public:
     auto count(const ast::Symbol& s) const { return table.count(s); }
     
     T* getEntry(const ast::Symbol& s){
-        if(table.count(s) and table[s].size()){
+        if(table.count(s)){
             if(table[s].empty()){
                 // Error, trying to access non-existing entry
                 return nullptr;
