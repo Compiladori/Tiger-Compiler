@@ -22,6 +22,9 @@ struct ExpType {
         // By default, two types are the same if their kinds match
         return this->kind == exp_type.kind;
     }
+    virtual bool operator!=(const ExpType& exp_type) const {
+        return not (*this == exp_type);
+    }
     virtual void print() const = 0;
 };
 

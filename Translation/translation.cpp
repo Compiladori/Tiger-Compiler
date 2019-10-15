@@ -17,7 +17,7 @@ using std::shared_ptr, std::make_shared;
 using std::move;
 
 trans::AssociatedExpType Translator::translate(ast::Expression* exp){
-    this->clear();
+    clear();
     return transExpression(exp);
 }
 
@@ -34,24 +34,22 @@ void Translator::endScope(){
     }
     
     // Remove all registered scoped insertions
-    while(not type_insertions.top().empty()){
-        auto s = type_insertions.top().top();
-        TypeEnv[s].pop();
-        type_insertions.top().pop();
+    for(auto& type_scope = type_insertions.top(); not type_scope.empty(); type_scope.pop()){
+        auto& symbol = type_scope.top();
+        TypeEnv[symbol].pop();
     }
     type_insertions.pop();
     
-    while(not value_insertions.top().empty()){
-        auto s = value_insertions.top().top();
-        ValueEnv[s].pop();
-        value_insertions.top().pop();
+    for(auto& value_scope = value_insertions.top(); not value_scope.empty(); value_scope.pop()){
+        auto& symbol = value_scope.top();
+        ValueEnv[symbol].pop();
     }
     value_insertions.pop();
 }
 
 void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_entry, bool ignore_scope){
     if((not ignore_scope) and type_insertions.empty()){
-        // Error, no scope was initialized
+        // Internal error, no scope was initialized
         assert(false);
     }
     TypeEnv[s].emplace(make_unique<TypeEntry>(type_entry));
@@ -61,7 +59,7 @@ void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_
 
 void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
     if((not ignore_scope) and value_insertions.empty()){
-        // Error, no scope was initialized
+        // Internal error, no scope was initialized
         assert(false);
     }
     ValueEnv[s].push(move(value_entry));
@@ -70,7 +68,6 @@ void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_en
 }
 
 
-// TODO: Check if the transSomething() return types are correct
 AssociatedExpType Translator::transVariable(ast::Variable* var){
     // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
@@ -172,9 +169,10 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
         beginScope();
         
-        // Augment current scope by processing let declarations:
-        // for declist in *let_exp->decs
-        //   transDeclaration(declist)
+        for(const auto& dec_list : *let_exp->decs){
+            // Augment current scope by processing let declarations
+            transDeclarations(dec_list.get());
+        }
         
         auto result = transExpression(let_exp->body.get());
         
@@ -215,7 +213,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 // Error, type_id was not declared
                 assert(false);
             }
-            if(*var_type == *result.exp_type) {
+            if(*var_type != *result.exp_type) {
                 // Error, type-id was explicitly specified but doesn't match the expression type
                 assert(false);
             }
