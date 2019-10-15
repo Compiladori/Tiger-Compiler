@@ -16,6 +16,36 @@ void Escapator::setEscapes(ast::Expression* exp){
     traverseExpression(exp);
 }
 
+void Escapator::beginScope(){
+    // Create a new scope without any initial insertions
+    escape_insertions.push(std::stack<ast::Symbol>());
+}
+
+void Escapator::endScope(){
+    if(escape_insertions.empty()){
+        // Internal error, there is no scope to end
+        assert(false);
+    }
+    
+    // Remove all registered scoped insertions
+    for(auto& escape_scope = escape_insertions.top(); not escape_scope.empty(); escape_scope.pop()){
+        auto& symbol = escape_scope.top();
+        EscapeEnv[symbol].pop();
+    }
+    escape_insertions.pop();
+}
+
+void Escapator::insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry, bool ignore_scope){
+    if((not ignore_scope) and escape_insertions.empty()){
+        // Internal error, no scope was initialized
+        assert(false);
+    }
+    EscapeEnv[s].push(std::move(escape_entry));
+    if(not ignore_scope)
+        escape_insertions.top().push(s);
+}
+
+
 void Escapator::traverseExpression(ast::Expression* exp){
     // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
@@ -129,18 +159,13 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
 }
 
 void Escapator::traverseVariable(ast::Variable* var){
-    // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
+        // TODO: Check if correct
         if(auto escape_entry = getEscapeEntry(*simple_var->id)){
             // simple_var escape found
             if(current_depth > escape_entry->depth){
                 *escape_entry->escape = true;
-            } else {
-                // TODO: Do something ?
             }
-        } else {
-            // simple_var escape doesn't exist
-            // TODO: Error? Insert new entry?
         }
         return;
     }

@@ -8,6 +8,7 @@
  * */
 
 #include <memory>
+#include <stack>
 #include "../AST/AST.h"
 #include "../Translation/environmentTable.h"
 
@@ -29,23 +30,26 @@ struct EscapeEntry {
  * **/
 class Escapator {
     trans::BindingTable<EscapeEntry> EscapeEnv;
+    std::stack<std::stack<ast::Symbol>> escape_insertions;
     int current_depth = 0;
+    
+    auto getEscapeEntry(ast::Symbol s){ return EscapeEnv.getEntry(s); }
+    void insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry, bool ignore_scope = false);
+    
+    void beginScope();
+    void endScope();
     
     void clear(){
         EscapeEnv.clear();
+        escape_insertions = std::stack<std::stack<ast::Symbol>>();
         current_depth = 0;
-    }
-    
-    auto getEscapeEntry(ast::Symbol s){ return EscapeEnv.getEntry(s); }
-    void insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry){
-        EscapeEnv[s].push(std::move(escape_entry));
     }
     
     void traverseExpression(ast::Expression* exp);
     void traverseDeclarations(ast::DeclarationList* dec_list);
     void traverseVariable(ast::Variable* var);
 public:
-    Escapator() : current_depth(0) {}
+    Escapator() {}
     
     void setEscapes(ast::Expression* exp);
 };

@@ -61,11 +61,11 @@ class Translator {
     auto getTypeEntry(const ast::Symbol& s)  { return TypeEnv.getEntry(s); }
     auto getValueEntry(const ast::Symbol& s) { return ValueEnv.getEntry(s); }
     
-    void beginScope();
-    void endScope();
-    
     void insertTypeEntry(ast::Symbol s, std::shared_ptr<trans::ExpType> type_entry, bool ignore_scope = false);
     void insertValueEntry(ast::Symbol s, std::unique_ptr<ValueEntry> value_entry, bool ignore_scope = false);
+    
+    void beginScope();
+    void endScope();    
     
     void load_initial_values(){
         // Basic types
