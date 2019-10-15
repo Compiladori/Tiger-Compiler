@@ -53,8 +53,9 @@ void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_
         assert(false);
     }
     TypeEnv[s].emplace(make_unique<TypeEntry>(type_entry));
-    if(not ignore_scope)
+    if(not ignore_scope){
         type_insertions.top().push(s);
+    }
 }
 
 void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
@@ -63,8 +64,9 @@ void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_en
         assert(false);
     }
     ValueEnv[s].push(move(value_entry));
-    if(not ignore_scope)
+    if(not ignore_scope){
         value_insertions.top().push(s);
+    }
 }
 
 
@@ -168,16 +170,12 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
         beginScope();
-        
         for(const auto& dec_list : *let_exp->decs){
             // Augment current scope by processing let declarations
             transDeclarations(dec_list.get());
         }
-        
         auto result = transExpression(let_exp->body.get());
-        
         endScope();
-        
         return result;
     }
     

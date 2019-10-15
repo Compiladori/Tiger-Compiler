@@ -41,13 +41,13 @@ void Escapator::insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> es
         assert(false);
     }
     EscapeEnv[s].push(std::move(escape_entry));
-    if(not ignore_scope)
+    if(not ignore_scope){
         escape_insertions.top().push(s);
+    }
 }
 
 
 void Escapator::traverseExpression(ast::Expression* exp){
-    // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         traverseVariable(var_exp->var.get());
         return;
@@ -60,7 +60,9 @@ void Escapator::traverseExpression(ast::Expression* exp){
     if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){ return; }
     
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
-        // TODO: ...
+        for(const auto& exp : *call_exp->exp_list){
+            traverseExpression(exp.get());
+        }
         return;
     }
     
@@ -120,14 +122,20 @@ void Escapator::traverseExpression(ast::Expression* exp){
     }
     
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
-        // TODO: ...
+        beginScope();
+        for(const auto& dec_list : *let_exp->decs){
+            traverseDeclarations(dec_list.get());
+        }
+        traverseExpression(let_exp->body.get());
+        endScope();
         return;
     }
     
     if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){ return; }
     
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
-        // TODO: ...
+        traverseExpression(array_exp->size.get());
+        traverseExpression(array_exp->init.get());
         return;
     }
     
@@ -136,11 +144,18 @@ void Escapator::traverseExpression(ast::Expression* exp){
 }
 
 void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
+    if(dec_list->empty()){
+        // TODO: Check if this is an actual error, or if we should simply do nothing instead
+        // Internal error, declaration lists shouldn't be empty
+        assert(false);
+    }
+    
     auto first_dec = dec_list->begin()->get();
     
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
-        // TODO: ...
+        insertEscapeEntry(*var_dec->id, make_unique<EscapeEntry>(current_depth, &var_dec->escape));
+        traverseExpression(var_dec->exp.get());
         return;
     }
     
@@ -150,7 +165,7 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
     }
     
     if(auto type_dec = dynamic_cast<ast::TypeDec*>(first_dec)){
-        // TODO: ...
+        // Nothing to do with types
         return;
     }
     
@@ -166,8 +181,10 @@ void Escapator::traverseVariable(ast::Variable* var){
             if(current_depth > escape_entry->depth){
                 *escape_entry->escape = true;
             }
+            return;
         }
-        return;
+        // Error, inexisting simple_var escape
+        assert(false);
     }
     
     if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
