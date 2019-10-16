@@ -1,11 +1,11 @@
 #ifndef __AST_H__
 #define __AST_H__
 
-/*** 
+/***
  * Abstract Syntax Tree (AST)
- * 
+ *
  * Described in Chapter 4 Appel C (2004)
- * 
+ *
  * Every abstraction of the AST is constructed by raw pointers, taking ownership over them.
  * This is a special case to work along with the usual versions of Bison and Flex.
  * ***/
@@ -49,12 +49,12 @@ enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
  * **/
 struct Symbol {
     std::string name;
-    
+
     Symbol (const char* name) : name(name) {}
     Symbol (std::string name) : name(name) {}
-    
+
     bool operator==(const Symbol& s) const { return name == s.name; }
-    
+
     void print() const { std::cout << "Symbol " << name; }
 };
 
@@ -84,7 +84,8 @@ struct Type {
 
 struct TypeField {
     std::unique_ptr<Symbol> id, type_id;
-
+    bool escape = false;
+    
     TypeField (Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
     void print() const;
 };
@@ -118,7 +119,7 @@ struct ArrayType : public Type {
     void print() const;
 };
 
-/** 
+/**
  * Variables
  * **/
 struct Variable {
@@ -179,9 +180,9 @@ struct NilExp : public Expression {
 template<class T>
 struct GenericValueExp : public Expression {
     T value;
-    
+
     GenericValueExp(T value, Position pos) : Expression(pos), value(value) {}
-    
+
     void print() const { std::cout << "ValueExp (" << value << ")"; }
 };
 
@@ -289,7 +290,7 @@ struct VarDec : public Declaration {
 
     VarDec(Symbol *id, Expression *exp) : id(id), type_id(nullptr), exp(exp) {}
     VarDec(Symbol *id, Symbol *type_id, Expression *exp) : id(id), type_id(type_id), exp(exp) {}
-    
+
     void print() const;
 };
 
