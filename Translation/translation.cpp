@@ -95,7 +95,6 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
 }
 
 AssociatedExpType Translator::transExpression(ast::Expression* exp){
-    // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         auto result = transVariable(var_exp->var.get());
         return AssociatedExpType(make_shared<TranslatedExp>(), result.exp_type);
@@ -327,6 +326,11 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     
     // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
+        if(dec_list->size() != 1){
+            // Internal error, a declaration list of variables should only have one single element in it
+            assert(false);
+        }
+        
         auto result = transExpression(var_dec->exp.get());
         
         if(var_dec->type_id){
@@ -347,8 +351,54 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         return;
     }
     
-    if(auto fun_dec = dynamic_cast<ast::FunDec*>(first_dec)){
-        // TODO: ...
+    if(dynamic_cast<ast::FunDec*>(first_dec)){
+        // Insert a FunEntry for each function header
+        for(const auto& dec : *dec_list){
+            auto fun_dec = static_cast<ast::FunDec*>(dec.get());
+            shared_ptr<trans::ExpType> return_type;
+            
+            if(not fun_dec->type_id){
+                return_type = make_shared<UnitExpType>();
+            } else {
+                auto return_type_entry = getTypeEntry(*fun_dec->type_id);
+                if(not return_type_entry){
+                    // Error, the function return type wasn't declared
+                    assert(false);
+                }
+                
+                return_type = return_type_entry->type;
+            }
+            
+            unique_ptr<trans::FunEntry> fun_entry = make_unique<trans::FunEntry>(return_type);
+            
+            for(const auto& type_field : *fun_dec->tyfields){
+                if(auto param_type_entry = getTypeEntry(*type_field->type_id)){
+                    fun_entry->formals.push_back(param_type_entry->type);
+                } else {
+                    // Error, function parameter's type wasn't declared
+                    assert(false);
+                }                
+            }
+            
+            insertValueEntry(*fun_dec->id, move(fun_entry));
+        }
+        
+        // Process each one of the function bodies, checking if the return type is actually correct
+        for(const auto& dec : *dec_list){
+            auto fun_dec = static_cast<ast::FunDec*>(dec.get());
+            
+            if(auto fun_entry = dynamic_cast<trans::FunEntry*>(getValueEntry(*fun_dec->id))){
+                auto body_result = transExpression(fun_dec->exp.get());
+                if(*fun_entry->result != *body_result.exp_type){
+                    // Error, function return type doesn't match its body type
+                    assert(false);
+                }
+            } else {
+                // Internal error, function's entry got somehow overriden or deleted
+                assert(false);
+            }
+        }
+        
         return;
     }
     

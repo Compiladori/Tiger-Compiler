@@ -39,10 +39,11 @@ struct VarEntry : public ValueEntry {
 };
 
 struct FunEntry : public ValueEntry {
-    std::vector<std::shared_ptr<trans::ExpType>> formals; // TODO: Verify if this is the correct type
+    std::vector<std::shared_ptr<trans::ExpType>> formals;
     std::shared_ptr<trans::ExpType> result;
 
-    FunEntry (auto formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
+    FunEntry (auto result) : formals(), result(result) {}
+    FunEntry (auto formals, auto result) : formals(formals), result(result) {}
     
     void print() const {}
 };
