@@ -97,7 +97,8 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
 AssociatedExpType Translator::transExpression(ast::Expression* exp){
     // TODO: Complete all the cases
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
-        // TODO: ...
+        auto result = transVariable(var_exp->var.get());
+        return AssociatedExpType(make_shared<TranslatedExp>(), result.exp_type);
     }
     
     if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
@@ -117,7 +118,29 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
     
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
-        // TODO: ...
+        auto env_entry = getValueEntry(*call_exp->func);
+        if(auto fun_entry = dynamic_cast<trans::FunEntry*>(env_entry)){
+            if(fun_entry->formals.size() != call_exp->exp_list->size()){
+                // Error, function call with a different number of arguments than the required ones
+                assert(false);
+            }
+            
+            for(int index = 0; index < fun_entry->formals.size(); index++){
+                auto& param_type = fun_entry->formals[index];
+                auto& arg_exp = (*call_exp->exp_list)[index];
+                
+                auto param_result = transExpression(arg_exp.get());
+                
+                if(*param_type != *param_result.exp_type){
+                    // Error, the argument type doesn't match its expression type
+                    assert(false);
+                }
+            }
+            
+            return AssociatedExpType(make_shared<TranslatedExp>(), fun_entry->result);
+        }
+        // Error, the function wasn't declared in this scope
+        assert(false);
     }
     
     if(auto op_exp = dynamic_cast<ast::OpExp*>(exp)){
@@ -126,7 +149,10 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         auto result_right = transExpression(op_exp->right.get());
         
         switch(oper){
-            case ast::Plus: {
+            case ast::Plus:
+            case ast::Minus:
+            case ast::Times: 
+            case ast::Divide: {
                 if(result_left.exp_type->kind != ExpTypeKind::IntKind){
                     // Error, integer required on the left
                     assert(false);
@@ -137,7 +163,33 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 }
                 return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
-            // TODO: Complete the rest of the operators
+            case ast::Lt:
+            case ast::Le:
+            case ast::Gt:
+            case ast::Ge: {
+                auto left_kind = result_left.exp_type->kind;
+                auto right_kind = result_right.exp_type->kind;
+                
+                if(left_kind != right_kind){
+                    // Error, type kinds must be the same
+                    assert(false);
+                }
+                
+                if(left_kind != ExpTypeKind::IntKind or left_kind != ExpTypeKind::StringKind){
+                    // Error, operands must be between Int or String
+                    assert(false);
+                }
+                
+                return AssociatedExpType(make_shared<TranslatedExp>(), result_left.exp_type);
+            }
+            case ast::Eq:
+            case ast::Neq: {
+                if(*result_left.exp_type != *result_right.exp_type){
+                    // Error, different types on equality testing
+                    assert(false);
+                }
+                return AssociatedExpType(make_shared<TranslatedExp>(), result_left.exp_type);
+            }
         }
         
         // Internal error, the operator should have matched some clause of the switch
@@ -145,27 +197,85 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
     
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
-        // TODO: ...
+        if(auto type_entry = getTypeEntry(*record_exp->type_id)){
+            // TODO: Implement this, considering the order matters
+        }
+        // Error, record type not defined
+        assert(false);
     }
     
     if(auto seq_exp = dynamic_cast<ast::SeqExp*>(exp)){
-        // TODO: ...
+        auto& list_ptr = seq_exp->exp_list;
+        
+        if(list_ptr->size() == 0){
+            // Internal error, the expression list shouldn't be empty
+            assert(false);
+        }
+        
+        auto last_result = transExpression((*list_ptr)[list_ptr->size()-1].get());
+        return AssociatedExpType(make_shared<TranslatedExp>(), last_result.exp_type);
     }
     
     if(auto assign_exp = dynamic_cast<ast::AssignExp*>(exp)){
-        // TODO: ...
+        auto var_result = transVariable(assign_exp->var.get());
+        auto exp_result = transExpression(assign_exp->exp.get());
+        
+        if(*var_result.exp_type != *exp_result.exp_type){
+            // Error, variable's type is different than the expression's type
+            assert(false);
+        }
+        
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
     
     if(auto if_exp = dynamic_cast<ast::IfExp*>(exp)){
-        // TODO: ...
+        auto test_result = transExpression(if_exp->test.get());
+        
+        if(test_result.exp_type->kind != ExpTypeKind::IntKind){
+            // Error, the if-test should be int
+            assert(false);
+        }        
+        
+        auto then_result = transExpression(if_exp->then.get());
+        if(if_exp->otherwise){
+            auto otherwise_result = transExpression(if_exp->otherwise.get());
+            
+            if(*then_result.exp_type != *otherwise_result.exp_type){
+                // Error, then and else clauses must be of the same type
+                assert(false);
+            }
+        }
+        
+        return AssociatedExpType(make_shared<TranslatedExp>(), then_result.exp_type);
     }
     
     if(auto while_exp = dynamic_cast<ast::WhileExp*>(exp)){
-        // TODO: ...
+        auto test_result = transExpression(while_exp->test.get());
+    
+        if(test_result.exp_type->kind != ExpTypeKind::IntKind){
+            // Error, the while-test should be int
+            assert(false);
+        }
+        
+        transExpression(while_exp->body.get());
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
     
     if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
-        // TODO: ...
+        auto lo_result = transExpression(for_exp->lo.get());
+        if(lo_result.exp_type->kind != ExpTypeKind::IntKind){
+            // Error, the for-lo should be int
+            assert(false);
+        }
+        
+        auto hi_result = transExpression(for_exp->hi.get());
+        if(hi_result.exp_type->kind != ExpTypeKind::IntKind){
+            // Error, the for-hi should be int
+            assert(false);
+        }
+        
+        transExpression(for_exp->body.get());
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
     
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
@@ -180,11 +290,27 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
     
     if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){
-        // TODO: ...
+        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
     
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
-        // TODO: ...
+        if(auto type_entry = getTypeEntry(*array_exp->ty)){
+            auto size_result = transExpression(array_exp->size.get());
+            if(size_result.exp_type->kind != ExpTypeKind::IntKind){
+                // Error, array's size MUST be an int
+                assert(false);
+            }
+            
+            auto init_result = transExpression(array_exp->init.get());
+            if(*init_result.exp_type != *type_entry->type){
+                // Error, array type MUST match with its initialization's type
+                assert(false);
+            }
+            
+            return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
+        }
+        // Error, array's type was not declared
+        assert(false);
     }
     
     // Internal error, it should have matched some clause
@@ -193,7 +319,6 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
 void Translator::transDeclarations(ast::DeclarationList* dec_list){
     if(dec_list->empty()){
-        // TODO: Check if this is an actual error, or if we should simply do nothing instead
         // Internal error, declaration lists shouldn't be empty
         assert(false);
     }

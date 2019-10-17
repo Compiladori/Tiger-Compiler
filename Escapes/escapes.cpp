@@ -108,17 +108,12 @@ void Escapator::traverseExpression(ast::Expression* exp){
     }
 
     if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
-        if(auto for_var = dynamic_cast<ast::SimpleVar*>(exp)){
-            traverseExpression(for_exp->lo.get());
-            traverseExpression(for_exp->hi.get());
+        traverseExpression(for_exp->lo.get());
+        traverseExpression(for_exp->hi.get());
 
-            insertEscapeEntry(*for_var->id, make_unique<EscapeEntry>(current_depth, &for_exp->escape));
-            traverseExpression(for_exp->body.get());
-            return;
-        }
-
-        // Internal error, the for variable should have been a SimpleVar
-        assert(false);
+        insertEscapeEntry(*for_exp->var, make_unique<EscapeEntry>(current_depth, &for_exp->escape));
+        traverseExpression(for_exp->body.get());
+        return;
     }
 
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){

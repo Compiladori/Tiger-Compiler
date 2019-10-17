@@ -245,11 +245,11 @@ struct WhileExp : public Expression {
 };
 
 struct ForExp : public Expression {
-    std::unique_ptr<Variable> var;
+    std::unique_ptr<Symbol> var;
     std::unique_ptr<Expression> lo, hi, body;
     bool escape = false;
 
-    ForExp (Variable *var, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), lo(lo), hi(hi), body(body) {}
+    ForExp (Symbol *var, Expression *lo, Expression *hi, Expression *body, Position pos) : Expression(pos), var(var), lo(lo), hi(hi), body(body) {}
 
     void print() const;
 };

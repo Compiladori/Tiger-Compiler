@@ -61,23 +61,31 @@ struct ArrayExpType : public ExpType {
         if(this->kind != exp_type.kind)
             return false;
         
+        // TODO: Consider more cases!
         return *this->type == *static_cast<const ArrayExpType*>(&exp_type)->type;
     }
     
     void print() const {}
 };
 
-struct RecordExpType : public ExpType {
+struct RecordExpTypeField {
     std::string name;
     std::shared_ptr<ExpType> type;
     int index;
+    
+    RecordExpTypeField() : name(name), type(type), index(index) {}
+}; 
 
-    RecordExpType(std::string name, std::shared_ptr<ExpType> type, int index) : ExpType(ExpTypeKind::RecordKind), name(name), type(type), index(index) {}
+struct RecordExpType : public ExpType {
+    std::vector<RecordExpTypeField> fields;
+
+    RecordExpType(auto fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
     
     bool operator==(const ExpType& exp_type) const {
         if(this->kind != exp_type.kind)
             return false;
         
+        // TODO: Consider more cases!
         return this == &exp_type;
     }
     
@@ -93,6 +101,7 @@ struct CustomExpType : public ExpType {
         if(this->kind != exp_type.kind)
             return false;
         
+        // TODO: Consider more cases!
         return this->name == static_cast<const CustomExpType*>(&exp_type)->name;
     }
     

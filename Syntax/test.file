@@ -2,5 +2,5 @@ let
 	var a := 3
 	var b : int := 4
 in
-	nil
+	a + (9 * (b / 0)) - 12 = (a - 1)
 end
