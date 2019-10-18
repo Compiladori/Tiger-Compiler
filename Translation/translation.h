@@ -62,7 +62,7 @@ class Translator {
     auto getTypeEntry(const ast::Symbol& s)  { return TypeEnv.getEntry(s); }
     auto getValueEntry(const ast::Symbol& s) { return ValueEnv.getEntry(s); }
     
-    void insertTypeEntry(ast::Symbol s, std::shared_ptr<trans::ExpType> type_entry, bool ignore_scope = false);
+    void insertTypeEntry(ast::Symbol s, std::unique_ptr<TypeEntry> type_entry, bool ignore_scope = false);
     void insertValueEntry(ast::Symbol s, std::unique_ptr<ValueEntry> value_entry, bool ignore_scope = false);
     
     void beginScope();
@@ -70,8 +70,8 @@ class Translator {
     
     void load_initial_values(){
         // Basic types
-        insertTypeEntry("int",    std::make_shared<trans::IntExpType>(), true);
-        insertTypeEntry("string", std::make_shared<trans::StringExpType>(), true);
+        insertTypeEntry("int",    std::make_unique<TypeEntry>(std::make_shared<trans::IntExpType>()), true);
+        insertTypeEntry("string", std::make_unique<TypeEntry>(std::make_shared<trans::StringExpType>()), true);
         
         // Runtime functions
         // insertValueEntry("print",     std::make_unique<trans::FunEntry>(???), true);
@@ -94,7 +94,6 @@ class Translator {
         load_initial_values();
     }
     
-    // TODO: Check if these return types are correct
     trans::AssociatedExpType transVariable(ast::Variable* var);
     trans::AssociatedExpType transExpression(ast::Expression* exp);
     void                     transDeclarations(ast::DeclarationList* dec_list);

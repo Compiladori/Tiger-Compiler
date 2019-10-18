@@ -49,12 +49,12 @@ void Translator::endScope(){
     value_insertions.pop();
 }
 
-void Translator::insertTypeEntry(ast::Symbol s, shared_ptr<trans::ExpType> type_entry, bool ignore_scope){
+void Translator::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry, bool ignore_scope){
     if((not ignore_scope) and type_insertions.empty()){
         // Internal error, no scope was initialized
         assert(false);
     }
-    TypeEnv[s].emplace(make_unique<TypeEntry>(type_entry));
+    TypeEnv[s].push(move(type_entry));
     if(not ignore_scope){
         type_insertions.top().push(s);
     }
@@ -460,7 +460,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             if(symbol_to_ast_type.count(symbol)){
                 // Declare types actually being declared in this scope
                 auto type_result = transType(symbol_to_ast_type[symbol]);
-                insertTypeEntry(symbol, type_result);
+                insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
             }
         }
         
@@ -500,9 +500,6 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
         }
         
         return new_record_type;
-        
-        // Error, array type_id wasn't declared in this scope
-        assert(false);
     }
     
     if(auto array_type = dynamic_cast<ast::ArrayType*>(type)){
