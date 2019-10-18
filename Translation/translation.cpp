@@ -4,6 +4,8 @@
 #include <cassert>
 #include <stack>
 #include <memory>
+#include "translation.h"
+#include "toposort.h"
 
 using namespace trans;
 
@@ -16,7 +18,7 @@ using std::unique_ptr, std::make_unique;
 using std::shared_ptr, std::make_shared;
 using std::move;
 
-trans::AssociatedExpType Translator::translate(ast::Expression* exp){
+AssociatedExpType Translator::translate(ast::Expression* exp){
     clear();
     return transExpression(exp);
 }
@@ -75,7 +77,6 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
-            // TODO: Fix 'var_entry->type' to the actual type expected (Page 117-118 Appel C)
             return AssociatedExpType(make_shared<TranslatedExp>(), var_entry->type);
         }
         // Error, undefined variable
@@ -124,7 +125,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 assert(false);
             }
             
-            for(int index = 0; index < fun_entry->formals.size(); index++){
+            for(std::size_t index = 0; index < fun_entry->formals.size(); index++){
                 auto& param_type = fun_entry->formals[index];
                 auto& arg_exp = (*call_exp->exp_list)[index];
                 
@@ -170,15 +171,13 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 auto right_kind = result_right.exp_type->kind;
                 
                 if(left_kind != right_kind){
-                    // Error, type kinds must be the same
+                    // Error, operands' type kinds must be the same
                     assert(false);
                 }
-                
                 if(left_kind != ExpTypeKind::IntKind or left_kind != ExpTypeKind::StringKind){
-                    // Error, operands must be between Int or String
+                    // Error, operands' types must be between Int or String
                     assert(false);
                 }
-                
                 return AssociatedExpType(make_shared<TranslatedExp>(), result_left.exp_type);
             }
             case ast::Eq:
@@ -197,7 +196,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
         if(auto type_entry = getTypeEntry(*record_exp->type_id)){
-            // TODO: Implement this, considering the order matters
+            // TODO: Implement this, considering the order
         }
         // Error, record type not defined
         assert(false);
@@ -324,7 +323,6 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     
     auto first_dec = dec_list->begin()->get();
     
-    // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
         if(dec_list->size() != 1){
             // Internal error, a declaration list of variables should only have one single element in it
@@ -335,11 +333,18 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         
         if(var_dec->type_id){
             // Check if the explicitly specified type_id matches the type of the expression
-            auto var_type = getTypeEntry(*var_dec->type_id)->type.get();
+            auto type_entry = getTypeEntry(*var_dec->type_id);
+            if(not type_entry){
+                // Error, type_id wasn't declared in this scope
+                assert(false);
+            }
+            
+            auto var_type = type_entry->type.get();
             if(not var_type){
                 // Error, type_id was not declared
                 assert(false);
             }
+            
             if(*var_type != *result.exp_type) {
                 // Error, type-id was explicitly specified but doesn't match the expression type
                 assert(false);
@@ -355,6 +360,9 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         // Insert a FunEntry for each function header
         for(const auto& dec : *dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
+            
+            // TODO: Check the case where a function is getting defined twice
+            
             shared_ptr<trans::ExpType> return_type;
             
             if(not fun_dec->type_id){
@@ -377,7 +385,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 } else {
                     // Error, function parameter's type wasn't declared
                     assert(false);
-                }                
+                }
             }
             
             insertValueEntry(*fun_dec->id, move(fun_entry));
@@ -402,8 +410,60 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         return;
     }
     
-    if(auto type_dec = dynamic_cast<ast::TypeDec*>(first_dec)){
-        // TODO: ...
+    if(dynamic_cast<ast::TypeDec*>(first_dec)){
+        tpsrt::Toposorter<ast::Symbol, ast::SymbolHasher> toposorter;
+        std::unordered_map<ast::Symbol, ast::Type*, ast::SymbolHasher> symbol_to_ast_type;
+        
+        for(const auto& dec : *dec_list){
+            auto type_dec = static_cast<ast::TypeDec*>(dec.get());
+            
+            if(symbol_to_ast_type.count(*type_dec->type_id)){
+                // Error, this type was already defined in the same scope
+                assert(false);
+            }
+            
+            symbol_to_ast_type[*type_dec->type_id] = type_dec->ty.get();
+            
+            // Build the type dependency graph to be toposorted
+            if(auto name_type = dynamic_cast<ast::NameType*>(type_dec->ty.get())){
+                // type a := name b  =>  b -> a
+                toposorter.addDirectedEdge(*name_type->type_id, *type_dec->type_id);
+                continue;
+            }
+            
+            if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
+                // type a := record {x1 : b1, ..., xn : bn}  =>  b1 -> a, ..., bn -> a
+                for(const auto& type_field : *record_type->tyfields){
+                    toposorter.addDirectedEdge(*type_field->type_id, *type_dec->type_id);
+                }
+                continue;
+            }
+            
+            if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
+                // type a := array b  =>  b -> a
+                toposorter.addDirectedEdge(*array_type->type_id, *type_dec->type_id);
+                continue;
+            }
+            
+            // Internal error, it should have matched some clause of the above
+            assert(false);
+        }
+        
+        auto sorted_result = toposorter.sort();
+        
+        if(sorted_result.size() < dec_list->size()){
+            // Error, ilegal cycle detected in this scope
+            assert(false);
+        }
+        
+        for(const auto& symbol : sorted_result){
+            if(symbol_to_ast_type.count(symbol)){
+                // Declare types actually being declared in this scope
+                auto type_result = transType(symbol_to_ast_type[symbol]);
+                insertTypeEntry(symbol, type_result);
+            }
+        }
+        
         return;
     }
     
@@ -411,18 +471,47 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     assert(false);
 }
 
-std::shared_ptr<ExpType> Translator::transType(ast::Type* type){
+shared_ptr<ExpType> Translator::transType(ast::Type* type){
     // TODO: Complete all the cases
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
-        // TODO: ...
+        if(auto type_entry = getTypeEntry(*name_type->type_id)){
+            return type_entry->type; 
+        }
+        
+        // Error, type_id wasn't declared in this scope
+        assert(false);
     }
     
     if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
-        // TODO: ...
+        shared_ptr<RecordExpType> new_record_type = make_shared<RecordExpType>();
+        
+        int field_index = 0;
+        for(const auto& type_field : *record_type->tyfields){
+            if(auto type_entry = getTypeEntry(*type_field->type_id)){
+                // TODO: Check if the RecordExpTypeField index usage is correct (and even needed)
+                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type, field_index);
+                new_record_type->fields.push_back(new_record_field);
+                
+                field_index += 1;
+            } else {
+                // Error, field type_id wasn't declared in this scope
+                assert(false);
+            }
+        }
+        
+        return new_record_type;
+        
+        // Error, array type_id wasn't declared in this scope
+        assert(false);
     }
     
     if(auto array_type = dynamic_cast<ast::ArrayType*>(type)){
-        // TODO: ...
+        if(auto type_entry = getTypeEntry(*array_type->type_id)){
+            return type_entry->type; 
+        }
+        
+        // Error, array's type_id wasn't declared in this scope
+        assert(false);
     }
     
     // Internal error, it should have matched some clause

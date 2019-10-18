@@ -1,6 +1,7 @@
 let
-	var a := 3
-	var b : int := 4
+    type A    = B
+    type B    = C
+    type C    = A
 in
-	a + (9 * (b / 0)) - 12 = (a - 1)
+	c
 end

@@ -2,6 +2,7 @@
 #define __EXPRESSION_TYPE_H__
 
 #include <string>
+#include <vector>
 #include <memory>
 
 namespace trans{
@@ -55,7 +56,7 @@ struct StringExpType : public ExpType {
 struct ArrayExpType : public ExpType {
     std::shared_ptr<ExpType> type;
 
-    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(std::move(type)) {}
+    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
     
     bool operator==(const ExpType& exp_type) const {
         if(this->kind != exp_type.kind)
@@ -73,12 +74,13 @@ struct RecordExpTypeField {
     std::shared_ptr<ExpType> type;
     int index;
     
-    RecordExpTypeField() : name(name), type(type), index(index) {}
+    RecordExpTypeField(std::string name, std::shared_ptr<ExpType> type, int index) : name(name), type(type), index(index) {}
 }; 
 
 struct RecordExpType : public ExpType {
     std::vector<RecordExpTypeField> fields;
 
+    RecordExpType()            : ExpType(ExpTypeKind::RecordKind) {}
     RecordExpType(auto fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
     
     bool operator==(const ExpType& exp_type) const {

@@ -50,6 +50,7 @@ enum Operation {Plus, Minus, Times, Divide, Eq, Neq, Lt, Le, Gt, Ge};
 struct Symbol {
     std::string name;
 
+    Symbol ()                 : name()     {}
     Symbol (const char* name) : name(name) {}
     Symbol (std::string name) : name(name) {}
 
@@ -90,13 +91,6 @@ struct TypeField {
     void print() const;
 };
 
-struct RecordField {
-    std::unique_ptr<Symbol> id;
-    std::unique_ptr<Expression> exp;
-
-    RecordField (Symbol *id, Expression *exp) : id(id), exp(exp) {}
-    void print() const;
-};
 
 struct NameType : public Type {
     std::unique_ptr<Symbol> type_id;
@@ -203,6 +197,15 @@ struct OpExp : public Expression {
     std::unique_ptr<Expression> right;
 
     OpExp (Expression *left, Operation oper, Expression *right, Position pos) : Expression(pos), left(left), oper(oper), right(right) {}
+    void print() const;
+};
+
+struct RecordField {
+    std::unique_ptr<Symbol> id;
+    std::unique_ptr<Expression> exp;
+    // TODO: Check if there is an escape variable missing to be used at RecordExp
+
+    RecordField (Symbol *id, Expression *exp) : id(id), exp(exp) {}
     void print() const;
 };
 

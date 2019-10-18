@@ -174,6 +174,7 @@ int main(int, char**) {
     
     // Print the final built AST
     final_ast->print();
+    cout << endl;
     
     // Set variable escapes
     esc::Escapator E;

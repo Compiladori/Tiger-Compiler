@@ -40,7 +40,7 @@ void Escapator::insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> es
         // Internal error, no scope was initialized
         assert(false);
     }
-    EscapeEnv[s].push(std::move(escape_entry));
+    EscapeEnv[s].push(move(escape_entry));
     if(not ignore_scope){
         escape_insertions.top().push(s);
     }
@@ -146,7 +146,6 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
 
     auto first_dec = dec_list->begin()->get();
 
-    // TODO: Complete all the cases
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
         traverseExpression(var_dec->exp.get());
         insertEscapeEntry(*var_dec->id, make_unique<EscapeEntry>(current_depth, &var_dec->escape));
@@ -177,7 +176,6 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
 
 void Escapator::traverseVariable(ast::Variable* var){
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
-        // TODO: Check if correct
         if(auto escape_entry = getEscapeEntry(*simple_var->id)){
             // simple_var escape found
             if(current_depth > escape_entry->depth){

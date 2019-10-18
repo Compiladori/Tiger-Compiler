@@ -21,7 +21,7 @@ namespace trans{
 struct TypeEntry {
     std::shared_ptr<trans::ExpType> type;
     
-    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    TypeEntry (auto type) : type(type) {}
     
     void print() const {}
 };
@@ -33,7 +33,7 @@ struct ValueEntry {
 struct VarEntry : public ValueEntry {
     std::shared_ptr<trans::ExpType> type;
 
-    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    VarEntry (auto type) : type(type) {}
 
     void print() const {}
 };
