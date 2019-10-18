@@ -507,7 +507,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
     
     if(auto array_type = dynamic_cast<ast::ArrayType*>(type)){
         if(auto type_entry = getTypeEntry(*array_type->type_id)){
-            return type_entry->type; 
+            return make_shared<ArrayExpType>(type_entry->type); 
         }
         
         // Error, array's type_id wasn't declared in this scope

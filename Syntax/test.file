@@ -1,7 +1,8 @@
 let
-    type A    = B
-    type B    = C
-    type C    = A
+    type A    = C
+    type B    = A
+    type C    = int
+    var c : B := 3
 in
 	c
 end
