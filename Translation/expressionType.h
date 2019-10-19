@@ -59,11 +59,13 @@ struct ArrayExpType : public ExpType {
     ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
     
     bool operator==(const ExpType& exp_type) const {
+        if(exp_type.kind == ExpTypeKind::NilKind)
+            return true;
+        
         if(this->kind != exp_type.kind)
             return false;
         
-        // TODO: Consider more cases!
-        return *this->type == *static_cast<const ArrayExpType*>(&exp_type)->type;
+        return this == &exp_type;
     }
     
     void print() const {}
@@ -87,28 +89,12 @@ struct RecordExpType : public ExpType {
         if(this->kind != exp_type.kind)
             return false;
         
-        // TODO: Consider more cases!
         return this == &exp_type;
     }
     
     void print() const {}
 };
 
-struct CustomExpType : public ExpType {
-    std::string name;
-
-    CustomExpType (std::string name) : ExpType(ExpTypeKind::CustomKind), name(name) {}
-    
-    bool operator==(const ExpType& exp_type) const {
-        if(this->kind != exp_type.kind)
-            return false;
-        
-        // TODO: Consider more cases!
-        return this->name == static_cast<const CustomExpType*>(&exp_type)->name;
-    }
-    
-    void print() const {}
-};
 
 /**
  * Translated Expression associated with an Expression Type

@@ -5,7 +5,7 @@
 #include <stack>
 #include <memory>
 #include "translation.h"
-#include "toposort.h"
+#include "../Utility/toposort.h"
 
 using namespace trans;
 
@@ -21,6 +21,29 @@ using std::move;
 AssociatedExpType Translator::translate(ast::Expression* exp){
     clear();
     return transExpression(exp);
+}
+
+void Translator::load_initial_values(){
+    auto TInt    = std::make_shared<trans::IntExpType>();
+    auto TString = std::make_shared<trans::StringExpType>();
+    auto TUnit   = std::make_shared<trans::UnitExpType>();
+    
+    // Basic types
+    insertTypeEntry("int",    std::make_unique<TypeEntry>(TInt), true);
+    insertTypeEntry("string", std::make_unique<TypeEntry>(TString), true);
+    
+    // Runtime functions
+    using type_vector = std::vector<std::shared_ptr<trans::ExpType>>;
+    insertValueEntry("print",     std::make_unique<FunEntry>(type_vector{TString}, TUnit), true);
+    insertValueEntry("flush",     std::make_unique<FunEntry>(type_vector{}, TUnit), true);
+    insertValueEntry("getchar",   std::make_unique<FunEntry>(type_vector{}, TString), true);
+    insertValueEntry("ord",       std::make_unique<FunEntry>(type_vector{TString}, TInt), true);
+    insertValueEntry("chr",       std::make_unique<FunEntry>(type_vector{TInt}, TString), true);
+    insertValueEntry("size",      std::make_unique<FunEntry>(type_vector{TString}, TInt), true);
+    insertValueEntry("substring", std::make_unique<FunEntry>(type_vector{TString, TInt, TInt}, TString), true);
+    insertValueEntry("concat",    std::make_unique<FunEntry>(type_vector{TString, TString}, TString), true);
+    insertValueEntry("not",       std::make_unique<FunEntry>(type_vector{TInt}, TInt), true);
+    insertValueEntry("exit",      std::make_unique<FunEntry>(type_vector{TInt}, TUnit), true);
 }
 
 void Translator::beginScope(){
@@ -492,7 +515,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
                 auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type, field_index);
                 new_record_type->fields.push_back(new_record_field);
                 
-                field_index += 1;
+                field_index++;
             } else {
                 // Error, field type_id wasn't declared in this scope
                 assert(false);

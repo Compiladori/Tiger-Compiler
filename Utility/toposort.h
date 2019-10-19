@@ -11,7 +11,7 @@ namespace tpsrt {
 /**
  * Toposorter
  * 
- * Given some type T and its hasher H, stores them internally as integers in the range [0,N)
+ * Given some type T and its hasher H, stores its elements internally as integers in the range [0,N)
  * where N is the number of unique elements of type T inserted
  * **/
 template <typename T, typename H>

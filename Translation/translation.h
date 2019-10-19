@@ -51,8 +51,6 @@ struct FunEntry : public ValueEntry {
 /**
  * Main translating class
  * **/
-
-// TODO: Replace assert() with custom error reporting
 class Translator {
     BindingTable<TypeEntry> TypeEnv;
     BindingTable<ValueEntry> ValueEnv;
@@ -66,25 +64,9 @@ class Translator {
     void insertValueEntry(ast::Symbol s, std::unique_ptr<ValueEntry> value_entry, bool ignore_scope = false);
     
     void beginScope();
-    void endScope();    
+    void endScope();
     
-    void load_initial_values(){
-        // Basic types
-        insertTypeEntry("int",    std::make_unique<TypeEntry>(std::make_shared<trans::IntExpType>()), true);
-        insertTypeEntry("string", std::make_unique<TypeEntry>(std::make_shared<trans::StringExpType>()), true);
-        
-        // Runtime functions
-        // insertValueEntry("print",     std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("flush",     std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("getchar",   std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("ord",       std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("chr",       std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("size",      std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("substring", std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("concat",    std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("not",       std::make_unique<trans::FunEntry>(???), true);
-        // insertValueEntry("exit",      std::make_unique<trans::FunEntry>(???), true);
-    }
+    void load_initial_values();
     
     void clear(){
         TypeEnv.clear(), ValueEnv.clear();
