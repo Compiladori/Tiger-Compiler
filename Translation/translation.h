@@ -27,6 +27,7 @@ struct TypeEntry {
 };
 
 struct ValueEntry {
+    virtual ~ValueEntry() {}
     virtual void print() const = 0;
 };
 

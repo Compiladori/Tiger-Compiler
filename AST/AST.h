@@ -80,6 +80,7 @@ struct Position {
  * Types
  * **/
 struct Type {
+    virtual ~Type() {}
     virtual void print() const = 0;
 };
 
@@ -117,6 +118,7 @@ struct ArrayType : public Type {
  * Variables
  * **/
 struct Variable {
+    virtual ~Variable() {}
     virtual void print() const = 0;
 };
 
@@ -151,6 +153,7 @@ struct Expression {
 
     Expression(Position pos) : pos(pos) {}
 
+    virtual ~Expression() {}
     virtual void print() const = 0;
 };
 
@@ -282,6 +285,7 @@ struct ArrayExp : public Expression {
  * Declarations
  * **/
 struct Declaration {
+    virtual ~Declaration() {}
     virtual void print() const = 0;
 };
 

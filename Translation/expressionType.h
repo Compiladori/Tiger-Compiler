@@ -26,6 +26,8 @@ struct ExpType {
     virtual bool operator!=(const ExpType& exp_type) const {
         return not (*this == exp_type);
     }
+    
+    virtual ~ExpType() {}
     virtual void print() const = 0;
 };
 
@@ -56,7 +58,7 @@ struct StringExpType : public ExpType {
 struct ArrayExpType : public ExpType {
     std::shared_ptr<ExpType> type;
 
-    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
+    ArrayExpType(auto type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
     
     bool operator==(const ExpType& exp_type) const {
         if(exp_type.kind == ExpTypeKind::NilKind)
@@ -76,7 +78,7 @@ struct RecordExpTypeField {
     std::shared_ptr<ExpType> type;
     int index;
     
-    RecordExpTypeField(std::string name, std::shared_ptr<ExpType> type, int index) : name(name), type(type), index(index) {}
+    RecordExpTypeField(auto name, auto type, int index) : name(name), type(type), index(index) {}
 }; 
 
 struct RecordExpType : public ExpType {
@@ -109,7 +111,7 @@ struct AssociatedExpType {
     std::shared_ptr<TranslatedExp> tr_exp;
     std::shared_ptr<ExpType> exp_type;
 
-    AssociatedExpType (std::shared_ptr<TranslatedExp> tr_exp, std::shared_ptr<ExpType> exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
+    AssociatedExpType (auto tr_exp, auto exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
 };
 
 
