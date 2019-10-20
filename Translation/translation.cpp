@@ -4,6 +4,8 @@
 #include <cassert>
 #include <stack>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include "translation.h"
 #include "../Utility/toposort.h"
 
@@ -148,7 +150,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 assert(false);
             }
             
-            for(std::size_t index = 0; index < fun_entry->formals.size(); index++){
+            for(auto index = 0; index < fun_entry->formals.size(); index++){
                 auto& param_type = fun_entry->formals[index];
                 auto& arg_exp = (*call_exp->exp_list)[index];
                 
@@ -221,7 +223,8 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         if(auto type_entry = getTypeEntry(*record_exp->type_id)){
             // TODO: Implement this, considering the order
         }
-        // Error, record type not defined
+        
+        // Error, record type was not defined
         assert(false);
     }
     
@@ -362,14 +365,9 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 assert(false);
             }
             
-            auto var_type = type_entry->type.get();
-            if(not var_type){
-                // Error, type_id was not declared
-                assert(false);
-            }
-            
+            auto var_type = type_entry->type.get();            
             if(*var_type != *result.exp_type) {
-                // Error, type-id was explicitly specified but doesn't match the expression type
+                // Error, type_id was explicitly specified but doesn't match the expression type
                 assert(false);
             }
         }
@@ -383,11 +381,16 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         // Insert a FunEntry for each function header
         for(const auto& dec : *dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
+            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_functions;
             
-            // TODO: Check the case where a function is getting defined twice
+            if(declared_functions.count(*fun_dec->id)){
+                // Error, this function was already defined in the same scope
+                assert(false);
+            }
+            
+            declared_functions.insert(*fun_dec->id);
             
             shared_ptr<trans::ExpType> return_type;
-            
             if(not fun_dec->type_id){
                 return_type = make_shared<UnitExpType>();
             } else {

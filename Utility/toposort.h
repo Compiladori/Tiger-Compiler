@@ -55,7 +55,7 @@ public:
                 in_degree[id]++;
         
         std::queue<int> ready;
-        for(int i = 0; i < graph.size(); i++)
+        for(auto i = 0; i < graph.size(); i++)
             if(in_degree[i] == 0)
                 ready.push(i);
         
