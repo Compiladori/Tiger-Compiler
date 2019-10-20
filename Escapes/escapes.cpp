@@ -1,4 +1,6 @@
 #include <cassert>
+#include <stack>
+#include "../AST/AST.h"
 #include "escapes.h"
 
 using namespace esc;
@@ -183,8 +185,7 @@ void Escapator::traverseVariable(ast::Variable* var){
             }
             return;
         }
-        // Error, inexisting simple_var escape
-        assert(false);
+        return;
     }
 
     if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){

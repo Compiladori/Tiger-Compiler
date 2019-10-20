@@ -378,10 +378,11 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     }
     
     if(dynamic_cast<ast::FunDec*>(first_dec)){
+        std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_functions;
+        
         // Insert a FunEntry for each function header
         for(const auto& dec : *dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
-            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_functions;
             
             if(declared_functions.count(*fun_dec->id)){
                 // Error, this function was already defined in the same scope

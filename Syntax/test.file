@@ -2,6 +2,8 @@ let
     type A    = C
     type B    = A
     type C    = int
+    function f () : int = g
+    function g () : int = f
     var c : B := 3
 in
 	c
