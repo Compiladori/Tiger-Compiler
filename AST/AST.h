@@ -206,7 +206,6 @@ struct OpExp : public Expression {
 struct RecordField {
     std::unique_ptr<Symbol> id;
     std::unique_ptr<Expression> exp;
-    // TODO: Check if there is an escape variable missing to be used at RecordExp
 
     RecordField (Symbol *id, Expression *exp) : id(id), exp(exp) {}
     void print() const;

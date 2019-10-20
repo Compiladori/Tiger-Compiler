@@ -76,9 +76,8 @@ struct ArrayExpType : public ExpType {
 struct RecordExpTypeField {
     std::string name;
     std::shared_ptr<ExpType> type;
-    int index;
     
-    RecordExpTypeField(auto name, auto type, int index) : name(name), type(type), index(index) {}
+    RecordExpTypeField(auto name, auto type) : name(name), type(type) {}
 }; 
 
 struct RecordExpType : public ExpType {

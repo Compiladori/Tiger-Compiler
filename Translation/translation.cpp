@@ -98,7 +98,6 @@ void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_en
 
 
 AssociatedExpType Translator::transVariable(ast::Variable* var){
-    // TODO: Complete all the cases
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
@@ -109,11 +108,35 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
     }
         
     if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
-        // TODO: ...
-    }
+        auto var_result = transVariable(field_var->var.get());
         
+        if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
+            for(const auto& field : record_type->fields){
+                if(field.name == field_var->id->name){
+                    return AssociatedExpType(make_shared<TranslatedExp>(), field.type);
+                }
+            }
+            // Error, id field doesn't exist
+            assert(false);
+        }
+        // Error, expected record type
+        assert(false);
+    }
+    
     if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
-        // TODO: ...
+        auto var_result = transVariable(subscript_var->var.get());
+        if(var_result.exp_type->kind != ExpTypeKind::ArrayKind){
+            // Error, expected array type
+            assert(false);
+        }
+        
+        auto exp_result = transExpression(subscript_var->exp.get());
+        if(exp_result.exp_type->kind != ExpTypeKind::IntKind){
+            // Error, expected int type in array index
+            assert(false);
+        }
+        
+        return AssociatedExpType(make_shared<TranslatedExp>(), var_result.exp_type);
     }
     
     // Internal error, it should have matched some clause
@@ -150,7 +173,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 assert(false);
             }
             
-            for(auto index = 0; index < fun_entry->formals.size(); index++){
+            for(unsigned index = 0; index < fun_entry->formals.size(); index++){
                 auto& param_type = fun_entry->formals[index];
                 auto& arg_exp = (*call_exp->exp_list)[index];
                 
@@ -221,6 +244,11 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
         if(auto type_entry = getTypeEntry(*record_exp->type_id)){
+            if(type_entry->type->kind != ExpTypeKind::RecordKind){
+                // Error, expected record type
+                assert(false);
+            }
+            
             // TODO: Implement this, considering the order
         }
         
@@ -499,7 +527,6 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
 }
 
 shared_ptr<ExpType> Translator::transType(ast::Type* type){
-    // TODO: Complete all the cases
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         if(auto type_entry = getTypeEntry(*name_type->type_id)){
             return type_entry->type; 
@@ -511,15 +538,19 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
     
     if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
         shared_ptr<RecordExpType> new_record_type = make_shared<RecordExpType>();
+        std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
         
-        int field_index = 0;
         for(const auto& type_field : *record_type->tyfields){
+            if(declared_fields.count(*type_field->id)){
+                // Error, duplicated field declaration
+                assert(false);
+            }
+            declared_fields.insert(*type_field->id);
+            
             if(auto type_entry = getTypeEntry(*type_field->type_id)){
-                // TODO: Check if the RecordExpTypeField index usage is correct (and even needed)
-                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type, field_index);
+                // TODO: Check if the RecordExpTypeField actually requires the index
+                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type);
                 new_record_type->fields.push_back(new_record_field);
-                
-                field_index++;
             } else {
                 // Error, field type_id wasn't declared in this scope
                 assert(false);
