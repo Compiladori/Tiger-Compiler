@@ -1,10 +1,8 @@
 let
-    type A    = C
-    type B    = A
-    type C    = int
-    function f () : int = g()
-    function g () : int = f()
-    var c : B := 3
+    type A = int
+    type B = array of R
+    type R = {first : int, second : string, third : B}
+    var c : int := 3
 in
 	c
 end

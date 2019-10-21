@@ -47,7 +47,8 @@ public:
         graph[id_t1].push_back(id_t2);
     }
     
-    std::vector<T> sort(){        
+    std::pair<std::vector<T>, std::vector<T>> sort(){
+        // Returns a pair {topological order, unused nodes present in cycles}
         std::vector<int> in_degree(graph.size(), 0);
         
         for(const auto& v : graph)
@@ -55,7 +56,7 @@ public:
                 in_degree[id]++;
         
         std::queue<int> ready;
-        for(unsigned i = 0; i < graph.size(); i++)
+        for(std::size_t i = 0; i < graph.size(); i++)
             if(in_degree[i] == 0)
                 ready.push(i);
         
@@ -74,7 +75,12 @@ public:
             }
         }
         
-        return answer;
+        std::vector<T> unused;
+        for(std::size_t i = 0; i < in_degree.size(); i++)
+            if(in_degree[i] != 0)
+                unused.push_back(id_to_key[i]);
+        
+        return {answer, unused};
     }
 };
 

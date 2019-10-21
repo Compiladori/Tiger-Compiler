@@ -173,7 +173,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 assert(false);
             }
             
-            for(unsigned index = 0; index < fun_entry->formals.size(); index++){
+            for(std::size_t index = 0; index < fun_entry->formals.size(); index++){
                 auto& param_type = fun_entry->formals[index];
                 auto& arg_exp = (*call_exp->exp_list)[index];
                 
@@ -479,7 +479,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             
             symbol_to_ast_type[*type_dec->type_id] = type_dec->ty.get();
             
-            // Build the type dependency graph to be toposorted
+            // Build the type dependency graph
             if(auto name_type = dynamic_cast<ast::NameType*>(type_dec->ty.get())){
                 // type a := name b  =>  b -> a
                 toposorter.addDirectedEdge(*name_type->type_id, *type_dec->type_id);
@@ -506,12 +506,12 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         
         auto sorted_result = toposorter.sort();
         
-        if(sorted_result.size() < dec_list->size()){
+        if(not sorted_result.second.empty()){
             // Error, ilegal cycle detected in this scope
             assert(false);
         }
         
-        for(const auto& symbol : sorted_result){
+        for(const auto& symbol : sorted_result.first){
             if(symbol_to_ast_type.count(symbol)){
                 // Declare types actually being declared in this scope
                 auto type_result = transType(symbol_to_ast_type[symbol]);
