@@ -1,0 +1,31 @@
+CXXFLAGS = -std=c++17 -g -Wall -Wshadow
+CXX = g++
+
+
+AST_HDR = AST.h
+AST_SRC = AST.cpp
+AST_OBJ = AST.o
+
+ESCAPES_HDR = escapes.h         \
+              ../AST/AST.h
+ESCAPES_SRC = escapes.cpp
+ESCAPES_OBJ = escapes.o
+
+TRANS_HDR = environmentTable.h        \
+            expressionType.h          \
+            translation.h             \
+            ../AST/AST.h              \
+            ../Utility/utility.h      \
+            ../Utility/toposort.h
+
+TRANS_SRC = translation.cpp
+TRANS_OBJ = translation.o
+
+SYNTAX_OBJ = lex.yy.o tigerbison.tab.o
+
+TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
+AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
+ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
+SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
+
+PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR) $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)

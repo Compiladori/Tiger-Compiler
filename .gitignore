@@ -42,3 +42,6 @@ tiger.exe
 *.tab.c
 *.tab.h
 *.yy.c
+
+# Ignore makefiles
+*.depends

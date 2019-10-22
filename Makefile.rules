@@ -1,0 +1,19 @@
+.PHONY: all clean depend
+
+all: $(OBJ_FILES)
+
+clean:
+	$(RM) $(OBJ_FILES) Makefile.depends
+
+depend: $(SRC_FILES) $(HDR_FILES)
+    # WARNING: this may break if the preprocessor outputs something, because
+    # that would get mixed with the dependency output.
+	$(CXX) -MM $^ >Makefile.depends
+
+
+# Usage of `patsubst` is a hack that should be removed later.  The problem
+# is that `make depend` generates duplicate rules with different
+# dependencies, and it seems that different versions of GNU Make follow
+# different orders.
+$(OBJ_FILES): %.o:
+	$(CXX) $(CXXFLAGS) -c $(patsubst %.hh,%.cc,$<)
