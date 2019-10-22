@@ -1,7 +1,7 @@
 let
     type A = int
     type B = array of R
-    type R = {first : int, second : string, third : B}
+    type R = {first : int, second : string}
     var c : int := 3
 in
 	c
