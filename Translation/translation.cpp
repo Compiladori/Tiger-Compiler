@@ -510,6 +510,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         tpsrt::Toposorter<ast::Symbol, ast::SymbolHasher> toposorter;
         std::unordered_map<ast::Symbol, ast::Type*, ast::SymbolHasher> symbol_to_ast_type;
 
+        // First pass: check for duplicates and insert incomplete record / array types
         for(const auto& dec : *dec_list){
             auto type_dec = static_cast<ast::TypeDec*>(dec.get());
 
@@ -520,43 +521,65 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
 
             symbol_to_ast_type[*type_dec->type_id] = type_dec->ty.get();
 
-            // Build the type dependency graph
-            if(auto name_type = dynamic_cast<ast::NameType*>(type_dec->ty.get())){
-                // type a := name b  =>  b -> a
-                toposorter.addDirectedEdge(*name_type->type_id, *type_dec->type_id);
-                continue;
-            }
-
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
-                // type a := record {x1 : b1, ..., xn : bn}  =>  b1 -> a, ..., bn -> a
+                std::vector<RecordExpTypeField> record_fields;
                 for(const auto& type_field : *record_type->tyfields){
-                    toposorter.addDirectedEdge(*type_field->type_id, *type_dec->type_id);
-                }
-                continue;
+                    record_fields.push_back(RecordExpTypeField(type_field->id->name, nullptr));
+                } 
+                
+                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<RecordExpType>(record_fields)));
             }
 
             if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
-                // type a := array b  =>  b -> a
-                toposorter.addDirectedEdge(*array_type->type_id, *type_dec->type_id);
-                continue;
+                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<ArrayExpType>(nullptr)));
             }
-
-            // Internal error, it should have matched some clause of the above
-            assert(false);
         }
 
-        auto sorted_result = toposorter.sort();
+        // Second pass: toposort the simple NameType types
+        for(const auto& dec : *dec_list){
+            auto type_dec = static_cast<ast::TypeDec*>(dec.get());
 
+            if(auto name_type = dynamic_cast<ast::NameType*>(type_dec->ty.get())){
+                // type a := name b  =>  b -> a
+                toposorter.addDirectedEdge(*name_type->type_id, *type_dec->type_id);
+            }
+        }
+        auto sorted_result = toposorter.sort();
+        
         if(not sorted_result.second.empty()){
             // Error, ilegal cycle detected in this scope
             assert(false);
         }
 
         for(const auto& symbol : sorted_result.first){
-            if(symbol_to_ast_type.count(symbol)){
-                // Declare types actually being declared in this scope
-                auto type_result = transType(symbol_to_ast_type[symbol]);
-                insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
+            // Declare NameTypes in this scope
+            auto type_result = transType(symbol_to_ast_type[symbol]);
+            insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
+        }
+
+        // Third pass: fix record and array types
+        for(const auto& dec : *dec_list){
+            auto type_dec = static_cast<ast::TypeDec*>(dec.get());
+
+            if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
+                for(const auto& type_field : *record_type->tyfields){
+                    auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
+
+                    for(std::size_t i = 0; i < record_exptype->fields.size(); i++){
+                        auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
+                        if(not field_type_entry){
+                            // Error, record type not defined in this scope
+                            assert(false);
+                        }
+                        record_exptype->fields[i].type = field_type_entry->type;
+                    }
+                }
+            }
+
+            if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
+                auto array_exptype = static_cast<ArrayExpType*>(getTypeEntry(*array_type->type_id)->type.get());
+
+                array_exptype->type = getTypeEntry(*array_type->type_id)->type;
             }
         }
 

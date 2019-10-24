@@ -1,8 +1,17 @@
+/* define valid recursive types */
+
 let
-    type A = int
-    type B = array of R
-    type R = {first : int, second : string}
-    var c : int := 3
+  /* define a list */
+  type intlist = {hd : int, tl : intlist}
+
+  /* define a tree */
+  type tree ={key : int, children : treelist}
+  type treelist = {hd : tree, tl : treelist}
+
+  var lis : intlist := intlist { hd = 0, tl = nil }
+
 in
-	c
+/*
+  lis; 0
+*/
 end
