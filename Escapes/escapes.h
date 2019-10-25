@@ -49,7 +49,7 @@ class Escapator {
     void traverseDeclarations(ast::DeclarationList* dec_list);
     void traverseVariable(ast::Variable* var);
 public:
-    Escapator() {}
+    Escapator() = default;
     
     void setEscapes(ast::Expression* exp);
 };

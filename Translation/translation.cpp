@@ -26,26 +26,27 @@ AssociatedExpType Translator::translate(ast::Expression* exp){
 }
 
 void Translator::load_initial_values(){
-    auto TInt    = std::make_shared<trans::IntExpType>();
-    auto TString = std::make_shared<trans::StringExpType>();
-    auto TUnit   = std::make_shared<trans::UnitExpType>();
+    auto TInt    = make_shared<IntExpType>();
+    auto TString = make_shared<StringExpType>();
+    auto TUnit   = make_shared<UnitExpType>();
 
     // Basic types
-    insertTypeEntry("int",    std::make_unique<TypeEntry>(TInt), true);
-    insertTypeEntry("string", std::make_unique<TypeEntry>(TString), true);
+    insertTypeEntry("int",    make_unique<TypeEntry>(TInt), true);
+    insertTypeEntry("string", make_unique<TypeEntry>(TString), true);
 
     // Runtime functions
     using type_vector = std::vector<std::shared_ptr<trans::ExpType>>;
-    insertValueEntry("print",     std::make_unique<FunEntry>(type_vector{TString}, TUnit), true);
-    insertValueEntry("flush",     std::make_unique<FunEntry>(type_vector{}, TUnit), true);
-    insertValueEntry("getchar",   std::make_unique<FunEntry>(type_vector{}, TString), true);
-    insertValueEntry("ord",       std::make_unique<FunEntry>(type_vector{TString}, TInt), true);
-    insertValueEntry("chr",       std::make_unique<FunEntry>(type_vector{TInt}, TString), true);
-    insertValueEntry("size",      std::make_unique<FunEntry>(type_vector{TString}, TInt), true);
-    insertValueEntry("substring", std::make_unique<FunEntry>(type_vector{TString, TInt, TInt}, TString), true);
-    insertValueEntry("concat",    std::make_unique<FunEntry>(type_vector{TString, TString}, TString), true);
-    insertValueEntry("not",       std::make_unique<FunEntry>(type_vector{TInt}, TInt), true);
-    insertValueEntry("exit",      std::make_unique<FunEntry>(type_vector{TInt}, TUnit), true);
+    
+    insertValueEntry("print",     make_unique<FunEntry>(type_vector{TString}, TUnit), true);
+    insertValueEntry("flush",     make_unique<FunEntry>(type_vector{}, TUnit), true);
+    insertValueEntry("getchar",   make_unique<FunEntry>(type_vector{}, TString), true);
+    insertValueEntry("ord",       make_unique<FunEntry>(type_vector{TString}, TInt), true);
+    insertValueEntry("chr",       make_unique<FunEntry>(type_vector{TInt}, TString), true);
+    insertValueEntry("size",      make_unique<FunEntry>(type_vector{TString}, TInt), true);
+    insertValueEntry("substring", make_unique<FunEntry>(type_vector{TString, TInt, TInt}, TString), true);
+    insertValueEntry("concat",    make_unique<FunEntry>(type_vector{TString, TString}, TString), true);
+    insertValueEntry("not",       make_unique<FunEntry>(type_vector{TInt}, TInt), true);
+    insertValueEntry("exit",      make_unique<FunEntry>(type_vector{TInt}, TUnit), true);
 }
 
 void Translator::beginScope(){
@@ -113,7 +114,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
             for(const auto& field : record_type->fields){
                 if(field.name == field_var->id->name){
-                    return AssociatedExpType(make_shared<TranslatedExp>(), field.type);
+                    return AssociatedExpType(make_shared<TranslatedExp>(), field.getType());
                 }
             }
             // Error, id field doesn't exist
@@ -244,30 +245,18 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
         if(auto type_entry = getTypeEntry(*record_exp->type_id)){
-          auto record_exp_type = dynamic_cast<RecordExpType*>(type_entry->type.get());
+            auto record_exp_type = dynamic_cast<RecordExpType*>(type_entry->type.get());
             if (not record_exp_type){
               // Record type is undefined
               assert(false);
             }
 
-            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
-
-            auto getIndex = [&](const ast::Symbol& symbol){
-                int index = 0;
-                for(const auto& field : record_exp_type->fields){
-                    if(symbol.name == field.name){
-                        return index;
-                    }
-                    index++;
-                }
-                return -1;
-            };
-
             if(record_exp_type->fields.size() != record_exp->fields->size()){
                 // Error, different number of fields
                 assert(false);
             }
-
+            
+            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
             for(const auto& field : *record_exp->fields){
                 if(declared_fields.count(*field->id)){
                     // Error, duplicated field name
@@ -275,6 +264,17 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 }
 
                 declared_fields.insert(*field->id);
+                
+                auto getIndex = [&](const ast::Symbol& symbol){
+                    int index = 0;
+                    for(const auto& field : record_exp_type->fields){
+                        if(symbol.name == field.name){
+                            return index;
+                        }
+                        index++;
+                    }
+                    return -1;
+                };
 
                 auto index = getIndex(*field->id);
                 if(index < 0){
@@ -284,13 +284,15 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
                 auto field_type = transExpression(field->exp.get());
 
-                if(field_type.exp_type != record_exp_type->fields[index].type){
+                // TODO: Might we be dereferencing an empty pointer 'record_exp_type->fields[index].getType()'?
+                // This would be an internal error, it shouldn't ever be invalid
+                if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
                     // Error, field type doesn't match
                     assert(false);
                 }
             }
 
-            return AssociatedExpType(make_shared<TranslatedExp>(), record_exp_type);
+            return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
         }
 
         // Error, record type was not defined
@@ -524,14 +526,14 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
                 std::vector<RecordExpTypeField> record_fields;
                 for(const auto& type_field : *record_type->tyfields){
-                    record_fields.push_back(RecordExpTypeField(type_field->id->name, nullptr));
+                    record_fields.push_back(RecordExpTypeField(type_field->id->name));
                 } 
                 
                 insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<RecordExpType>(record_fields)));
             }
 
             if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
-                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<ArrayExpType>(nullptr)));
+                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<ArrayExpType>()));
             }
         }
 
@@ -552,9 +554,11 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         }
 
         for(const auto& symbol : sorted_result.first){
-            // Declare NameTypes in this scope
-            auto type_result = transType(symbol_to_ast_type[symbol]);
-            insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
+            // Declare NameTypes in this scopes
+            if(symbol_to_ast_type.count(symbol)){
+                auto type_result = transType(symbol_to_ast_type[symbol]);
+                insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
+            }
         }
 
         // Third pass: fix record and array types
@@ -571,7 +575,14 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                             // Error, record type not defined in this scope
                             assert(false);
                         }
-                        record_exptype->fields[i].type = field_type_entry->type;
+                        
+                        if(*record_exptype == *field_type_entry->type){
+                            // We got a circular reference
+                            record_exptype->fields[i].setWeak(field_type_entry->type);
+                        } else {
+                            // Regular shared reference
+                            record_exptype->fields[i].setShared(field_type_entry->type);
+                        }
                     }
                 }
             }
@@ -612,8 +623,8 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
             declared_fields.insert(*type_field->id);
 
             if(auto type_entry = getTypeEntry(*type_field->type_id)){
-                // TODO: Check if the RecordExpTypeField actually requires the index
-                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type);
+                auto new_record_field = RecordExpTypeField(type_field->id->name);
+                new_record_field.setShared(type_entry->type);
                 new_record_type->fields.push_back(new_record_field);
             } else {
                 // Error, field type_id wasn't declared in this scope

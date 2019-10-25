@@ -12,7 +12,7 @@ template <class T>
 class GenericList {
     std::deque<std::unique_ptr<T>> data;
 public:
-    GenericList()     : data() {}
+    GenericList()     = default;
     GenericList(T *e) : GenericList() { this->push_back(e); }
     
     using iterator       = typename std::deque<std::unique_ptr<T>>::iterator;

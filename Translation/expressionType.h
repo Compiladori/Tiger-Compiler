@@ -11,7 +11,7 @@ namespace trans{
 /**
  * Expression Types
  * **/
-enum ExpTypeKind { UnitKind, NilKind, IntKind, StringKind, ArrayKind, RecordKind, CustomKind, NoKind };
+enum ExpTypeKind { UnitKind = 0, NilKind, IntKind, StringKind, ArrayKind, RecordKind, CustomKind, NoKind };
 
 struct ExpType {
     ExpTypeKind kind;
@@ -34,33 +34,44 @@ struct ExpType {
 struct UnitExpType : public ExpType {
     UnitExpType() : ExpType(ExpTypeKind::UnitKind) {}
     
-    void print() const {}
+    void print() const override {}
 };
 
 struct NilExpType : public ExpType {
     NilExpType() : ExpType(ExpTypeKind::NilKind) {}
     
-    void print() const {}
+    virtual bool operator==(const ExpType& exp_type) const override {
+        if(exp_type.kind == ExpTypeKind::RecordKind)
+            return true;
+        
+        if(exp_type.kind == ExpTypeKind::ArrayKind)
+            return true;
+        
+        return this->kind == exp_type.kind;
+    }
+    
+    void print() const override {}
 };
 
 struct IntExpType : public ExpType {
     IntExpType() : ExpType(ExpTypeKind::IntKind) {}
 
-    void print() const {}
+    void print() const override {}
 };
 
 struct StringExpType : public ExpType {
     StringExpType() : ExpType(ExpTypeKind::StringKind) {}
 
-    void print() const {}
+    void print() const override {}
 };
 
 struct ArrayExpType : public ExpType {
     std::shared_ptr<ExpType> type;
 
-    ArrayExpType(auto type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
+    ArrayExpType()                              : ExpType(ExpTypeKind::ArrayKind), type() {}
+    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
     
-    bool operator==(const ExpType& exp_type) const {
+    virtual bool operator==(const ExpType& exp_type) const override {
         if(exp_type.kind == ExpTypeKind::NilKind)
             return true;
         
@@ -70,30 +81,45 @@ struct ArrayExpType : public ExpType {
         return this == &exp_type;
     }
     
-    void print() const {}
+    void print() const override {}
 };
 
 struct RecordExpTypeField {
     std::string name;
-    std::shared_ptr<ExpType> type;
+    std::shared_ptr<ExpType> shared_type;
+    std::weak_ptr<ExpType> weak_type;
     
-    RecordExpTypeField(auto name, auto type) : name(name), type(type) {}
+    void setShared(std::shared_ptr<ExpType> ptr){ shared_type = ptr; }
+    void setWeak(std::shared_ptr<ExpType> ptr)  { weak_type   = ptr; }
+    
+    std::shared_ptr<ExpType> getType() const {
+        if(not weak_type.expired())
+            return weak_type.lock();
+        else
+            return shared_type;
+    }
+    
+    RecordExpTypeField(std::string name) : name(name) {}
 }; 
 
 struct RecordExpType : public ExpType {
     std::vector<RecordExpTypeField> fields;
 
-    RecordExpType()            : ExpType(ExpTypeKind::RecordKind) {}
-    RecordExpType(auto fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
+    RecordExpType()                                         : ExpType(ExpTypeKind::RecordKind) {}
+    RecordExpType(std::vector<RecordExpTypeField>&  fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
+    RecordExpType(std::vector<RecordExpTypeField>&& fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
     
-    bool operator==(const ExpType& exp_type) const {
+    virtual bool operator==(const ExpType& exp_type) const override {
+        if(exp_type.kind == ExpTypeKind::NilKind)
+            return true;
+        
         if(this->kind != exp_type.kind)
             return false;
         
         return this == &exp_type;
     }
     
-    void print() const {}
+    void print() const override {}
 };
 
 
@@ -110,7 +136,7 @@ struct AssociatedExpType {
     std::shared_ptr<TranslatedExp> tr_exp;
     std::shared_ptr<ExpType> exp_type;
 
-    AssociatedExpType (auto tr_exp, auto exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
+    AssociatedExpType (std::shared_ptr<TranslatedExp> tr_exp, std::shared_ptr<ExpType> exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
 };
 
 

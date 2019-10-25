@@ -237,7 +237,7 @@ struct AssignExp : public Expression {
 struct IfExp : public Expression {
     std::unique_ptr<Expression> test, then, otherwise;
 
-    IfExp (Expression *test, Expression *then, Position pos) : Expression(pos), test(test), then(then), otherwise(nullptr) {}
+    IfExp (Expression *test, Expression *then, Position pos) : Expression(pos), test(test), then(then), otherwise() {}
     IfExp (Expression *test, Expression *then, Expression *otherwise, Position pos) : Expression(pos), test(test), then(then), otherwise(otherwise) {}
     void print() const;
 };
@@ -294,7 +294,7 @@ struct VarDec : public Declaration {
     std::unique_ptr<Expression> exp;
     bool escape = false;
 
-    VarDec(Symbol *id, Expression *exp) : id(id), type_id(nullptr), exp(exp) {}
+    VarDec(Symbol *id, Expression *exp) : id(id), type_id(), exp(exp) {}
     VarDec(Symbol *id, Symbol *type_id, Expression *exp) : id(id), type_id(type_id), exp(exp) {}
 
     void print() const;
@@ -314,7 +314,7 @@ struct FunDec : public Declaration {
     std::unique_ptr<Symbol> type_id;
     std::unique_ptr<Expression> exp;
 
-    FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : id(id), tyfields(tyfields), type_id(nullptr), exp(exp) {}
+    FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : id(id), tyfields(tyfields), type_id(), exp(exp) {}
     FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
     void print() const;
 };

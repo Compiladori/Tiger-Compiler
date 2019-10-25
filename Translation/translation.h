@@ -21,7 +21,7 @@ namespace trans{
 struct TypeEntry {
     std::shared_ptr<trans::ExpType> type;
     
-    TypeEntry (auto type) : type(type) {}
+    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
     
     void print() const {}
 };
@@ -34,7 +34,7 @@ struct ValueEntry {
 struct VarEntry : public ValueEntry {
     std::shared_ptr<trans::ExpType> type;
 
-    VarEntry (auto type) : type(type) {}
+    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
 
     void print() const {}
 };
@@ -43,8 +43,9 @@ struct FunEntry : public ValueEntry {
     std::vector<std::shared_ptr<trans::ExpType>> formals;
     std::shared_ptr<trans::ExpType> result;
 
-    FunEntry (auto result) : formals(), result(result) {}
-    FunEntry (auto formals, auto result) : formals(formals), result(result) {}
+    FunEntry (std::shared_ptr<trans::ExpType> result) : formals(), result(result) {}
+    FunEntry (std::vector<std::shared_ptr<trans::ExpType>>&  formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
+    FunEntry (std::vector<std::shared_ptr<trans::ExpType>>&& formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
     
     void print() const {}
 };

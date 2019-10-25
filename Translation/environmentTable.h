@@ -22,7 +22,7 @@ template <class T>
 class BindingTable {
     std::unordered_map<ast::Symbol, std::stack<std::unique_ptr<T>>, ast::SymbolHasher> table;
 public:
-    BindingTable() {};
+    BindingTable() = default;
     
     auto clear()                           { table.clear(); }
     auto empty()                     const { return table.empty(); }

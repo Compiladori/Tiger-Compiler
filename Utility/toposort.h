@@ -35,7 +35,7 @@ class Toposorter {
     }
     
 public:
-    Toposorter() {}
+    Toposorter() = default;
     
     auto clear()       { graph.clear(), key_to_id.clear(), id_to_key.clear(); }
     auto empty() const { return graph.empty(); }
