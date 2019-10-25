@@ -114,7 +114,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
             for(const auto& field : record_type->fields){
                 if(field.name == field_var->id->name){
-                    return AssociatedExpType(make_shared<TranslatedExp>(), field.getType());
+                    return AssociatedExpType(make_shared<TranslatedExp>(), field.type);
                 }
             }
             // Error, id field doesn't exist
@@ -284,9 +284,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
                 auto field_type = transExpression(field->exp.get());
 
-                // TODO: Might we be dereferencing an empty pointer 'record_exp_type->fields[index].getType()'?
-                // This would be an internal error, it shouldn't ever be invalid
-                if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
+                if(*field_type.exp_type != *record_exp_type->fields[index].type){
                     // Error, field type doesn't match
                     assert(false);
                 }
@@ -576,13 +574,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                             assert(false);
                         }
                         
-                        if(*record_exptype == *field_type_entry->type){
-                            // We got a circular reference
-                            record_exptype->fields[i].setWeak(field_type_entry->type);
-                        } else {
-                            // Regular shared reference
-                            record_exptype->fields[i].setShared(field_type_entry->type);
-                        }
+                        record_exptype->fields[i].type = field_type_entry->type;
                     }
                 }
             }
@@ -623,8 +615,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
             declared_fields.insert(*type_field->id);
 
             if(auto type_entry = getTypeEntry(*type_field->type_id)){
-                auto new_record_field = RecordExpTypeField(type_field->id->name);
-                new_record_field.setShared(type_entry->type);
+                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type);
                 new_record_type->fields.push_back(new_record_field);
             } else {
                 // Error, field type_id wasn't declared in this scope

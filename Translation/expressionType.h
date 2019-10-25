@@ -66,7 +66,7 @@ struct StringExpType : public ExpType {
 };
 
 struct ArrayExpType : public ExpType {
-    std::shared_ptr<ExpType> type;
+    std::shared_ptr<ExpType> type; // TODO: Memory leak, not using weak references to itself
 
     ArrayExpType()                              : ExpType(ExpTypeKind::ArrayKind), type() {}
     ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
@@ -86,20 +86,10 @@ struct ArrayExpType : public ExpType {
 
 struct RecordExpTypeField {
     std::string name;
-    std::shared_ptr<ExpType> shared_type;
-    std::weak_ptr<ExpType> weak_type;
+    std::shared_ptr<ExpType> type; // TODO: Memory leak, not using weak references to itself
     
-    void setShared(std::shared_ptr<ExpType> ptr){ shared_type = ptr; }
-    void setWeak(std::shared_ptr<ExpType> ptr)  { weak_type   = ptr; }
-    
-    std::shared_ptr<ExpType> getType() const {
-        if(not weak_type.expired())
-            return weak_type.lock();
-        else
-            return shared_type;
-    }
-    
-    RecordExpTypeField(std::string name) : name(name) {}
+    RecordExpTypeField(std::string name)                                : name(name), type() {}
+    RecordExpTypeField(std::string name, std::shared_ptr<ExpType> type) : name(name), type(type) {}
 }; 
 
 struct RecordExpType : public ExpType {
