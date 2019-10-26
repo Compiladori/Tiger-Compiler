@@ -35,7 +35,7 @@ void Translator::load_initial_values(){
     insertTypeEntry("string", make_unique<TypeEntry>(TString), true);
 
     // Runtime functions
-    using type_vector = std::vector<std::shared_ptr<trans::ExpType>>;
+    using type_vector = std::vector<std::shared_ptr<ExpType>>;
     
     insertValueEntry("print",     make_unique<FunEntry>(type_vector{TString}, TUnit), true);
     insertValueEntry("flush",     make_unique<FunEntry>(type_vector{}, TUnit), true);
@@ -114,7 +114,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
         if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
             for(const auto& field : record_type->fields){
                 if(field.name == field_var->id->name){
-                    return AssociatedExpType(make_shared<TranslatedExp>(), field.type);
+                    return AssociatedExpType(make_shared<TranslatedExp>(), field.getType());
                 }
             }
             // Error, id field doesn't exist
@@ -150,25 +150,25 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         return AssociatedExpType(make_shared<TranslatedExp>(), result.exp_type);
     }
 
-    if(auto unit_exp = dynamic_cast<ast::UnitExp*>(exp)){
+    if(/*auto unit_exp = */dynamic_cast<ast::UnitExp*>(exp)){
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
 
-    if(auto nil_exp = dynamic_cast<ast::NilExp*>(exp)){
+    if(/*auto nil_exp = */dynamic_cast<ast::NilExp*>(exp)){
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<NilExpType>());
     }
 
-    if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
+    if(/*auto int_exp = */dynamic_cast<ast::IntExp*>(exp)){
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
     }
 
-    if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
+    if(/*auto string_exp = */dynamic_cast<ast::StringExp*>(exp)){
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<StringExpType>());
     }
 
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
         auto env_entry = getValueEntry(*call_exp->func);
-        if(auto fun_entry = dynamic_cast<trans::FunEntry*>(env_entry)){
+        if(auto fun_entry = dynamic_cast<FunEntry*>(env_entry)){
             if(fun_entry->formals.size() != call_exp->exp_list->size()){
                 // Error, function call with a different number of arguments than the required ones
                 assert(false);
@@ -223,7 +223,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                     // Error, operands' type kinds must be the same
                     assert(false);
                 }
-                if(left_kind != ExpTypeKind::IntKind or left_kind != ExpTypeKind::StringKind){
+                if(left_kind != ExpTypeKind::IntKind and left_kind != ExpTypeKind::StringKind){
                     // Error, operands' types must be between Int or String
                     assert(false);
                 }
@@ -247,8 +247,8 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         if(auto type_entry = getTypeEntry(*record_exp->type_id)){
             auto record_exp_type = dynamic_cast<RecordExpType*>(type_entry->type.get());
             if (not record_exp_type){
-              // Record type is undefined
-              assert(false);
+                // Error, record type is undefined
+                assert(false);
             }
 
             if(record_exp_type->fields.size() != record_exp->fields->size()){
@@ -283,8 +283,8 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 }
 
                 auto field_type = transExpression(field->exp.get());
-
-                if(*field_type.exp_type != *record_exp_type->fields[index].type){
+                
+                if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
                     // Error, field type doesn't match
                     assert(false);
                 }
@@ -298,14 +298,14 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
 
     if(auto seq_exp = dynamic_cast<ast::SeqExp*>(exp)){
-        auto& list_ptr = seq_exp->exp_list;
+        const auto& list_ptr = seq_exp->exp_list;
 
-        if(list_ptr->size() == 0){
+        if(list_ptr->empty()){
             // Internal error, the expression list shouldn't be empty
             assert(false);
         }
 
-        auto last_result = transExpression((*list_ptr)[list_ptr->size()-1].get());
+        auto last_result = transExpression(list_ptr->back().get());
         return AssociatedExpType(make_shared<TranslatedExp>(), last_result.exp_type);
     }
 
@@ -382,12 +382,18 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         return result;
     }
 
-    if(auto break_exp = dynamic_cast<ast::BreakExp*>(exp)){
+    if(/*auto break_exp = */dynamic_cast<ast::BreakExp*>(exp)){
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
 
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
         if(auto type_entry = getTypeEntry(*array_exp->ty)){
+            auto array_type = dynamic_cast<ArrayExpType*>(type_entry->type.get());
+            if(not array_type){
+                // Error, array type was not declared in this scope
+                assert(false);
+            }
+            
             auto size_result = transExpression(array_exp->size.get());
             if(size_result.exp_type->kind != ExpTypeKind::IntKind){
                 // Error, array's size MUST be an int
@@ -395,14 +401,15 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             }
 
             auto init_result = transExpression(array_exp->init.get());
-            if(*init_result.exp_type != *type_entry->type){
+            if(*init_result.exp_type != *array_type->getType()){
                 // Error, array type MUST match with its initialization's type
                 assert(false);
             }
 
             return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
         }
-        // Error, array's type was not declared
+        
+        // Error, array type was not declared in this scope
         assert(false);
     }
 
@@ -460,7 +467,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
 
             declared_functions.insert(*fun_dec->id);
 
-            shared_ptr<trans::ExpType> return_type;
+            shared_ptr<ExpType> return_type;
             if(not fun_dec->type_id){
                 return_type = make_shared<UnitExpType>();
             } else {
@@ -473,9 +480,17 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 return_type = return_type_entry->type;
             }
 
-            unique_ptr<trans::FunEntry> fun_entry = make_unique<trans::FunEntry>(return_type);
-
+            unique_ptr<FunEntry> fun_entry = make_unique<FunEntry>(return_type);
+            
+            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_arguments;
             for(const auto& type_field : *fun_dec->tyfields){
+                if(declared_arguments.count(*type_field->id)){
+                    // Error, function arguments must have different names
+                    assert(false);
+                }
+                
+                declared_arguments.insert(*type_field->id);
+                
                 if(auto param_type_entry = getTypeEntry(*type_field->type_id)){
                     fun_entry->formals.push_back(param_type_entry->type);
                 } else {
@@ -490,13 +505,28 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         // Process each one of the function bodies, checking if the return type is actually correct
         for(const auto& dec : *dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
-
-            if(auto fun_entry = dynamic_cast<trans::FunEntry*>(getValueEntry(*fun_dec->id))){
+            
+            if(auto fun_entry = dynamic_cast<FunEntry*>(getValueEntry(*fun_dec->id))){
+                beginScope();
+                
+                // Augment current scope with function arguments as new variables
+                for(const auto& type_field : *fun_dec->tyfields){
+                    auto type_entry = getTypeEntry(*type_field->type_id);
+                    if(not type_entry){
+                        // Error, argument type not declared in this scope
+                        assert(false);
+                    }
+                    
+                    insertValueEntry(*type_field->id, make_unique<VarEntry>(type_entry->type));
+                }
+                
                 auto body_result = transExpression(fun_dec->exp.get());
                 if(*fun_entry->result != *body_result.exp_type){
                     // Error, function return type doesn't match its body type
                     assert(false);
                 }
+                
+                endScope();
             } else {
                 // Internal error, function's entry got somehow overriden or deleted
                 assert(false);
@@ -522,15 +552,16 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             symbol_to_ast_type[*type_dec->type_id] = type_dec->ty.get();
 
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
-                std::vector<RecordExpTypeField> record_fields;
+                shared_ptr<RecordExpType> record_exp_type = make_shared<RecordExpType>();
+                
                 for(const auto& type_field : *record_type->tyfields){
-                    record_fields.push_back(RecordExpTypeField(type_field->id->name));
+                    record_exp_type->pushField(type_field->id->name, nullptr);
                 } 
                 
-                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<RecordExpType>(record_fields)));
+                insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(record_exp_type));
             }
 
-            if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
+            if(/*auto array_type = */dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
                 insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(make_shared<ArrayExpType>()));
             }
         }
@@ -552,7 +583,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         }
 
         for(const auto& symbol : sorted_result.first){
-            // Declare NameTypes in this scopes
+            // Declare NameTypes in this scope
             if(symbol_to_ast_type.count(symbol)){
                 auto type_result = transType(symbol_to_ast_type[symbol]);
                 insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
@@ -564,25 +595,29 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             auto type_dec = static_cast<ast::TypeDec*>(dec.get());
 
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
-                for(const auto& type_field : *record_type->tyfields){
-                    auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
+                auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
 
-                    for(std::size_t i = 0; i < record_exptype->fields.size(); i++){
-                        auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
-                        if(not field_type_entry){
-                            // Error, record type not defined in this scope
-                            assert(false);
-                        }
-                        
-                        record_exptype->fields[i].type = field_type_entry->type;
+                for(std::size_t i = 0; i < record_type->tyfields->size(); i++){
+                    auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
+                    if(not field_type_entry){
+                        // Error, record type not defined in this scope
+                        assert(false);
                     }
+                    
+                    record_exptype->updateField(i, field_type_entry->type);
                 }
             }
 
             if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
-                auto array_exptype = static_cast<ArrayExpType*>(getTypeEntry(*array_type->type_id)->type.get());
+                auto array_exptype = static_cast<ArrayExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
+                auto array_type_entry = getTypeEntry(*array_type->type_id);
+                
+                if(not array_type_entry){
+                    // Error, array type wasn't declared in this scope
+                    assert(false);
+                }
 
-                array_exptype->type = getTypeEntry(*array_type->type_id)->type;
+                array_exptype->updateType(array_type_entry->type);
             }
         }
 
@@ -615,8 +650,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
             declared_fields.insert(*type_field->id);
 
             if(auto type_entry = getTypeEntry(*type_field->type_id)){
-                auto new_record_field = RecordExpTypeField(type_field->id->name, type_entry->type);
-                new_record_type->fields.push_back(new_record_field);
+                new_record_type->pushField(type_field->id->name, type_entry->type);
             } else {
                 // Error, field type_id wasn't declared in this scope
                 assert(false);

@@ -19,9 +19,9 @@ namespace trans{
  * Table entries
  * **/
 struct TypeEntry {
-    std::shared_ptr<trans::ExpType> type;
+    std::shared_ptr<ExpType> type;
     
-    TypeEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    TypeEntry (std::shared_ptr<ExpType> type) : type(type) {}
     
     void print() const {}
 };
@@ -32,20 +32,20 @@ struct ValueEntry {
 };
 
 struct VarEntry : public ValueEntry {
-    std::shared_ptr<trans::ExpType> type;
+    std::shared_ptr<ExpType> type;
 
-    VarEntry (std::shared_ptr<trans::ExpType> type) : type(type) {}
+    VarEntry (std::shared_ptr<ExpType> type) : type(type) {}
 
     void print() const {}
 };
 
 struct FunEntry : public ValueEntry {
-    std::vector<std::shared_ptr<trans::ExpType>> formals;
-    std::shared_ptr<trans::ExpType> result;
+    std::vector<std::shared_ptr<ExpType>> formals;
+    std::shared_ptr<ExpType> result;
 
-    FunEntry (std::shared_ptr<trans::ExpType> result) : formals(), result(result) {}
-    FunEntry (std::vector<std::shared_ptr<trans::ExpType>>&  formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
-    FunEntry (std::vector<std::shared_ptr<trans::ExpType>>&& formals, std::shared_ptr<trans::ExpType> result) : formals(formals), result(result) {}
+    FunEntry (std::shared_ptr<ExpType> result) : formals(), result(result) {}
+    FunEntry (std::vector<std::shared_ptr<ExpType>>&  formals, std::shared_ptr<ExpType> result) : formals(formals), result(result) {}
+    FunEntry (std::vector<std::shared_ptr<ExpType>>&& formals, std::shared_ptr<ExpType> result) : formals(formals), result(result) {}
     
     void print() const {}
 };

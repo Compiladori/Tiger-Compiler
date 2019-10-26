@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cassert>
 
 namespace trans{
 
@@ -11,6 +12,7 @@ namespace trans{
 /**
  * Expression Types
  * **/
+// TODO: Replace assert(false) with custom errors
 enum ExpTypeKind { UnitKind = 0, NilKind, IntKind, StringKind, ArrayKind, RecordKind, CustomKind, NoKind };
 
 struct ExpType {
@@ -65,11 +67,27 @@ struct StringExpType : public ExpType {
     void print() const override {}
 };
 
-struct ArrayExpType : public ExpType {
-    std::shared_ptr<ExpType> type; // TODO: Memory leak, not using weak references to itself
 
-    ArrayExpType()                              : ExpType(ExpTypeKind::ArrayKind), type() {}
-    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind), type(type) {}
+class ArrayExpType : public ExpType {
+    bool uses_weak;
+    std::weak_ptr<ExpType> weak_type;
+    std::shared_ptr<ExpType> shared_type;
+
+public:
+    ArrayExpType()                              : ExpType(ExpTypeKind::ArrayKind) {}
+    ArrayExpType(std::shared_ptr<ExpType> type) : ExpType(ExpTypeKind::ArrayKind) { updateType(type); }
+    
+    std::shared_ptr<ExpType> getType() const {
+        if(uses_weak) return weak_type.lock();
+        else          return shared_type;
+    }
+    
+    void updateType(std::shared_ptr<ExpType> type){
+        uses_weak = type.get() == this;
+        
+        if(uses_weak) weak_type   = type, shared_type.reset();
+        else          shared_type = type, weak_type.reset();
+    }
     
     virtual bool operator==(const ExpType& exp_type) const override {
         if(exp_type.kind == ExpTypeKind::NilKind)
@@ -84,20 +102,44 @@ struct ArrayExpType : public ExpType {
     void print() const override {}
 };
 
-struct RecordExpTypeField {
+class RecordExpTypeField {
+    bool uses_weak;
+    std::weak_ptr<ExpType> weak_type;
+    std::shared_ptr<ExpType> shared_type;
+
+public:
     std::string name;
-    std::shared_ptr<ExpType> type; // TODO: Memory leak, not using weak references to itself
     
-    RecordExpTypeField(std::string name)                                : name(name), type() {}
-    RecordExpTypeField(std::string name, std::shared_ptr<ExpType> type) : name(name), type(type) {}
-}; 
+    std::shared_ptr<ExpType> getType() const {
+        if(uses_weak) return weak_type.lock();
+        else          return shared_type;
+    }
+    
+    RecordExpTypeField(std::string& name, std::shared_ptr<ExpType> type, bool uses_weak) : uses_weak(uses_weak), name(name) {
+        if(uses_weak) weak_type   = type;
+        else          shared_type = type;
+    }
+};
 
 struct RecordExpType : public ExpType {
     std::vector<RecordExpTypeField> fields;
-
+    
     RecordExpType()                                         : ExpType(ExpTypeKind::RecordKind) {}
     RecordExpType(std::vector<RecordExpTypeField>&  fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
     RecordExpType(std::vector<RecordExpTypeField>&& fields) : ExpType(ExpTypeKind::RecordKind), fields(fields) {}
+    
+    void pushField(std::string& name, std::shared_ptr<ExpType> type){
+        fields.push_back(RecordExpTypeField(name, type, type.get() == this));
+    }
+    
+    void updateField(std::size_t index, std::shared_ptr<ExpType> type){
+        if(index < 0 or index >= fields.size()){
+            // Internal error, invalid fields index
+            assert(false);
+        }
+        
+        fields[index] = RecordExpTypeField(fields[index].name, type, type.get() == this);
+    }
     
     virtual bool operator==(const ExpType& exp_type) const override {
         if(exp_type.kind == ExpTypeKind::NilKind)
