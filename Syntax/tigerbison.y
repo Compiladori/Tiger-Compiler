@@ -106,7 +106,13 @@ exp : INT					{ $$ = new IntExp($1, yylineno); }
 	| LET decs IN END		{ $$ = new LetExp($2, new UnitExp(yylineno), yylineno); }
 	| LET decs IN exp END	{ $$ = new LetExp($2, $4, yylineno); }
 	| LET decs IN exp PCOMA explist END  { $6 -> push_front($4); $$ = new LetExp($2, new SeqExp($6, yylineno), yylineno); }
-	| id CI exp CD OF exp { $$ = new ArrayExp($1, $3, $6, yylineno); }
+	| l_value CI exp CD OF exp { // Shift/reduce fix
+                                 auto simple_var = dynamic_cast<SimpleVar*>($1);
+                                 if(not simple_var){ yyerror("Expected simple var on array declaration"); }
+                                 string name = simple_var->id->name;
+                                 delete simple_var;
+                                 $$ = new ArrayExp(new Symbol(name), $3, $6, yylineno); 
+                               }
     | id LI rec_fields LD	{ $$ = new RecordExp($3, $1, yylineno); }
 	;
 explist: exp PCOMA explist	{ $3 -> push_front($1); $$ = $3; }

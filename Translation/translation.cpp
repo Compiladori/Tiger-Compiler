@@ -105,6 +105,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
             return AssociatedExpType(make_shared<TranslatedExp>(), var_entry->type);
         }
         // Error, undefined variable
+        
         assert(false);
     }
 
@@ -137,7 +138,8 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
             assert(false);
         }
 
-        return AssociatedExpType(make_shared<TranslatedExp>(), var_result.exp_type);
+        auto array_result = static_cast<ArrayExpType*>(var_result.exp_type.get());
+        return AssociatedExpType(make_shared<TranslatedExp>(), array_result->getType());
     }
 
     // Internal error, it should have matched some clause
@@ -227,7 +229,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                     // Error, operands' types must be between Int or String
                     assert(false);
                 }
-                return AssociatedExpType(make_shared<TranslatedExp>(), result_left.exp_type);
+                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
             case ast::Eq:
             case ast::Neq: {
@@ -235,7 +237,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                     // Error, different types on equality testing
                     assert(false);
                 }
-                return AssociatedExpType(make_shared<TranslatedExp>(), result_left.exp_type);
+                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
         }
 
@@ -306,6 +308,10 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         }
 
         auto last_result = transExpression(list_ptr->back().get());
+        for(auto it = list_ptr->begin(); it != list_ptr->end()--; it++){
+            transExpression(it->get());
+        }
+        
         return AssociatedExpType(make_shared<TranslatedExp>(), last_result.exp_type);
     }
 
@@ -366,8 +372,12 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             // Error, the for-hi should be int
             assert(false);
         }
-
+        
+        beginScope();
+        insertValueEntry(for_exp->var->name, make_unique<VarEntry>(lo_result.exp_type));
         transExpression(for_exp->body.get());
+        endScope();
+        
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
 
