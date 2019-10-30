@@ -11,7 +11,7 @@ class semantic_error : public std::exception {
 public:
         semantic_error(std::string msg, ast::Position pos) : info(msg), pos(pos) {}
 
-        // std::string getMessage() { return info + std::to_string(pos); }
+        std::string getMessage() { return info + " in line " + pos.to_string(); }
     };
 };
 

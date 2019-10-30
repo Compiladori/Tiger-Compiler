@@ -9,6 +9,7 @@
   #include "../AST/AST.h"
   #include "../Translation/translation.h"
   #include "../Escapes/escapes.h"
+  #include "../Utility/error.h"
   using namespace std;
 
   // stuff from flex that bison needs to know about:
@@ -153,9 +154,9 @@ args : exp COMA args		{ $3 -> push_front($1); $$ = $3; }
 	| exp					{ $$ = new ExpressionList($1); }
 	|						{ $$ = new ExpressionList(); }
 	;
-l_value : id				{ $$ = new SimpleVar($1); }
-	| l_value PTO id		{ $$ = new FieldVar($1, $3); }
-	| l_value CI exp CD		{ $$ = new SubscriptVar($1, $3); }
+l_value : id				{ $$ = new SimpleVar($1, yylineno); }
+	| l_value PTO id		{ $$ = new FieldVar($1, $3, yylineno); }
+	| l_value CI exp CD		{ $$ = new SubscriptVar($1, $3, yylineno); }
 	;
 
 %%
@@ -191,8 +192,8 @@ int main(int, char**) {
     auto result = T.translate(final_ast.get());
       
     // ...
-  } catch (exception& e) {
-    cout << "Catched an exception: " << e.what() << endl;
+  } catch (error::semantic_error& e) {
+    cout << "Catched an exception: " << e.getMessage() << endl;
   }
 }
 

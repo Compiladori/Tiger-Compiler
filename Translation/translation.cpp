@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include "translation.h"
 #include "../Utility/toposort.h"
+#include "../Utility/error.h"
 
 using namespace trans;
 
@@ -105,8 +106,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
             return AssociatedExpType(make_shared<TranslatedExp>(), var_entry->type);
         }
         // Error, undefined variable
-        
-        assert(false);
+        throw error::semantic_error("Undefined variable \"" + simple_var->id->name + "\"", var->pos);
     }
 
     if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
@@ -119,23 +119,23 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
                 }
             }
             // Error, id field doesn't exist
-            assert(false);
+            throw error::semantic_error("Field \"" + field_var->id->name + "\" doesn't exist" , var->pos);
         }
         // Error, expected record type
-        assert(false);
+        throw error::semantic_error("Expected record type" , var->pos);
     }
 
     if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
         auto var_result = transVariable(subscript_var->var.get());
         if(var_result.exp_type->kind != ExpTypeKind::ArrayKind){
             // Error, expected array type
-            assert(false);
+            throw error::semantic_error("Expected array type" , var->pos);
         }
 
         auto exp_result = transExpression(subscript_var->exp.get());
         if(exp_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, expected int type in array index
-            assert(false);
+            throw error::semantic_error("Expected int type in array index", var->pos);
         }
 
         auto array_result = static_cast<ArrayExpType*>(var_result.exp_type.get());
@@ -173,7 +173,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         if(auto fun_entry = dynamic_cast<FunEntry*>(env_entry)){
             if(fun_entry->formals.size() != call_exp->exp_list->size()){
                 // Error, function call with a different number of arguments than the required ones
-                assert(false);
+                throw error::semantic_error("Function \"" + call_exp->func->name + "\" called with a different number of arguments than the required ones", exp->pos);
             }
 
             for(std::size_t index = 0; index < fun_entry->formals.size(); index++){
@@ -184,14 +184,14 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
                 if(*param_type != *param_result.exp_type){
                     // Error, the argument type doesn't match its expression type
-                    assert(false);
+                    throw error::semantic_error("Argument number " + std::to_string(index) + " has an unexpected type", exp->pos);
                 }
             }
 
             return AssociatedExpType(make_shared<TranslatedExp>(), fun_entry->result);
         }
         // Error, the function wasn't declared in this scope
-        assert(false);
+        throw error::semantic_error("Function \"" + call_exp->func->name + "\" wasn't declared in this scope", exp->pos);
     }
 
     if(auto op_exp = dynamic_cast<ast::OpExp*>(exp)){
@@ -206,11 +206,12 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             case ast::Divide: {
                 if(result_left.exp_type->kind != ExpTypeKind::IntKind){
                     // Error, integer required on the left
-                    assert(false);
+                    throw error::semantic_error("Operand on the left isn't an integer", exp->pos);
                 }
                 if(result_right.exp_type->kind != ExpTypeKind::IntKind){
                     // Error, integer required on the right
-                    assert(false);
+                    throw error::semantic_error("Operand on the right isn't an integer", exp->pos);
+
                 }
                 return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
@@ -223,11 +224,11 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
                 if(left_kind != right_kind){
                     // Error, operands' type kinds must be the same
-                    assert(false);
+                    throw error::semantic_error("Operands have different type", exp->pos);
                 }
                 if(left_kind != ExpTypeKind::IntKind and left_kind != ExpTypeKind::StringKind){
                     // Error, operands' types must be between Int or String
-                    assert(false);
+                    throw error::semantic_error("Operands must have type Int or String", exp->pos);
                 }
                 return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
@@ -235,7 +236,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             case ast::Neq: {
                 if(*result_left.exp_type != *result_right.exp_type){
                     // Error, different types on equality testing
-                    assert(false);
+                    throw error::semantic_error("Operands must have the same type", exp->pos);
                 }
                 return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
             }
@@ -250,19 +251,19 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             auto record_exp_type = dynamic_cast<RecordExpType*>(type_entry->type.get());
             if (not record_exp_type){
                 // Error, record type is undefined
-                assert(false);
+                throw error::semantic_error("Record type \"" + record_exp->type_id->name + "\" undefined" , exp->pos);
             }
 
             if(record_exp_type->fields.size() != record_exp->fields->size()){
                 // Error, different number of fields
-                assert(false);
+                throw error::semantic_error("Wrong number of fields for record \"" + record_exp->type_id->name + "\"" , exp->pos);
             }
             
             std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
             for(const auto& field : *record_exp->fields){
                 if(declared_fields.count(*field->id)){
                     // Error, duplicated field name
-                    assert(false);
+                    throw error::semantic_error("Field \"" + field->id->name + "\" is duplicated" , exp->pos);
                 }
 
                 declared_fields.insert(*field->id);
@@ -281,14 +282,14 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 auto index = getIndex(*field->id);
                 if(index < 0){
                     // Error, non existent field
-                    assert(false);
+                    throw error::semantic_error("Field \"" + field->id->name + "\" doesn't exist" , exp->pos);
                 }
 
                 auto field_type = transExpression(field->exp.get());
                 
                 if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
                     // Error, field type doesn't match
-                    assert(false);
+                    throw error::semantic_error("Type of \"" + field->id->name + "\" doesn't match its definition" , exp->pos);
                 }
             }
 
@@ -296,7 +297,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         }
 
         // Error, record type was not defined
-        assert(false);
+        throw error::semantic_error("Record \"" + record_exp->type_id->name + "\" wasn't defined in this scope" , exp->pos);
     }
 
     if(auto seq_exp = dynamic_cast<ast::SeqExp*>(exp)){
@@ -321,7 +322,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
         if(*var_result.exp_type != *exp_result.exp_type){
             // Error, variable's type is different than the expression's type
-            assert(false);
+            throw error::semantic_error("Variable's type is different than the expression's type" , exp->pos);
         }
 
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
@@ -332,7 +333,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
         if(test_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the if-test should be int
-            assert(false);
+            throw error::semantic_error("The expression evaluated in the if clause must be an int" , exp->pos);
         }
 
         auto then_result = transExpression(if_exp->then.get());
@@ -341,7 +342,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
             if(*then_result.exp_type != *otherwise_result.exp_type){
                 // Error, then and else clauses must be of the same type
-                assert(false);
+                throw error::semantic_error("Then and Else clauses must be of the same type" , exp->pos);
             }
         }
 
@@ -353,7 +354,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
         if(test_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the while-test should be int
-            assert(false);
+            throw error::semantic_error("The expression evaluated in the while condition must be an int" , exp->pos);
         }
 
         transExpression(while_exp->body.get());
@@ -364,13 +365,13 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         auto lo_result = transExpression(for_exp->lo.get());
         if(lo_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the for-lo should be int
-            assert(false);
+            throw error::semantic_error("Initialization value (low) in for loop must be an int" , exp->pos);
         }
 
         auto hi_result = transExpression(for_exp->hi.get());
         if(hi_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the for-hi should be int
-            assert(false);
+            throw error::semantic_error("Final value (high) in for loop must be an int" , exp->pos);
         }
         
         beginScope();
@@ -401,26 +402,26 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             auto array_type = dynamic_cast<ArrayExpType*>(type_entry->type.get());
             if(not array_type){
                 // Error, array type was not declared in this scope
-                assert(false);
+                throw error::semantic_error("Array type \"" + array_exp->ty->name + "\" wasn't declared in this scope" , exp->pos);
             }
             
             auto size_result = transExpression(array_exp->size.get());
             if(size_result.exp_type->kind != ExpTypeKind::IntKind){
                 // Error, array's size MUST be an int
-                assert(false);
+                throw error::semantic_error("Array's size must be an int" , exp->pos);
             }
 
             auto init_result = transExpression(array_exp->init.get());
             if(*init_result.exp_type != *array_type->getType()){
                 // Error, array type MUST match with its initialization's type
-                assert(false);
+                throw error::semantic_error("Array type must match with its initialization type" , exp->pos);
             }
 
             return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
         }
         
         // Error, array type was not declared in this scope
-        assert(false);
+        throw error::semantic_error("Array type \"" + array_exp->ty->name + "\" wasn't declared in this scope" , exp->pos);
     }
 
     // Internal error, it should have matched some clause
@@ -448,7 +449,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             auto type_entry = getTypeEntry(*var_dec->type_id);
             if(not type_entry){
                 // Error, type_id wasn't declared in this scope
-                assert(false);
+                assert(false); // ...........................................................................
             }
 
             auto var_type = type_entry->type.get();

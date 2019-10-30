@@ -73,6 +73,7 @@ struct Position {
     int pos;
 
     Position (int pos) : pos(pos) {}
+    std::string to_string() { return std::to_string(pos); }
     void print() const { std::cout << pos; }
 };
 
@@ -119,13 +120,15 @@ struct ArrayType : public Type {
  * **/
 struct Variable {
     virtual ~Variable() {}
+    Position pos;
+    Variable(Position pos) : pos(pos) {}
     virtual void print() const = 0;
 };
 
 struct SimpleVar : public Variable {
     std::unique_ptr<Symbol> id;
-
-    SimpleVar (Symbol *id) : id(id) {}
+    
+    SimpleVar (Symbol *id, Position pos) : Variable(pos), id(id) {}
     void print() const;
 };
 
@@ -133,7 +136,7 @@ struct FieldVar : public Variable {
     std::unique_ptr<Variable> var;
     std::unique_ptr<Symbol> id;
 
-    FieldVar (Variable *var, Symbol *id) : var(var), id(id) {}
+    FieldVar (Variable *var, Symbol *id, Position pos) : Variable(pos), var(var), id(id) {}
     void print() const;
 };
 
@@ -141,7 +144,7 @@ struct SubscriptVar : public Variable {
     std::unique_ptr<Variable> var;
     std::unique_ptr<Expression> exp;
 
-    SubscriptVar (Variable *var, Expression *exp) : var(var), exp(exp) {}
+    SubscriptVar (Variable *var, Expression *exp, Position pos) : Variable(pos), var(var), exp(exp) {}
     void print() const;
 };
 
