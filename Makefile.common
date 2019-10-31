@@ -6,6 +6,10 @@ AST_HDR = AST.h
 AST_SRC = AST.cpp
 AST_OBJ = AST.o
 
+IRT_HDR = IRT.h
+IRT_SRC = IRT.cpp
+IRT_OBJ = IRT.o
+
 ESCAPES_HDR = escapes.h         \
               ../AST/AST.h
 ESCAPES_SRC = escapes.cpp
@@ -25,7 +29,8 @@ SYNTAX_OBJ = lex.yy.o tigerbison.tab.o
 
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
+IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
 ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
 SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
 
-PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR) $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)
+PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR) $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR) $(IRT_OBJ_DIR)

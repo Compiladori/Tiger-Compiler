@@ -14,6 +14,8 @@ myprogram: all
 all:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
+	$(MAKE) -C IRT depend
+	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
 	$(MAKE) -C Syntax all
@@ -21,9 +23,9 @@ all:
 	$(MAKE) -C Translation all
 
 
-# Do not delete executables in `userland` in case there is no cross-compiler.
 clean:
 		$(MAKE) -C AST clean
+		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
 		$(MAKE) -C Syntax clean
 		$(MAKE) -C Translation clean
