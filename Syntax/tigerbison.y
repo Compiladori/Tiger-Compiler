@@ -19,7 +19,7 @@
   extern int yylineno;
 
   void yyerror(const char *s);
-  
+
   ast::Expression* ast_raw_ptr;
 %}
 
@@ -112,7 +112,7 @@ exp : INT					{ $$ = new IntExp($1, yylineno); }
                                  if(not simple_var){ yyerror("Expected simple var on array declaration"); }
                                  string name = simple_var->id->name;
                                  delete simple_var;
-                                 $$ = new ArrayExp(new Symbol(name), $3, $6, yylineno); 
+                                 $$ = new ArrayExp(new Symbol(name), $3, $6, yylineno);
                                }
     | id LI rec_fields LD	{ $$ = new RecordExp($3, $1, yylineno); }
 	;
@@ -127,13 +127,13 @@ rec_fields : id IGUAL exp COMA rec_fields { $5 -> push_front(new RecordField($1,
 decs : dec decs		{ $2 -> frontAppendDeclaration($1); $$ = $2;  }
 	|						{ $$ = new GroupedDeclarations(); }
 	;
-dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4); }
+dec : TYPE id IGUAL ty		{ $$ = new TypeDec($2, $4, yylineno); }
 	| vardec				{ $$ = $1; }
 	| fundec				{ $$ = $1; }
 	;
-ty : id						{ $$ = new NameType($1); }
-	| LI tyflds LD			{ $$ = new RecordType($2); }
-	| ARRAY OF id			{ $$ = new ArrayType($3); }
+ty : id						{ $$ = new NameType($1, yylineno); }
+	| LI tyflds LD			{ $$ = new RecordType($2, yylineno); }
+	| ARRAY OF id			{ $$ = new ArrayType($3, yylineno); }
 	;
 id : ID						{ $$ = new Symbol($1); }
 	;
@@ -141,12 +141,12 @@ id : ID						{ $$ = new Symbol($1); }
 	| tyfield				   { $$ = new TypeFieldList($1); }
 	|						 { $$ = new TypeFieldList();   }
 	;
-vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, $4); }
-	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, $4, $6); }
+vardec : VAR id DOSPIG exp	{ $$ = new VarDec($2, $4, yylineno); }
+	| VAR id DOSP id DOSPIG exp { $$ = new VarDec($2, $4, $6, yylineno); }
 	;
-fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7); }
+fundec : FUNCTION id PI tyflds PD IGUAL exp { $$ = new FunDec($2, $4, $7, yylineno); }
 	| FUNCTION id PI tyflds PD DOSP id IGUAL exp
-							{ $$ = new FunDec($2, $4, $7, $9); }
+							{ $$ = new FunDec($2, $4, $7, $9, yylineno); }
 	;
 tyfield : id DOSP id		{ $$ = new TypeField($1, $3); }
 	;
@@ -174,23 +174,23 @@ int main(int, char**) {
 
   // Parse through the input:
   yyparse();
-  
+
   // TODO: Separate into a different main file
   try {
     unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
-    
+
     // Print the final built AST
     final_ast->print();
     cout << endl;
-    
+
     // Set variable escapes
     esc::Escapator E;
     E.setEscapes(final_ast.get());
-    
+
     // Semantic check
     trans::Translator T;
     auto result = T.translate(final_ast.get());
-      
+
     // ...
   } catch (error::semantic_error& e) {
     cout << "Catched an exception: " << e.getMessage() << endl;

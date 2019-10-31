@@ -15,12 +15,10 @@ std::string operation_name[] = { [Operation::Plus] = "+",
                                  [Operation::Neq] = "!=",
                                  [Operation::Lt] = "<",
                                  [Operation::Le] = "<=" ,
-                                 [Operation::Gt] = ">", 
+                                 [Operation::Gt] = ">",
                                  [Operation::Ge] = ">=" };
-                                 
+
 std::ostream& operator<<(std::ostream& os, const Operation& op){ return os << operation_name[op]; }
-
-
 
 /** Types **/
 void TypeField::print()     const { cout << "TypeField ("; id -> print(); cout <<") ("; type_id -> print(); cout << ")"; }
@@ -81,15 +79,11 @@ void GroupedDeclarations::frontAppendDeclaration(Declaration* dec){
     } else {
         // Join last group if their types match
         auto p = this->front()->front().get();
-        
+
         bool matchTypeDec = util::testSameDerivatedTypes<Declaration*, TypeDec*>(p, dec);
         bool matchFunDec  = util::testSameDerivatedTypes<Declaration*, FunDec*>(p, dec);
-        
+
         if(matchTypeDec or matchFunDec) this->front()->push_front(dec);
         else                            this->push_front(new DeclarationList(dec));
     }
 }
-
-
-
-

@@ -1,3 +1,6 @@
-let 
-    var a := b + 1
+let
+    type r2 = {x : int}
+    type r1 = {x : int}
+    var b := r2 { x = 1 }
+    var a : r1 := b
 in 0 end

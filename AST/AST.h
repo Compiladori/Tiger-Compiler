@@ -81,6 +81,8 @@ struct Position {
  * Types
  * **/
 struct Type {
+    Position pos;
+    Type(Position pos) : pos(pos) {}
     virtual ~Type() {}
     virtual void print() const = 0;
 };
@@ -88,7 +90,7 @@ struct Type {
 struct TypeField {
     std::unique_ptr<Symbol> id, type_id;
     bool escape = false;
-    
+
     TypeField (Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
     void print() const;
 };
@@ -97,21 +99,21 @@ struct TypeField {
 struct NameType : public Type {
     std::unique_ptr<Symbol> type_id;
 
-    NameType (Symbol *type_id) : type_id(type_id) {}
+    NameType (Symbol *type_id, Position pos) : type_id(type_id), Type(pos) {}
     void print() const;
 };
 
 struct RecordType : public Type {
     std::unique_ptr<TypeFieldList> tyfields;
 
-    RecordType (TypeFieldList *tyfields) : tyfields(tyfields) {}
+    RecordType (TypeFieldList *tyfields, Position pos) : tyfields(tyfields), Type(pos) {}
     void print() const;
 };
 
 struct ArrayType : public Type {
     std::unique_ptr<Symbol> type_id;
 
-    ArrayType (Symbol *type_id) : type_id(type_id) {}
+    ArrayType (Symbol *type_id, Position pos) : type_id(type_id), Type(pos) {}
     void print() const;
 };
 
@@ -127,7 +129,7 @@ struct Variable {
 
 struct SimpleVar : public Variable {
     std::unique_ptr<Symbol> id;
-    
+
     SimpleVar (Symbol *id, Position pos) : Variable(pos), id(id) {}
     void print() const;
 };
@@ -288,6 +290,8 @@ struct ArrayExp : public Expression {
  * **/
 struct Declaration {
     virtual ~Declaration() {}
+    Position pos;
+    Declaration(Position pos) : pos(pos) {}
     virtual void print() const = 0;
 };
 
@@ -297,8 +301,8 @@ struct VarDec : public Declaration {
     std::unique_ptr<Expression> exp;
     bool escape = false;
 
-    VarDec(Symbol *id, Expression *exp) : id(id), type_id(), exp(exp) {}
-    VarDec(Symbol *id, Symbol *type_id, Expression *exp) : id(id), type_id(type_id), exp(exp) {}
+    VarDec(Symbol *id, Expression *exp, Position pos) : Declaration(pos), id(id), type_id(), exp(exp) {}
+    VarDec(Symbol *id, Symbol *type_id, Expression *exp, Position pos) : Declaration(pos), id(id), type_id(type_id), exp(exp) {}
 
     void print() const;
 };
@@ -307,7 +311,7 @@ struct TypeDec : public Declaration {
     std::unique_ptr<Symbol> type_id;
     std::unique_ptr<Type> ty;
 
-    TypeDec(Symbol *type_id, Type *ty) : type_id(type_id), ty(ty) {}
+    TypeDec(Symbol *type_id, Type *ty, Position pos) : Declaration(pos), type_id(type_id), ty(ty) {}
     void print() const;
 };
 
@@ -317,8 +321,8 @@ struct FunDec : public Declaration {
     std::unique_ptr<Symbol> type_id;
     std::unique_ptr<Expression> exp;
 
-    FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp) : id(id), tyfields(tyfields), type_id(), exp(exp) {}
-    FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp) : id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
+    FunDec(Symbol *id, TypeFieldList *tyfields, Expression *exp, Position pos) : Declaration(pos), id(id), tyfields(tyfields), type_id(), exp(exp) {}
+    FunDec(Symbol *id, TypeFieldList *tyfields, Symbol *type_id, Expression *exp, Position pos) : Declaration(pos), id(id), tyfields(tyfields), type_id(type_id), exp(exp) {}
     void print() const;
 };
 

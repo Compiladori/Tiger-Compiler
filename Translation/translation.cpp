@@ -37,7 +37,7 @@ void Translator::load_initial_values(){
 
     // Runtime functions
     using type_vector = std::vector<std::shared_ptr<ExpType>>;
-    
+
     insertValueEntry("print",     make_unique<FunEntry>(type_vector{TString}, TUnit), true);
     insertValueEntry("flush",     make_unique<FunEntry>(type_vector{}, TUnit), true);
     insertValueEntry("getchar",   make_unique<FunEntry>(type_vector{}, TString), true);
@@ -258,7 +258,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 // Error, different number of fields
                 throw error::semantic_error("Wrong number of fields for record \"" + record_exp->type_id->name + "\"" , exp->pos);
             }
-            
+
             std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
             for(const auto& field : *record_exp->fields){
                 if(declared_fields.count(*field->id)){
@@ -267,7 +267,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 }
 
                 declared_fields.insert(*field->id);
-                
+
                 auto getIndex = [&](const ast::Symbol& symbol){
                     int index = 0;
                     for(const auto& field : record_exp_type->fields){
@@ -286,7 +286,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 }
 
                 auto field_type = transExpression(field->exp.get());
-                
+
                 if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
                     // Error, field type doesn't match
                     throw error::semantic_error("Type of \"" + field->id->name + "\" doesn't match its definition" , exp->pos);
@@ -312,7 +312,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         for(auto it = list_ptr->begin(); it != list_ptr->end()--; it++){
             transExpression(it->get());
         }
-        
+
         return AssociatedExpType(make_shared<TranslatedExp>(), last_result.exp_type);
     }
 
@@ -373,12 +373,12 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
             // Error, the for-hi should be int
             throw error::semantic_error("Final value (high) in for loop must be an int" , exp->pos);
         }
-        
+
         beginScope();
         insertValueEntry(for_exp->var->name, make_unique<VarEntry>(lo_result.exp_type));
         transExpression(for_exp->body.get());
         endScope();
-        
+
         return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
     }
 
@@ -404,7 +404,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
                 // Error, array type was not declared in this scope
                 throw error::semantic_error("Array type \"" + array_exp->ty->name + "\" wasn't declared in this scope" , exp->pos);
             }
-            
+
             auto size_result = transExpression(array_exp->size.get());
             if(size_result.exp_type->kind != ExpTypeKind::IntKind){
                 // Error, array's size MUST be an int
@@ -419,7 +419,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
             return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
         }
-        
+
         // Error, array type was not declared in this scope
         throw error::semantic_error("Array type \"" + array_exp->ty->name + "\" wasn't declared in this scope" , exp->pos);
     }
@@ -449,13 +449,13 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             auto type_entry = getTypeEntry(*var_dec->type_id);
             if(not type_entry){
                 // Error, type_id wasn't declared in this scope
-                assert(false); // ...........................................................................
+                throw error::semantic_error("Type \"" + var_dec->type_id->name + "\" wasn't declared in this scope" , var_dec->pos);
             }
 
             auto var_type = type_entry->type.get();
             if(*var_type != *result.exp_type) {
                 // Error, type_id was explicitly specified but doesn't match the expression type
-                assert(false);
+                throw error::semantic_error("Type \"" + var_dec->type_id->name + "\" was explicitly specified but doesn't match the expression type", var_dec->pos);
             }
         }
 
@@ -473,7 +473,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
 
             if(declared_functions.count(*fun_dec->id)){
                 // Error, this function was already defined in the same scope
-                assert(false);
+                throw error::semantic_error("Function \"" + fun_dec->id->name + "\" is already defined in this scope" , fun_dec->pos);
             }
 
             declared_functions.insert(*fun_dec->id);
@@ -485,28 +485,28 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 auto return_type_entry = getTypeEntry(*fun_dec->type_id);
                 if(not return_type_entry){
                     // Error, the function return type wasn't declared
-                    assert(false);
+                    throw error::semantic_error("Function return type \"" + fun_dec->type_id->name + "\" wasn't declared" , fun_dec->pos);
                 }
 
                 return_type = return_type_entry->type;
             }
 
             unique_ptr<FunEntry> fun_entry = make_unique<FunEntry>(return_type);
-            
+
             std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_arguments;
             for(const auto& type_field : *fun_dec->tyfields){
                 if(declared_arguments.count(*type_field->id)){
                     // Error, function arguments must have different names
-                    assert(false);
+                    throw error::semantic_error("Function arguments must have different names " , fun_dec->pos);
                 }
-                
+
                 declared_arguments.insert(*type_field->id);
-                
+
                 if(auto param_type_entry = getTypeEntry(*type_field->type_id)){
                     fun_entry->formals.push_back(param_type_entry->type);
                 } else {
                     // Error, function parameter's type wasn't declared
-                    assert(false);
+                    throw error::semantic_error("Type of parameter \"" + type_field->id->name + "\" wasn't declared" , fun_dec->pos);
                 }
             }
 
@@ -516,27 +516,27 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
         // Process each one of the function bodies, checking if the return type is actually correct
         for(const auto& dec : *dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
-            
+
             if(auto fun_entry = dynamic_cast<FunEntry*>(getValueEntry(*fun_dec->id))){
                 beginScope();
-                
+
                 // Augment current scope with function arguments as new variables
                 for(const auto& type_field : *fun_dec->tyfields){
                     auto type_entry = getTypeEntry(*type_field->type_id);
                     if(not type_entry){
                         // Error, argument type not declared in this scope
-                        assert(false);
+                        throw error::semantic_error("Type of argument \"" + type_field->type_id->name + "\" wasn't declared" , fun_dec->pos);
                     }
-                    
+
                     insertValueEntry(*type_field->id, make_unique<VarEntry>(type_entry->type));
                 }
-                
+
                 auto body_result = transExpression(fun_dec->exp.get());
                 if(*fun_entry->result != *body_result.exp_type){
                     // Error, function return type doesn't match its body type
-                    assert(false);
+                    throw error::semantic_error("Function return type \"" + kind_name[fun_entry->result->kind] + "\" doesn't match its body type \"" + kind_name[body_result.exp_type->kind] + "\"" , fun_dec->pos);
                 }
-                
+
                 endScope();
             } else {
                 // Internal error, function's entry got somehow overriden or deleted
@@ -557,18 +557,18 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
 
             if(symbol_to_ast_type.count(*type_dec->type_id)){
                 // Error, this type was already defined in the same scope
-                assert(false);
+                throw error::semantic_error("Type \"" + type_dec->type_id->name + "\" is already defined in this scope" , type_dec->pos);
             }
 
             symbol_to_ast_type[*type_dec->type_id] = type_dec->ty.get();
 
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
                 shared_ptr<RecordExpType> record_exp_type = make_shared<RecordExpType>();
-                
+
                 for(const auto& type_field : *record_type->tyfields){
                     record_exp_type->pushField(type_field->id->name, nullptr);
-                } 
-                
+                }
+
                 insertTypeEntry(*type_dec->type_id, make_unique<TypeEntry>(record_exp_type));
             }
 
@@ -587,10 +587,10 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             }
         }
         auto sorted_result = toposorter.sort();
-        
+
         if(not sorted_result.second.empty()){
             // Error, ilegal cycle detected in this scope
-            assert(false);
+            throw error::semantic_error("Ilegal cycle detected in the scope starting" , first_dec->pos);
         }
 
         for(const auto& symbol : sorted_result.first){
@@ -612,9 +612,9 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                     auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
                     if(not field_type_entry){
                         // Error, record type not defined in this scope
-                        assert(false);
+                        throw error::semantic_error("Field record type \"" + kind_name[field_type_entry->type->kind] + "\" isn't defined in the scope" , type_dec->pos);
                     }
-                    
+
                     record_exptype->updateField(i, field_type_entry->type);
                 }
             }
@@ -622,10 +622,10 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
             if(auto array_type = dynamic_cast<ast::ArrayType*>(type_dec->ty.get())){
                 auto array_exptype = static_cast<ArrayExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
                 auto array_type_entry = getTypeEntry(*array_type->type_id);
-                
+
                 if(not array_type_entry){
                     // Error, array type wasn't declared in this scope
-                    assert(false);
+                    throw error::semantic_error("Array type \"" + array_type->type_id->name + "\" wasn't declared in the scope" , type_dec->pos);
                 }
 
                 array_exptype->updateType(array_type_entry->type);
@@ -646,7 +646,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
         }
 
         // Error, type_id wasn't declared in this scope
-        assert(false);
+        throw error::semantic_error("Type \"" + name_type->type_id->name + "\" wasn't declared in the scope" , type->pos);
     }
 
     if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
@@ -656,7 +656,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
         for(const auto& type_field : *record_type->tyfields){
             if(declared_fields.count(*type_field->id)){
                 // Error, duplicated field declaration
-                assert(false);
+                throw error::semantic_error("Duplicated field declaration for \"" + type_field->id->name + "\"" , type->pos);
             }
             declared_fields.insert(*type_field->id);
 
@@ -664,7 +664,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
                 new_record_type->pushField(type_field->id->name, type_entry->type);
             } else {
                 // Error, field type_id wasn't declared in this scope
-                assert(false);
+                throw error::semantic_error("Field type \"" + type_field->type_id->name + "\" wasn't declared in the scope" , type->pos);
             }
         }
 
@@ -677,7 +677,7 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
         }
 
         // Error, array's type_id wasn't declared in this scope
-        assert(false);
+        throw error::semantic_error("Array's type \"" + array_type->type_id->name + "\" wasn't declared in the scope" , type->pos);
     }
 
     // Internal error, it should have matched some clause
