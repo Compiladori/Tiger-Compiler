@@ -27,10 +27,21 @@ TRANS_OBJ = translation.o
 
 SYNTAX_OBJ = lex.yy.o tigerbison.tab.o
 
+
+FRAME_HDR = ../AST/AST.h              \
+            temp.h                    \
+            frame.h
+FRAME_SRC = temp.cpp  frame.cpp
+FRAME_OBJ = temp.o frame.o
+
+
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
 IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
 ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
 SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
+FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
 
-PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR) $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR) $(IRT_OBJ_DIR)
+PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
+              $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
+              $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)

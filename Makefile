@@ -21,6 +21,9 @@ all:
 	$(MAKE) -C Syntax all
 	$(MAKE) -C Translation depend
 	$(MAKE) -C Translation all
+	$(MAKE) -C Frame depend
+	$(MAKE) -C Frame all
+
 
 
 clean:
@@ -29,5 +32,6 @@ clean:
 		$(MAKE) -C Escapes clean
 		$(MAKE) -C Syntax clean
 		$(MAKE) -C Translation clean
+		$(MAKE) -C Frame clean
 
 include Makefile.common
