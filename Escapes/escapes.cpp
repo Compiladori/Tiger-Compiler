@@ -10,7 +10,8 @@ using namespace esc;
  * **/
 // TODO: Replace assert() with custom error reporting
 
-using std::make_unique, std::unique_ptr;
+using std::make_unique;
+using std::unique_ptr;
 using std::move;
 
 void Escapator::setEscapes(ast::Expression* exp){

@@ -17,8 +17,10 @@ using namespace trans;
  * **/
 // TODO: Replace assert() with custom error reporting, including Position()
 
-using std::unique_ptr, std::make_unique;
-using std::shared_ptr, std::make_shared;
+using std::unique_ptr;
+using std::shared_ptr;
+using std::make_unique;
+using std::make_shared;
 using std::move;
 
 AssociatedExpType Translator::translate(ast::Expression* exp){
