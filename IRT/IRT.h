@@ -1,6 +1,8 @@
 #ifndef __IRT_H__
 #define __IRT_H__
 
+#include <string>
+
 /***
  * Intermediate Representation Tree (IRT)
  *
@@ -9,8 +11,17 @@
  * Intermediate language to serve as a "bridge" between source languages and compiled languages
  * ***/
 
+/*
+ * TEMPORARY ONLY TO MAKE IT COMPILE UNTIL THE TEMP MODULE IS READY
+ * */
+#define temp_label std::string
+#define temp_temporary int
+
 namespace irt {
 
+/**
+ * Operations
+ * **/
 enum BinaryOperation {Plus, Minus, Mul, Div, And, Or, Lshift, Rshift, Arshift, Xor};
 enum RelationOperation {Eq, Ne, Lt, Gt, Le, Ge, Ult, Ule, Ugt, Uge};
 
@@ -22,14 +33,32 @@ enum RelationOperation {Eq, Ne, Lt, Gt, Le, Ge, Ult, Ule, Ugt, Uge};
  * **/
 struct Statement {
     virtual ~Statement() {}
-    virtual void print() = 0;
+    virtual void print() const = 0;
 };
-struct Seq   : public Statement { void print() const; };
-struct Label : public Statement { void print() const; };
-struct Jump  : public Statement { void print() const; };
-struct Cjump : public Statement { void print() const; };
-struct Move  : public Statement { void print() const; };
-struct Exp   : public Statement { void print() const; };
+
+struct Seq   : public Statement {
+    void print() const;
+};
+
+struct Label : public Statement {
+    void print() const;
+};
+
+struct Jump  : public Statement {
+    void print() const;
+};
+
+struct Cjump : public Statement {
+    void print() const;
+};
+
+struct Move  : public Statement {
+    void print() const;
+};
+
+struct Exp   : public Statement {
+    void print() const;
+};
 
 
 /**
@@ -41,13 +70,40 @@ struct Expression {
     virtual ~Expression() {}
     virtual void print() const = 0;
 };
-struct BinOp : public Expression { void print() const; };
-struct Mem   : public Expression { void print() const; };
-struct Temp  : public Expression { void print() const; };
-struct Eseq  : public Expression { void print() const; };
-struct Name  : public Expression { void print() const; };
-struct Const : public Expression { void print() const; };
-struct Call  : public Expression { void print() const; };
+
+struct BinOp : public Expression {
+    void print() const;
+};
+
+struct Mem   : public Expression {
+    void print() const;
+};
+
+struct Temp  : public Expression {
+    temp_temporary t;
+    Temp(temp_temporary t) : t(t) {}
+    void print() const;
+};
+
+struct Eseq  : public Expression {
+    void print() const;
+};
+
+struct Name  : public Expression {
+    temp_label name;
+    Name(temp_label name) : name(name) {}
+    void print() const;
+};
+
+struct Const : public Expression {
+    int i;
+    Const(int i) : i(i) {}
+    void print() const;
+};
+
+struct Call  : public Expression {
+    void print() const;
+};
 
 
 

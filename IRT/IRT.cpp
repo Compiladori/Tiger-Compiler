@@ -5,20 +5,20 @@ using namespace irt;
 /**
  * Statements
  * **/
-void Seq::print()   const {};
-void Label::print() const {};
-void Jump::print()  const {};
-void Cjump::print() const {};
-void Move::print()  const {};
-void Exp::print()   const {};
+void Seq::print()   const override {};
+void Label::print() const override {};
+void Jump::print()  const override {};
+void Cjump::print() const override {};
+void Move::print()  const override {};
+void Exp::print()   const override {};
 
 /**
  * Expressions
  * **/
-void BinOp::print() const {};
-void Mem::print()   const {};
-void Temp::print()  const {};
-void Eseq::print()  const {};
-void Name::print()  const {};
-void Const::print() const {};
-void Call::print()  const {};
+void BinOp::print() const override {};
+void Mem::print()   const override {};
+void Temp::print()  const override {};
+void Eseq::print()  const override {};
+void Name::print()  const override {};
+void Const::print() const override {};
+void Call::print()  const override {};
