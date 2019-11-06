@@ -2,13 +2,13 @@
 #include <stack>
 #include "../AST/AST.h"
 #include "escapes.h"
+#include "../Utility/error.h"
 
 using namespace esc;
 
 /**
  * Escapator
  * **/
-// TODO: Replace assert() with custom error reporting
 
 using std::make_unique;
 using std::unique_ptr;
@@ -27,7 +27,7 @@ void Escapator::beginScope(){
 void Escapator::endScope(){
     if(escape_insertions.empty()){
         // Internal error, there is no scope to end
-        assert(false);
+        throw error::internal_error("there is no scope to end", __FILE__);
     }
 
     // Remove all registered scoped insertions
@@ -41,7 +41,7 @@ void Escapator::endScope(){
 void Escapator::insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry, bool ignore_scope){
     if((not ignore_scope) and escape_insertions.empty()){
         // Internal error, no scope was initialized
-        assert(false);
+        throw error::internal_error("no scope was initialized", __FILE__);
     }
     EscapeEnv[s].push(move(escape_entry));
     if(not ignore_scope){
@@ -138,13 +138,13 @@ void Escapator::traverseExpression(ast::Expression* exp){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in traverse expression function", __FILE__);
 }
 
 void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
     if(dec_list->empty()){
         // Internal error, declaration lists shouldn't be empty
-        assert(false);
+        throw error::internal_error("declaration list is empty", __FILE__);
     }
 
     auto first_dec = dec_list->begin()->get();
@@ -174,7 +174,7 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in traverse declarations function", __FILE__);    
 }
 
 void Escapator::traverseVariable(ast::Variable* var){
@@ -201,5 +201,5 @@ void Escapator::traverseVariable(ast::Variable* var){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in traverse variable function", __FILE__);
 }
