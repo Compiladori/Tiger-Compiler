@@ -15,7 +15,6 @@ using namespace trans;
 /**
  * Translator
  * **/
-// TODO: Replace assert() with custom error reporting, including Position()
 
 using std::unique_ptr, std::make_unique;
 using std::shared_ptr, std::make_shared;
@@ -59,7 +58,7 @@ void Translator::beginScope(){
 void Translator::endScope(){
     if(type_insertions.empty() or value_insertions.empty()){
         // Internal error, there is no scope to end
-        assert(false);
+        throw error::internal_error("there is no scope to end", __FILE__);    
     }
 
     // Remove all registered scoped insertions
@@ -79,7 +78,7 @@ void Translator::endScope(){
 void Translator::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry, bool ignore_scope){
     if((not ignore_scope) and type_insertions.empty()){
         // Internal error, no scope was initialized
-        assert(false);
+        throw error::internal_error("no scope was initialized", __FILE__);    
     }
     TypeEnv[s].push(move(type_entry));
     if(not ignore_scope){
@@ -90,7 +89,7 @@ void Translator::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry
 void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
     if((not ignore_scope) and value_insertions.empty()){
         // Internal error, no scope was initialized
-        assert(false);
+        throw error::internal_error("no scope was initialized", __FILE__);
     }
     ValueEnv[s].push(move(value_entry));
     if(not ignore_scope){
@@ -143,7 +142,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in translate variable function", __FILE__);
 }
 
 AssociatedExpType Translator::transExpression(ast::Expression* exp){
@@ -243,7 +242,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
         }
 
         // Internal error, the operator should have matched some clause of the switch
-        assert(false);
+        throw error::internal_error("the operator didn't match any of the switch in translate expression function", __FILE__);
     }
 
     if(auto record_exp = dynamic_cast<ast::RecordExp*>(exp)){
@@ -305,7 +304,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
 
         if(list_ptr->empty()){
             // Internal error, the expression list shouldn't be empty
-            assert(false);
+            throw error::internal_error("expression list is empty", __FILE__);
         }
 
         auto last_result = transExpression(list_ptr->back().get());
@@ -425,13 +424,13 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in translate expression function", __FILE__);
 }
 
 void Translator::transDeclarations(ast::DeclarationList* dec_list){
     if(dec_list->empty()){
         // Internal error, declaration lists shouldn't be empty
-        assert(false);
+        throw error::internal_error("declaration list is empty", __FILE__);
     }
 
     auto first_dec = dec_list->begin()->get();
@@ -439,7 +438,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
         if(dec_list->size() != 1){
             // Internal error, a declaration list of variables should only have one single element in it
-            assert(false);
+            throw error::internal_error("declaration list of variables should have only one element", __FILE__);
         }
 
         auto result = transExpression(var_dec->exp.get());
@@ -540,7 +539,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
                 endScope();
             } else {
                 // Internal error, function's entry got somehow overriden or deleted
-                assert(false);
+                throw error::internal_error("function's entry got somehow overriden or deleted", __FILE__);
             }
         }
 
@@ -636,7 +635,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in translate declarations function", __FILE__);
 }
 
 shared_ptr<ExpType> Translator::transType(ast::Type* type){
@@ -681,5 +680,5 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
     }
 
     // Internal error, it should have matched some clause
-    assert(false);
+    throw error::internal_error("didn't match any clause in the translate type function", __FILE__);
 }

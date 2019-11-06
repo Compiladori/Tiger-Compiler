@@ -1,5 +1,7 @@
 .PHONY: all clean depend
 
+OPTIONFLAGS = -std=c++17
+
 all: $(OBJ_FILES)
 
 clean:
@@ -8,7 +10,7 @@ clean:
 depend: $(SRC_FILES) $(HDR_FILES)
     # WARNING: this may break if the preprocessor outputs something, because
     # that would get mixed with the dependency output.
-	$(CXX) -MM $^ >Makefile.depends
+	$(CXX) $(OPTIONFLAGS) -MM $^ >Makefile.depends
 
 
 # Usage of `patsubst` is a hack that should be removed later.  The problem

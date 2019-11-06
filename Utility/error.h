@@ -13,6 +13,18 @@ public:
 
         std::string getMessage() { return info + " in line " + pos.to_string(); }
     };
+
+class internal_error : public std::exception {
+    std::string info;
+    const char* file;
+    
+public:
+        internal_error(std::string msg, const char* file) : info(msg), file(file) {}
+
+        std::string getMessage() { return "Internal error: " + info + "in file: " + file; }
+    };
+
+
 };
 
 #endif

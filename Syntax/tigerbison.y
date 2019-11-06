@@ -192,8 +192,10 @@ int main(int, char**) {
     auto result = T.translate(final_ast.get());
 
     // ...
-  } catch (error::semantic_error& e) {
-    cout << "Catched an exception: " << e.getMessage() << endl;
+  } catch (error::semantic_error& se) {
+    cout << se.getMessage() << endl;
+  } catch (error::internal_error& ie) { 
+    cout << ie.getMessage() << endl;
   }
 }
 
