@@ -4,10 +4,27 @@
 #include <vector>
 #include "../Frame/temp.h"
 
+/**
+ * List of pending label patches
+ * 
+ * Explanation starting in page 155 Appel C (2004)
+ * **/
 class PatchList {
-    std::vector<temp::Label> labels;
+    std::vector<temp::Label*> label_ptrs;
 public:
-    /** Interface here **/
+    PatchList() = default;
+    
+    void applyPatch(temp::Label label) const {
+        for(auto ptr : label_ptrs){
+            *ptr = label;
+        }
+    }
+    
+    std::size_t size() const { return label_ptrs.size(); }
+    
+    void push_back(temp::Label* label){ label_ptrs.push_back(label); }
+    void pop_back(){ label_ptrs.pop_back(); }
+    
 };
 
 #endif

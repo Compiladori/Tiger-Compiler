@@ -36,6 +36,7 @@
 *
 !*.*
 !*/
+!Makefile
 
 # Ignore flex and bison
 tiger.exe
