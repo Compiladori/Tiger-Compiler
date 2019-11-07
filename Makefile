@@ -23,7 +23,8 @@ all:
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
 	$(MAKE) -C Semantic all
-
+	$(MAKE) -C Translation depend
+	$(MAKE) -C Translation all
 
 clean:
 		$(MAKE) -C AST clean
@@ -32,5 +33,6 @@ clean:
 		$(MAKE) -C Syntax clean
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
+		$(MAKE) -C Translation clean
 
 include Makefile.common

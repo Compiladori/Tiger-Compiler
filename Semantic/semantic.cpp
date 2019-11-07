@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include "semantic.h"
 #include "../AST/AST.h"
-#include "../IRT/IRT.h"
+#include "../Translation/translatedExpression.h"
 #include "../Utility/toposort.h"
 #include "../Utility/error.h"
 

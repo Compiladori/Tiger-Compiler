@@ -15,6 +15,10 @@ ESCAPES_HDR = escapes.h         \
 ESCAPES_SRC = escapes.cpp
 ESCAPES_OBJ = escapes.o
 
+TRANS_HDR = ../IRT/IRT.h
+TRANS_SRC = translation.cpp
+TRANS_OBJ = translation.o
+
 SEMAN_HDR = environmentTable.h     \
             expressionType.h       \
             semantic.h             \
@@ -42,8 +46,9 @@ ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
 SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
 FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
 SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
+TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
               $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-              $(SEMAN_OBJ_DIR)
+              $(SEMAN_OBJ_DIR) $(TRANS_OBJ_DIR)

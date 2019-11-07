@@ -10,7 +10,8 @@
 
 
 namespace trans {
-    
+
+
 
 /**
  * Main translating class
@@ -20,6 +21,7 @@ class Translator {
 public:
     // More stuff
 };
+
 
 
 };
