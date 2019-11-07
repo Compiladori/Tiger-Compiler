@@ -10,6 +10,7 @@ namespace frame {
   using FrameAccessList = util::GenericList<FrameAccess>;
 
 class Frame {
+  const static int wordSize;
   temp::Label _name;
   FrameAccessList _formals;
   FrameAccessList _locals;

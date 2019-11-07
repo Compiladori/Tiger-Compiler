@@ -11,6 +11,8 @@
 using namespace frame;
 using namespace std;
 
+const static int wordSize = 8;
+
 Frame::Frame(temp::Label name, std::vector<bool> list){
   name = name;
   _offset = -16;
