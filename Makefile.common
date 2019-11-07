@@ -15,15 +15,15 @@ ESCAPES_HDR = escapes.h         \
 ESCAPES_SRC = escapes.cpp
 ESCAPES_OBJ = escapes.o
 
-TRANS_HDR = environmentTable.h        \
-            expressionType.h          \
-            translation.h             \
-            ../AST/AST.h              \
-            ../Utility/utility.h      \
+SEMAN_HDR = environmentTable.h     \
+            expressionType.h       \
+            semantic.h             \
+            ../AST/AST.h           \
+            ../Utility/utility.h   \
             ../Utility/toposort.h
 
-TRANS_SRC = translation.cpp
-TRANS_OBJ = translation.o
+SEMAN_SRC = semantic.cpp
+SEMAN_OBJ = semantic.o
 
 SYNTAX_OBJ = lex.yy.o tigerbison.tab.o
 
@@ -35,13 +35,15 @@ FRAME_SRC = temp.cpp  frame.cpp
 FRAME_OBJ = temp.o frame.o
 
 
-TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
+
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
 IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
 ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
 SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
 FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
+SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
 
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
-              $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)
+              $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
+              $(SEMAN_OBJ_DIR)

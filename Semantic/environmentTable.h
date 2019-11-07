@@ -9,7 +9,7 @@
 #include "../Utility/utility.h"
 #include "expressionType.h"
 
-namespace trans{
+namespace seman {
 
 
 /**

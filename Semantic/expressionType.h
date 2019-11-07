@@ -6,7 +6,7 @@
 #include <memory>
 #include <cassert>
 
-namespace trans{
+namespace seman {
 
 
 /**

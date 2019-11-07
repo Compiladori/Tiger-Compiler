@@ -10,7 +10,7 @@
 #include <memory>
 #include <stack>
 #include "../AST/AST.h"
-#include "../Translation/environmentTable.h"
+#include "../Semantic/environmentTable.h"
 
 namespace esc {
 
@@ -29,7 +29,7 @@ struct EscapeEntry {
  * Main escaping class
  * **/
 class Escapator {
-    trans::BindingTable<EscapeEntry> EscapeEnv;
+    seman::BindingTable<EscapeEntry> EscapeEnv;
     std::stack<std::stack<ast::Symbol>> escape_insertions;
     int current_depth = 0;
     

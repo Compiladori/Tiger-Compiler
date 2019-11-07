@@ -7,7 +7,7 @@
   #include <cstdio>
   #include <iostream>
   #include "../AST/AST.h"
-  #include "../Translation/translation.h"
+  #include "../Semantic/semantic.h"
   #include "../Escapes/escapes.h"
   #include "../Utility/error.h"
   using namespace std;
@@ -188,8 +188,8 @@ int main(int, char**) {
     E.setEscapes(final_ast.get());
 
     // Semantic check
-    trans::Translator T;
-    auto result = T.translate(final_ast.get());
+    seman::SemanticChecker SC;
+    auto result = SC.translate(final_ast.get());
 
     // ...
   } catch (error::semantic_error& se) {

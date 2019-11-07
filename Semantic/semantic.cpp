@@ -1,31 +1,31 @@
-#include "translation.h"
-#include "../AST/AST.h"
-
 #include <cassert>
 #include <stack>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include "translation.h"
+#include "semantic.h"
+#include "../AST/AST.h"
 #include "../Utility/toposort.h"
 #include "../Utility/error.h"
 
-using namespace trans;
+using namespace seman;
 
 /**
- * Translator
+ * SemanticChecker
  * **/
 
-using std::unique_ptr, std::make_unique;
-using std::shared_ptr, std::make_shared;
+using std::unique_ptr;
+using std::shared_ptr;
+using std::make_unique;
+using std::make_shared;
 using std::move;
 
-AssociatedExpType Translator::translate(ast::Expression* exp){
+AssociatedExpType SemanticChecker::translate(ast::Expression* exp){
     clear();
     return transExpression(exp);
 }
 
-void Translator::load_initial_values(){
+void SemanticChecker::load_initial_values(){
     auto TInt    = make_shared<IntExpType>();
     auto TString = make_shared<StringExpType>();
     auto TUnit   = make_shared<UnitExpType>();
@@ -49,13 +49,13 @@ void Translator::load_initial_values(){
     insertValueEntry("exit",      make_unique<FunEntry>(type_vector{TInt}, TUnit), true);
 }
 
-void Translator::beginScope(){
+void SemanticChecker::beginScope(){
     // Create a new scope without any initial insertions
     type_insertions.push(std::stack<ast::Symbol>());
     value_insertions.push(std::stack<ast::Symbol>());
 }
 
-void Translator::endScope(){
+void SemanticChecker::endScope(){
     if(type_insertions.empty() or value_insertions.empty()){
         // Internal error, there is no scope to end
         throw error::internal_error("there is no scope to end", __FILE__);    
@@ -75,7 +75,7 @@ void Translator::endScope(){
     value_insertions.pop();
 }
 
-void Translator::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry, bool ignore_scope){
+void SemanticChecker::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry, bool ignore_scope){
     if((not ignore_scope) and type_insertions.empty()){
         // Internal error, no scope was initialized
         throw error::internal_error("no scope was initialized", __FILE__);    
@@ -86,7 +86,7 @@ void Translator::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry
     }
 }
 
-void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
+void SemanticChecker::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_entry, bool ignore_scope){
     if((not ignore_scope) and value_insertions.empty()){
         // Internal error, no scope was initialized
         throw error::internal_error("no scope was initialized", __FILE__);
@@ -98,7 +98,7 @@ void Translator::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> value_en
 }
 
 
-AssociatedExpType Translator::transVariable(ast::Variable* var){
+AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
@@ -145,7 +145,7 @@ AssociatedExpType Translator::transVariable(ast::Variable* var){
     throw error::internal_error("didn't match any clause in translate variable function", __FILE__);
 }
 
-AssociatedExpType Translator::transExpression(ast::Expression* exp){
+AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         auto result = transVariable(var_exp->var.get());
         return AssociatedExpType(make_shared<TranslatedExp>(), result.exp_type);
@@ -427,7 +427,7 @@ AssociatedExpType Translator::transExpression(ast::Expression* exp){
     throw error::internal_error("didn't match any clause in translate expression function", __FILE__);
 }
 
-void Translator::transDeclarations(ast::DeclarationList* dec_list){
+void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
     if(dec_list->empty()){
         // Internal error, declaration lists shouldn't be empty
         throw error::internal_error("declaration list is empty", __FILE__);
@@ -638,7 +638,7 @@ void Translator::transDeclarations(ast::DeclarationList* dec_list){
     throw error::internal_error("didn't match any clause in translate declarations function", __FILE__);
 }
 
-shared_ptr<ExpType> Translator::transType(ast::Type* type){
+shared_ptr<ExpType> SemanticChecker::transType(ast::Type* type){
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         if(auto type_entry = getTypeEntry(*name_type->type_id)){
             return type_entry->type;
@@ -682,3 +682,4 @@ shared_ptr<ExpType> Translator::transType(ast::Type* type){
     // Internal error, it should have matched some clause
     throw error::internal_error("didn't match any clause in the translate type function", __FILE__);
 }
+

@@ -19,11 +19,10 @@ all:
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
 	$(MAKE) -C Syntax all
-	$(MAKE) -C Translation depend
-	$(MAKE) -C Translation all
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
-
+	$(MAKE) -C Semantic depend
+	$(MAKE) -C Semantic all
 
 
 clean:
@@ -31,7 +30,7 @@ clean:
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
 		$(MAKE) -C Syntax clean
-		$(MAKE) -C Translation clean
 		$(MAKE) -C Frame clean
+		$(MAKE) -C Semantic clean
 
 include Makefile.common

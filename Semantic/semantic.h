@@ -1,8 +1,8 @@
-#ifndef __TRANSLATION_H__
-#define __TRANSLATION_H__
+#ifndef __SEMANTIC_H__
+#define __SEMANTIC_H__
 
 /**
- * Translation and semantic check
+ * Generation of intermediate code and semantic check
  * 
  * Described in Chapter 5 Appel C (2004)
  * **/
@@ -13,7 +13,7 @@
 #include "environmentTable.h"
 #include "expressionType.h"
 
-namespace trans{
+namespace seman {
     
 /** 
  * Table entries
@@ -53,7 +53,7 @@ struct FunEntry : public ValueEntry {
 /**
  * Main translating class
  * **/
-class Translator {
+class SemanticChecker {
     BindingTable<TypeEntry> TypeEnv;
     BindingTable<ValueEntry> ValueEnv;
     
@@ -78,14 +78,14 @@ class Translator {
         load_initial_values();
     }
     
-    trans::AssociatedExpType transVariable(ast::Variable* var);
-    trans::AssociatedExpType transExpression(ast::Expression* exp);
+    seman::AssociatedExpType transVariable(ast::Variable* var);
+    seman::AssociatedExpType transExpression(ast::Expression* exp);
     void                     transDeclarations(ast::DeclarationList* dec_list);
     std::shared_ptr<ExpType> transType(ast::Type* type);
 public:
-    Translator() { load_initial_values(); }
+    SemanticChecker() { load_initial_values(); }
     
-    trans::AssociatedExpType translate(ast::Expression* exp);
+    seman::AssociatedExpType translate(ast::Expression* exp);
 };
 
 
