@@ -3,7 +3,9 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include "../Utility/utility.h"
+#include "../Frame/temp.h"
 
 /***
  * Intermediate Representation Tree (IRT)
@@ -14,11 +16,11 @@
  * ***/
 
 /*
- * TEMPORARY ONLY TO MAKE IT COMPILE UNTIL THE TEMP MODULE IS READY
+ * TODO: TEMPORARY ONLY TO MAKE IT COMPILE UNTIL THE TEMP MODULE IS READY
  * */
-using TempLabel = int;
-using LabelList = int;
-using Temporary = int;
+using TempLabel = temp::Label;
+using LabelList = std::vector<temp::Label>;
+using Temporary = temp::Temp;
 
 namespace irt {
 

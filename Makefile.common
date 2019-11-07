@@ -6,7 +6,8 @@ AST_HDR = AST.h
 AST_SRC = AST.cpp
 AST_OBJ = AST.o
 
-IRT_HDR = IRT.h
+IRT_HDR = IRT.h                 \
+		  ../Frame/temp.h
 IRT_SRC = IRT.cpp
 IRT_OBJ = IRT.o
 
@@ -15,9 +16,11 @@ ESCAPES_HDR = escapes.h         \
 ESCAPES_SRC = escapes.cpp
 ESCAPES_OBJ = escapes.o
 
-TRANS_HDR = ../IRT/IRT.h
-TRANS_SRC = translation.cpp
-TRANS_OBJ = translation.o
+TRANS_HDR = ../IRT/IRT.h            \
+			patchList.h             \
+			translatedExpression.h 
+TRANS_SRC = translation.cpp translatedExpression.cpp
+TRANS_OBJ = translation.o translatedExpression.o
 
 SEMAN_HDR = environmentTable.h     \
             expressionType.h       \
@@ -51,4 +54,4 @@ TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
               $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-              $(SEMAN_OBJ_DIR) $(TRANS_OBJ_DIR)
+              $(SEMAN_OBJ_DIR)

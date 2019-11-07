@@ -99,21 +99,21 @@ struct TypeField {
 struct NameType : public Type {
     std::unique_ptr<Symbol> type_id;
 
-    NameType (Symbol *type_id, Position pos) : type_id(type_id), Type(pos) {}
+    NameType (Symbol *type_id, Position pos) : Type(pos), type_id(type_id) {}
     void print() const;
 };
 
 struct RecordType : public Type {
     std::unique_ptr<TypeFieldList> tyfields;
 
-    RecordType (TypeFieldList *tyfields, Position pos) : tyfields(tyfields), Type(pos) {}
+    RecordType (TypeFieldList *tyfields, Position pos) : Type(pos), tyfields(tyfields) {}
     void print() const;
 };
 
 struct ArrayType : public Type {
     std::unique_ptr<Symbol> type_id;
 
-    ArrayType (Symbol *type_id, Position pos) : type_id(type_id), Type(pos) {}
+    ArrayType (Symbol *type_id, Position pos) : Type(pos), type_id(type_id) {}
     void print() const;
 };
 

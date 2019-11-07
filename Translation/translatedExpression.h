@@ -2,17 +2,29 @@
 #define __TRANSLATED_EXPRESSION_H__
 
 #include "../IRT/IRT.h"
+#include "patchList.h"
 
-/* TEMPORARY UNTIL DEFINED */
-using PatchList = int;
 
 namespace trans {
+
+/**
+ * Forward declarations
+ * **/
+class TranslatedExp;
+class Ex;
+class Nx;
+class Cx;
+
 
 /**
  * Modules used in the translation process
  * **/
 class TranslatedExp {
 public:
+    virtual std::unique_ptr<irt::Expression> unEx() const = 0;
+    virtual std::unique_ptr<irt::Statement>  unNx() const = 0;
+    virtual std::unique_ptr<Cx>              unCx() const = 0;
+    
     virtual void print() const = 0;
 };
 
@@ -23,7 +35,10 @@ struct Ex : public TranslatedExp {
     
     Ex(std::unique_ptr<irt::Expression> exp) {}
 
-    void print() const override {}
+    virtual std::unique_ptr<irt::Expression> unEx() const override;
+    virtual std::unique_ptr<irt::Statement>  unNx() const override;
+    virtual std::unique_ptr<Cx>              unCx() const override;
+    void print() const override;
 };
 
 /**
@@ -32,8 +47,12 @@ struct Ex : public TranslatedExp {
 struct Nx : public TranslatedExp {
     
     Nx(std::unique_ptr<irt::Statement> stm) {}
+    
+    virtual std::unique_ptr<irt::Expression> unEx() const override;
+    virtual std::unique_ptr<irt::Statement>  unNx() const override;
+    virtual std::unique_ptr<Cx>              unCx() const override;
 
-    void print() const override {}
+    void print() const override;
 };
 
 /**
@@ -42,8 +61,12 @@ struct Nx : public TranslatedExp {
 struct Cx : public TranslatedExp {
 
     Cx(PatchList trues, PatchList falses, std::unique_ptr<irt::Statement> stm) {}
+    
+    virtual std::unique_ptr<irt::Expression> unEx() const override;
+    virtual std::unique_ptr<irt::Statement>  unNx() const override;
+    virtual std::unique_ptr<Cx>              unCx() const override;
 
-    void print() const override {}
+    void print() const override;
 };
 
 
