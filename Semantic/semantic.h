@@ -51,7 +51,7 @@ struct FunEntry : public ValueEntry {
 };
 
 /**
- * Main translating class
+ * Main semantic checking class
  * **/
 class SemanticChecker {
     BindingTable<TypeEntry> TypeEnv;

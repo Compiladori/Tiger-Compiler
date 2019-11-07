@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include "semantic.h"
 #include "../AST/AST.h"
+#include "../IRT/IRT.h"
 #include "../Utility/toposort.h"
 #include "../Utility/error.h"
 
@@ -102,7 +103,7 @@ AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
-            return AssociatedExpType(make_shared<TranslatedExp>(), var_entry->type);
+            return AssociatedExpType(nullptr, var_entry->type);
         }
         // Error, undefined variable
         throw error::semantic_error("Undefined variable \"" + simple_var->id->name + "\"", var->pos);
@@ -114,7 +115,7 @@ AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
         if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
             for(const auto& field : record_type->fields){
                 if(field.name == field_var->id->name){
-                    return AssociatedExpType(make_shared<TranslatedExp>(), field.getType());
+                    return AssociatedExpType(nullptr, field.getType());
                 }
             }
             // Error, id field doesn't exist
@@ -138,7 +139,7 @@ AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
         }
 
         auto array_result = static_cast<ArrayExpType*>(var_result.exp_type.get());
-        return AssociatedExpType(make_shared<TranslatedExp>(), array_result->getType());
+        return AssociatedExpType(nullptr, array_result->getType());
     }
 
     // Internal error, it should have matched some clause
@@ -148,23 +149,23 @@ AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
 AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
         auto result = transVariable(var_exp->var.get());
-        return AssociatedExpType(make_shared<TranslatedExp>(), result.exp_type);
+        return AssociatedExpType(nullptr, result.exp_type);
     }
 
     if(/*auto unit_exp = */dynamic_cast<ast::UnitExp*>(exp)){
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
+        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
     }
 
     if(/*auto nil_exp = */dynamic_cast<ast::NilExp*>(exp)){
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<NilExpType>());
+        return AssociatedExpType(nullptr, make_shared<NilExpType>());
     }
 
     if(/*auto int_exp = */dynamic_cast<ast::IntExp*>(exp)){
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
+        return AssociatedExpType(nullptr, make_shared<IntExpType>());
     }
 
     if(/*auto string_exp = */dynamic_cast<ast::StringExp*>(exp)){
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<StringExpType>());
+        return AssociatedExpType(nullptr, make_shared<StringExpType>());
     }
 
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
@@ -187,7 +188,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 }
             }
 
-            return AssociatedExpType(make_shared<TranslatedExp>(), fun_entry->result);
+            return AssociatedExpType(nullptr, fun_entry->result);
         }
         // Error, the function wasn't declared in this scope
         throw error::semantic_error("Function \"" + call_exp->func->name + "\" wasn't declared in this scope", exp->pos);
@@ -212,7 +213,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     throw error::semantic_error("Operand on the right isn't an integer", exp->pos);
 
                 }
-                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
+                return AssociatedExpType(nullptr, make_shared<IntExpType>());
             }
             case ast::Lt:
             case ast::Le:
@@ -229,7 +230,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     // Error, operands' types must be between Int or String
                     throw error::semantic_error("Operands must have type Int or String", exp->pos);
                 }
-                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
+                return AssociatedExpType(nullptr, make_shared<IntExpType>());
             }
             case ast::Eq:
             case ast::Neq: {
@@ -237,7 +238,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     // Error, different types on equality testing
                     throw error::semantic_error("Operands must have the same type", exp->pos);
                 }
-                return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<IntExpType>());
+                return AssociatedExpType(nullptr, make_shared<IntExpType>());
             }
         }
 
@@ -292,7 +293,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 }
             }
 
-            return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
+            return AssociatedExpType(nullptr, type_entry->type);
         }
 
         // Error, record type was not defined
@@ -312,7 +313,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
             transExpression(it->get());
         }
 
-        return AssociatedExpType(make_shared<TranslatedExp>(), last_result.exp_type);
+        return AssociatedExpType(nullptr, last_result.exp_type);
     }
 
     if(auto assign_exp = dynamic_cast<ast::AssignExp*>(exp)){
@@ -324,7 +325,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
             throw error::semantic_error("Variable's type is different than the expression's type" , exp->pos);
         }
 
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
+        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
     }
 
     if(auto if_exp = dynamic_cast<ast::IfExp*>(exp)){
@@ -345,7 +346,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
             }
         }
 
-        return AssociatedExpType(make_shared<TranslatedExp>(), then_result.exp_type);
+        return AssociatedExpType(nullptr, then_result.exp_type);
     }
 
     if(auto while_exp = dynamic_cast<ast::WhileExp*>(exp)){
@@ -357,7 +358,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
         }
 
         transExpression(while_exp->body.get());
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
+        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
     }
 
     if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
@@ -378,7 +379,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
         transExpression(for_exp->body.get());
         endScope();
 
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
+        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
     }
 
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
@@ -393,7 +394,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
     }
 
     if(/*auto break_exp = */dynamic_cast<ast::BreakExp*>(exp)){
-        return AssociatedExpType(make_shared<TranslatedExp>(), make_shared<UnitExpType>());
+        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
     }
 
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
@@ -416,7 +417,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 throw error::semantic_error("Array type must match with its initialization type" , exp->pos);
             }
 
-            return AssociatedExpType(make_shared<TranslatedExp>(), type_entry->type);
+            return AssociatedExpType(nullptr, type_entry->type);
         }
 
         // Error, array type was not declared in this scope

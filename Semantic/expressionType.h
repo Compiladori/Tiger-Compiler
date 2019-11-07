@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <cassert>
+#include "../IRT/IRT.h"
 
 namespace seman {
 
@@ -171,17 +172,12 @@ struct RecordExpType : public ExpType {
 /**
  * Translated Expression associated with an Expression Type
  * **/
-struct TranslatedExp {
-    // TODO: Incomplete dummy class for translated expressions
-
-    TranslatedExp() {}
-};
 
 struct AssociatedExpType {
-    std::shared_ptr<TranslatedExp> tr_exp;
+    std::unique_ptr<irt::Expression> tr_exp;
     std::shared_ptr<ExpType> exp_type;
 
-    AssociatedExpType (std::shared_ptr<TranslatedExp> tr_exp, std::shared_ptr<ExpType> exp_type) : tr_exp(tr_exp), exp_type(exp_type) {}
+    AssociatedExpType (std::unique_ptr<irt::Expression> tr_exp, std::shared_ptr<ExpType> exp_type) : tr_exp(move(tr_exp)), exp_type(exp_type) {}
 };
 
 
