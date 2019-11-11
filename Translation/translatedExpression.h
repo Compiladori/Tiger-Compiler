@@ -24,7 +24,7 @@ public:
     virtual std::unique_ptr<irt::Expression> unEx() const = 0;
     virtual std::unique_ptr<irt::Statement>  unNx() const = 0;
     virtual std::unique_ptr<Cx>              unCx() const = 0;
-    
+
     virtual void print() const = 0;
 };
 
@@ -32,7 +32,7 @@ public:
  * Ex stands for an "Expression"
  * **/
 struct Ex : public TranslatedExp {
-    
+
     Ex(std::unique_ptr<irt::Expression> exp) {}
 
     virtual std::unique_ptr<irt::Expression> unEx() const override;
@@ -45,9 +45,9 @@ struct Ex : public TranslatedExp {
  * Nx stands for "No Result"
  * **/
 struct Nx : public TranslatedExp {
-    
+
     Nx(std::unique_ptr<irt::Statement> stm) {}
-    
+
     virtual std::unique_ptr<irt::Expression> unEx() const override;
     virtual std::unique_ptr<irt::Statement>  unNx() const override;
     virtual std::unique_ptr<Cx>              unCx() const override;
@@ -61,7 +61,7 @@ struct Nx : public TranslatedExp {
 struct Cx : public TranslatedExp {
 
     Cx(PatchList trues, PatchList falses, std::unique_ptr<irt::Statement> stm) {}
-    
+
     virtual std::unique_ptr<irt::Expression> unEx() const override;
     virtual std::unique_ptr<irt::Statement>  unNx() const override;
     virtual std::unique_ptr<Cx>              unCx() const override;
@@ -69,6 +69,14 @@ struct Cx : public TranslatedExp {
     void print() const override;
 };
 
+// check
+struct CanonicalTree : public TranslatedExp {
+    CanonicalTree(std::unique_ptr<irt::Statement> stm) {}
+    virtual std::unique_ptr<irt::Expression> unEx() const override;
+    virtual std::unique_ptr<irt::Statement>  unNx() const override;
+    virtual std::unique_ptr<Cx>              unCx() const override;
+    irt::StatementList linearize();
+};
 
 };
 

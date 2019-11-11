@@ -18,7 +18,7 @@ ESCAPES_OBJ = escapes.o
 
 TRANS_HDR = ../IRT/IRT.h            \
 			patchList.h             \
-			translatedExpression.h 
+			translatedExpression.h
 TRANS_SRC = translation.cpp translatedExpression.cpp
 TRANS_OBJ = translation.o translatedExpression.o
 
@@ -41,6 +41,10 @@ FRAME_HDR = ../AST/AST.h              \
 FRAME_SRC = temp.cpp  frame.cpp
 FRAME_OBJ = temp.o frame.o
 
+CANON_HDR = ../Utility/utility.h             \
+            ../IRT/IRT.h
+CANON_SRC = canon.cpp
+CANON_OBJ = canon.o
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
@@ -50,8 +54,9 @@ SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
 FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
 SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
+CANON_OBJ_DIR = $(patsubst %, Canon/%, $(CANON_OBJ))
 
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
               $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-              $(SEMAN_OBJ_DIR)
+              $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)

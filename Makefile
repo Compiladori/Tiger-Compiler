@@ -25,6 +25,8 @@ all:
 	$(MAKE) -C Semantic all
 	$(MAKE) -C Translation depend
 	$(MAKE) -C Translation all
+	$(MAKE) -C Canon depend
+	$(MAKE) -C Canon all
 
 clean:
 		$(MAKE) -C AST clean
