@@ -13,21 +13,35 @@
 namespace canon {
 
 using StatementList = util::GenericList<irt::Statement>;
-//using StatementListList = util::GenericList<StatementList>;
+using ExpressionList = util::GenericList<irt::Expression>;
+using StatementListList = util::GenericList<StatementList>;
 
 struct Block {
+    StatementListList* stmLists;
+    temp::Label label;
     virtual ~Block() {}
-    virtual void print() const = 0;
+
+    Block(StatementListList* stmLists, temp::Label label) : stmLists(stmLists), label(label) {}
+
 };
 
-struct BasicBlocks : public Block {
-    std::unique_ptr<StatementList> stmList;
+struct Canonizator {
+    Block block;
+    StatementList* stmList;
+    ExpressionList* expList;
+    auto linearize(irt::Statement* stm);
 
-    BasicBlocks(std::unique_ptr<StatementList> stmList) : stmList(std::move(stmList)) {}
+    auto basicBlocks(StatementList* stmList);
 
-    StatementList* traceSchedule();
-    void print() const;
+    StatementList* traceSchedule(Block block);
+
+    bool isNop(irt::Statement* stm);
+    bool commute(irt::Statement* stm, irt::Expression* exp);
+public:
+    Canonizator();
+
 };
+
 
 };
 
