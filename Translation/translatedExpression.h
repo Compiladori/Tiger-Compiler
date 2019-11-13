@@ -32,8 +32,10 @@ public:
  * Ex stands for an "Expression"
  * **/
 struct Ex : public TranslatedExp {
+    std::unique_ptr<irt::Expression> exp;
 
-    Ex(std::unique_ptr<irt::Expression> exp) {}
+    Ex() = default; // TODO: Check if actually valid
+    Ex(std::unique_ptr<irt::Expression> exp) : exp(std::move(exp)) {}
 
     virtual std::unique_ptr<irt::Expression> unEx() const override;
     virtual std::unique_ptr<irt::Statement>  unNx() const override;
@@ -45,8 +47,10 @@ struct Ex : public TranslatedExp {
  * Nx stands for "No Result"
  * **/
 struct Nx : public TranslatedExp {
+    std::unique_ptr<irt::Statement> stm;
 
-    Nx(std::unique_ptr<irt::Statement> stm) {}
+    Nx() = default; // TODO: Check if actually valid
+    Nx(std::unique_ptr<irt::Statement> stm) : stm(std::move(stm)) {}
 
     virtual std::unique_ptr<irt::Expression> unEx() const override;
     virtual std::unique_ptr<irt::Statement>  unNx() const override;
@@ -59,8 +63,11 @@ struct Nx : public TranslatedExp {
  * Cx stands for "Conditional"
  * **/
 struct Cx : public TranslatedExp {
+    PatchList trues, falses;
+    std::unique_ptr<irt::Statement> stm;
 
-    Cx(PatchList trues, PatchList falses, std::unique_ptr<irt::Statement> stm) {}
+    Cx() = default; // TODO: Check if actually valid
+    Cx(PatchList trues, PatchList falses, std::unique_ptr<irt::Statement> stm) : trues(trues), falses(falses), stm(std::move(stm)) {}
 
     virtual std::unique_ptr<irt::Expression> unEx() const override;
     virtual std::unique_ptr<irt::Statement>  unNx() const override;

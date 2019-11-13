@@ -9,10 +9,11 @@
  * 
  * Explanation starting in page 155 Appel C (2004)
  * **/
-class PatchList {
+struct PatchList {
     std::vector<temp::Label*> label_ptrs;
-public:
+
     PatchList() = default;
+    PatchList(const PatchList& PL) : label_ptrs(PL.label_ptrs) {}
     
     void applyPatch(temp::Label label) const {
         for(auto ptr : label_ptrs){
