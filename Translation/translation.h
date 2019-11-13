@@ -3,14 +3,18 @@
 
 /**
  * Translation module from Abstract Syntax into IRT
- * 
+ *
  * Described in Chapter 7 Appel C (2004)
  * **/
 
-#include "translatedExpression.h"
-
+#include "../Translation/translatedExpression.h"
+#include "../Frame/frame.h"
+#include "../Frame/temp.h"
+#include "../Utility/utility.h"
 namespace trans {
-
+class Access;
+class Level;
+using AccessList = util::GenericList<Access>;
 
 /**
  * Main translating class
@@ -24,7 +28,7 @@ public:
     std::unique_ptr<TranslatedExp> simpleVar();
     std::unique_ptr<TranslatedExp> fieldVar();
     std::unique_ptr<TranslatedExp> subscriptVar();
-    
+
     /**
      * Expression translation
      * **/
@@ -44,7 +48,7 @@ public:
     std::unique_ptr<TranslatedExp> letExp();
     std::unique_ptr<TranslatedExp> breakExp();
     std::unique_ptr<TranslatedExp> arrayExp();
-    
+
     /**
      * Declaration translation
      * **/
@@ -54,6 +58,20 @@ public:
 };
 
 
+struct Access {
+  std::unique_ptr<frame::Access> _access;
+  std::unique_ptr<Level> _level;
+  Access(std::unique_ptr<Level> level,std::unique_ptr<frame::Access> access) : _level(std::move(level)), _access(std::move(access)) {}
+};
+
+struct Level {
+  std::unique_ptr<frame::Frame> _frame;
+  std::unique_ptr<Level> _parent;
+  Level(std::unique_ptr<Level> level,temp::Label f, std::vector<bool> list);
+};
+
+std::unique_ptr<Access> alloc_local(std::unique_ptr<Level> level,bool escape);
+std::unique_ptr<AccessList> formals();
 
 };
 

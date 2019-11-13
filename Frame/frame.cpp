@@ -17,8 +17,8 @@ const int Frame::wordSize = 8;
 Frame::Frame(temp::Label name, vector<bool> list){
     name = name;
     _offset = -16;
-    FrameAccessList a_list;
-    
+    AccessList a_list;
+
     for (bool i : list) {
         if(i){
             unique_ptr<InFrame> arg = make_unique<InFrame>(_offset);
@@ -31,7 +31,7 @@ Frame::Frame(temp::Label name, vector<bool> list){
     }
 }
 
-unique_ptr<FrameAccess> Frame::alloc_local(bool escape){
+unique_ptr<Access> Frame::alloc_local(bool escape){
     if(escape) {
         unique_ptr<InFrame> l = make_unique<InFrame>(_offset);
         _offset -= 8;
