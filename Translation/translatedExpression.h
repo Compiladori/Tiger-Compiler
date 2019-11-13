@@ -69,14 +69,6 @@ struct Cx : public TranslatedExp {
     void print() const override;
 };
 
-// check
-struct CanonicalTree : public TranslatedExp {
-    CanonicalTree(std::unique_ptr<irt::Statement> stm) {}
-    virtual std::unique_ptr<irt::Expression> unEx() const override;
-    virtual std::unique_ptr<irt::Statement>  unNx() const override;
-    virtual std::unique_ptr<Cx>              unCx() const override;
-    irt::StatementList linearize();
-};
 
 };
 
