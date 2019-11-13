@@ -36,5 +36,6 @@ clean:
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean
+		$(MAKE) -C Canon clean
 
 include Makefile.common
