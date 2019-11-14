@@ -27,6 +27,8 @@ all:
 	$(MAKE) -C Translation all
 	$(MAKE) -C Canon depend
 	$(MAKE) -C Canon all
+	$(MAKE) -C Munch depend
+	$(MAKE) -C Munch all
 
 clean:
 		$(MAKE) -C AST clean
@@ -37,5 +39,6 @@ clean:
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
+		$(MAKE) -C Munch clean
 
 include Makefile.common

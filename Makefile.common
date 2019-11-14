@@ -46,6 +46,10 @@ CANON_HDR = ../Utility/utility.h             \
 CANON_SRC = canon.cpp
 CANON_OBJ = canon.o
 
+MUNCH_HDR = ../Utility/utility.h
+MUNCH_SRC = munch.cpp
+MUNCH_OBJ = munch.o
+
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
 IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
@@ -55,8 +59,10 @@ FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
 SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 CANON_OBJ_DIR = $(patsubst %, Canon/%, $(CANON_OBJ))
+MUNCH_OBJ_DIR = $(patsubst %, Munch/%, $(MUNCH_OBJ))
 
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
               $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-              $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)
+              $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
+              $(MUNCH_OBJ_DIR)
