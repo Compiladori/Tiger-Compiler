@@ -46,9 +46,11 @@ CANON_HDR = ../Utility/utility.h             \
 CANON_SRC = canon.cpp
 CANON_OBJ = canon.o
 
-MUNCH_HDR = ../Utility/utility.h
-MUNCH_SRC = munch.cpp
-MUNCH_OBJ = munch.o
+MUNCH_HDR = ../IRT/IRT.h             \
+            ../Frame/temp.h          \
+            munch.h assem.h 
+MUNCH_SRC = munch.cpp assem.cpp
+MUNCH_OBJ = munch.o assem.o
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
