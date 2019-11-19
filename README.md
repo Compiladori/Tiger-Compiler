@@ -1,4 +1,4 @@
-# Tiger-Compiler
+# Tiger-Compiler [![Build Status](https://travis-ci.com/Compiladori/Tiger-Compiler.svg?branch=master)](https://travis-ci.com/Compiladori/Tiger-Compiler)
 A Tiger compiler for the x86 architecture, implemented in C++, as described in the book "Modern Compiler Implementation" by Andrew Appel. 
 
 ## Compiler steps
