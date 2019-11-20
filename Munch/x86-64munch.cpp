@@ -5,8 +5,9 @@
 #include "../Frame/temp.h"
 
 using namespace munch;
-using std::unique_ptr, std::shared_ptr;
-using std::make_unique, std::make_shared, std::move;
+using std::unique_ptr;
+using std::make_unique;
+using std::move;
 
 /**
  * Muncher
