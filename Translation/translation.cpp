@@ -120,3 +120,13 @@ std::unique_ptr<AccessList> formals(std::unique_ptr<Level> level) {
   }
   return trans_list;
 }
+
+static std::unique_ptr<Level> outermost_level = nullptr;
+
+std::unique_ptr<Level> outermost(){
+  if(outermost_level == nullptr){
+    temp::Label tiger_label = temp::Label("mainLevel");
+    outermost_level = std::make_unique<Level>(nullptr,tiger_label,std::vector<bool>());
+  }
+  return std::move(outermost_level);
+}

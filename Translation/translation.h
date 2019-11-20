@@ -72,7 +72,7 @@ struct Level {
 
 std::unique_ptr<Access> alloc_local(std::unique_ptr<Level> level,bool escape);
 std::unique_ptr<AccessList> formals();
-
+std::unique_ptr<Level> outermost();
 };
 
 #endif

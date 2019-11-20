@@ -3,6 +3,7 @@
 
 #include "../IRT/IRT.h"
 #include "patchList.h"
+#include "../Utility/error.h"
 
 
 namespace trans {
@@ -21,11 +22,11 @@ class Cx;
  * **/
 class TranslatedExp {
 public:
-    virtual std::unique_ptr<irt::Expression> unEx() const = 0;
-    virtual std::unique_ptr<irt::Statement>  unNx() const = 0;
-    virtual std::unique_ptr<Cx>              unCx() const = 0;
+    virtual std::unique_ptr<irt::Expression> unEx()  = 0;
+    virtual std::unique_ptr<irt::Statement>  unNx()  = 0;
+    virtual std::unique_ptr<Cx>              unCx()  = 0;
 
-    virtual void print() const = 0;
+    virtual void print()  = 0;
 };
 
 /**
@@ -37,10 +38,10 @@ struct Ex : public TranslatedExp {
     Ex() = default; // TODO: Check if actually valid
     Ex(std::unique_ptr<irt::Expression> exp) : exp(std::move(exp)) {}
 
-    virtual std::unique_ptr<irt::Expression> unEx() const override;
-    virtual std::unique_ptr<irt::Statement>  unNx() const override;
-    virtual std::unique_ptr<Cx>              unCx() const override;
-    void print() const override;
+    virtual std::unique_ptr<irt::Expression> unEx()  override;
+    virtual std::unique_ptr<irt::Statement>  unNx()  override;
+    virtual std::unique_ptr<Cx>              unCx()  override;
+    void print()  override;
 };
 
 /**
@@ -52,11 +53,11 @@ struct Nx : public TranslatedExp {
     Nx() = default; // TODO: Check if actually valid
     Nx(std::unique_ptr<irt::Statement> stm) : stm(std::move(stm)) {}
 
-    virtual std::unique_ptr<irt::Expression> unEx() const override;
-    virtual std::unique_ptr<irt::Statement>  unNx() const override;
-    virtual std::unique_ptr<Cx>              unCx() const override;
+    virtual std::unique_ptr<irt::Expression> unEx()  override;
+    virtual std::unique_ptr<irt::Statement>  unNx()  override;
+    virtual std::unique_ptr<Cx>              unCx()  override;
 
-    void print() const override;
+    void print()  override;
 };
 
 /**
@@ -69,11 +70,11 @@ struct Cx : public TranslatedExp {
     Cx() = default; // TODO: Check if actually valid
     Cx(PatchList trues, PatchList falses, std::unique_ptr<irt::Statement> stm) : trues(trues), falses(falses), stm(std::move(stm)) {}
 
-    virtual std::unique_ptr<irt::Expression> unEx() const override;
-    virtual std::unique_ptr<irt::Statement>  unNx() const override;
-    virtual std::unique_ptr<Cx>              unCx() const override;
+    virtual std::unique_ptr<irt::Expression> unEx()  override;
+    virtual std::unique_ptr<irt::Statement>  unNx()  override;
+    virtual std::unique_ptr<Cx>              unCx()  override;
 
-    void print() const override;
+    void print()  override;
 };
 
 
