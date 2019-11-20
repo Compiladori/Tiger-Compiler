@@ -8,15 +8,19 @@
  * **/
 
 #include <memory>
+#include "assem.h"
 #include "../IRT/IRT.h"
 #include "../Frame/temp.h"
+#include "../Utility/utility.h"
 
 namespace munch {
 
 
 
 class Muncher {
-    void emit();
+    util::GenericList<assem::Instruction> instruction_list;
+    
+    void emit(std::unique_ptr<assem::Instruction> ins);
 public:
     Muncher() = default;
     // Stuff ...

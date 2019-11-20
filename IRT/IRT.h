@@ -14,10 +14,7 @@
  *
  * Intermediate language to serve as a "bridge" between source languages and compiled languages
  * ***/
-
-/*
- * TODO: TEMPORARY ONLY TO MAKE IT COMPILE UNTIL THE TEMP MODULE IS READY
- * */
+ 
 
 namespace irt {
 
@@ -29,6 +26,7 @@ class Statement;
 
 using ExpressionList = util::GenericList<Expression>;
 using StatementList  = util::GenericList<Statement>;
+
 
 /**
  * Operations
@@ -43,7 +41,7 @@ enum RelationOperation {Eq, Ne, Lt, Gt, Le, Ge, Ult, Ule, Ugt, Uge};
  * A statement performs side effects and flow control
  * **/
 struct Statement {
-    virtual ~Statement() {}
+    virtual ~Statement() = default;
     virtual void print() const = 0;
 };
 
@@ -65,9 +63,9 @@ struct Label : public Statement {
 
 struct Jump  : public Statement {
 	std::unique_ptr<Expression> exp;
-	std::vector<temp::Label> label_list;
+	temp::LabelList label_list;
 
-	Jump(std::unique_ptr<Expression> exp, std::vector<temp::Label> label_list) : exp(std::move(exp)), label_list(label_list) {}
+	Jump(std::unique_ptr<Expression> exp, temp::LabelList label_list) : exp(std::move(exp)), label_list(label_list) {}
 
     void print() const;
 };
@@ -106,7 +104,7 @@ struct Exp   : public Statement {
  * An expression represents a computation of some value (possibly with side effects)
  * **/
 struct Expression {
-    virtual ~Expression() {}
+    virtual ~Expression() = default;
     virtual void print() const = 0;
 };
 
@@ -130,9 +128,9 @@ struct Mem   : public Expression {
 };
 
 struct Temp  : public Expression {
-    temp::Temp temp;
+    temp::Temp temporary;
 
-    Temp(temp::Temp temp) : temp(temp) {}
+    Temp(temp::Temp temporary) : temporary(temporary) {}
 
     void print() const;
 };

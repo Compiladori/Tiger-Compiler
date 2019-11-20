@@ -7,7 +7,7 @@
 namespace util {
 
 /**
- * Unique pointer list
+ * Unique pointer generic list
  *
  * Mainly to manage AST + Flex/Bison pointers, claims ownership over raw pointers
  * **/

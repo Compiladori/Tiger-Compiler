@@ -83,7 +83,7 @@ struct Position {
 struct Type {
     Position pos;
     Type(Position pos) : pos(pos) {}
-    virtual ~Type() {}
+    virtual ~Type() = default;
     virtual void print() const = 0;
 };
 
@@ -121,7 +121,7 @@ struct ArrayType : public Type {
  * Variables
  * **/
 struct Variable {
-    virtual ~Variable() {}
+    virtual ~Variable() = default;
     Position pos;
     Variable(Position pos) : pos(pos) {}
     virtual void print() const = 0;
@@ -158,7 +158,7 @@ struct Expression {
 
     Expression(Position pos) : pos(pos) {}
 
-    virtual ~Expression() {}
+    virtual ~Expression() = default;
     virtual void print() const = 0;
 };
 
@@ -289,7 +289,7 @@ struct ArrayExp : public Expression {
  * Declarations
  * **/
 struct Declaration {
-    virtual ~Declaration() {}
+    virtual ~Declaration() = default;
     Position pos;
     Declaration(Position pos) : pos(pos) {}
     virtual void print() const = 0;
