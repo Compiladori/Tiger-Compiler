@@ -25,21 +25,33 @@ struct Block {
 
 };
 
+struct StmExpList {
+    std::unique_ptr<irt::Statement> stm;
+    std::unique_ptr<ExpressionList> expList;
+    virtual ~StmExpList() {}
+
+    StmExpList(irt::Statement* stm, irt::ExpressionList* expList) : stm(stm), expList(expList) {}
+};
+
 struct Canonizator {
     Block block;
     StatementList* stmList;
     ExpressionList* expList;
-    auto linearize(irt::Statement* stm);
-
-    auto basicBlocks(StatementList* stmList);
-
-    StatementList* traceSchedule(Block block);
 
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
+    struct StmExpList reorder(ExpressionList expList);
+    // doExp returns a statement and an expression (list of one expression)
+    std::pair<irt::Statement*, ExpressionList*> doExp(irt::Expression* exp);
+
+    /*doStm
+    linear*/
 public:
     Canonizator();
-
+    // ............... ver tipos!!!!!
+    std::unique_ptr<StatementList> linearize(std::unique_ptr<irt::Statement> stm);
+    struct Block* basicBlocks(StatementList* stmList);
+    StatementList* traceSchedule(Block block);
 };
 
 
