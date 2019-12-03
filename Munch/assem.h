@@ -14,15 +14,13 @@
 
 namespace assem {
 
-// TODO: fix type temp::Map
+
 using Targets = temp::LabelList;
 
 struct Instruction {
     virtual ~Instruction() = default;
-    virtual void print() const = 0;
-    /*
-    virtual void print(std::ostream& os = std::cout, temp::Map temp_map) const = 0; // Instruction output
-    * */
+    
+    virtual void print(std::ostream& os, temp::TempMap& temp_map) const = 0; // Instruction output
 };
 
 struct Oper : public Instruction {
@@ -33,10 +31,7 @@ struct Oper : public Instruction {
     Oper(std::string assm, temp::TempList dst, temp::TempList src, Targets jumps) :
         assm(assm), dst(dst), src(src), jumps(jumps) {}
     
-    /*
-    virtual void print(std::ostream& os = std::cout, temp::Map temp_map) const override;
-    * */
-    void print() const override;
+    virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
 
 struct Label : public Instruction {
@@ -45,10 +40,7 @@ struct Label : public Instruction {
 
     Label(std::string assm, temp::Label label) : assm(assm), label(label) {}
     
-    /*
-    virtual void print(std::ostream& os = std::cout, temp::Map temp_map) const override;
-    * */
-    void print() const override;
+    virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
 
 struct Move : public Instruction {
@@ -58,10 +50,7 @@ struct Move : public Instruction {
     Move(std::string assm, temp::TempList dst, temp::TempList src) : 
         assm(assm), dst(dst), src(src) {}
     
-    /*
-    virtual void print(std::ostream& os = std::cout, temp::Map temp_map) const override;
-    * */
-    void print() const override;
+    virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
 
 

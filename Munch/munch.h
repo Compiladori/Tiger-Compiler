@@ -19,11 +19,11 @@ namespace munch {
 
 class Muncher {
     util::GenericList<assem::Instruction> instruction_list;
+    temp::TempMap temp_to_label;
     
     void emit(std::unique_ptr<assem::Instruction> ins);
 public:
     Muncher() = default;
-    // Stuff ...
     
     void       munchStatement (irt::Statement*  stm);
     temp::Temp munchExpression(irt::Expression* exp);

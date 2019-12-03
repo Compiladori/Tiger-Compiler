@@ -5,6 +5,6 @@ using namespace assem;
 /**
  * Instructions
  * **/
-void Oper::print()  const {}
-void Label::print() const {}
-void Move::print()  const {}
+void Oper::print(std::ostream& os, temp::TempMap& temp_map) const {}
+void Label::print(std::ostream& os, temp::TempMap& temp_map) const {}
+void Move::print(std::ostream& os, temp::TempMap& temp_map) const {}

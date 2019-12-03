@@ -10,6 +10,20 @@ using std::make_unique;
 using std::move;
 
 /**
+ * Corresponding assembly names to IRT's relation operators
+ * **/
+std::string relation_operation_name[] = { [irt::RelationOperation::Eq] = "je",
+                                          [irt::RelationOperation::Ne] = "jne",
+                                          [irt::RelationOperation::Lt] = "jl",
+                                          [irt::RelationOperation::Gt] = "jg",
+                                          [irt::RelationOperation::Le] = "jle",
+                                          [irt::RelationOperation::Ge] = "jge",
+                                          [irt::RelationOperation::Ult] = "jb",
+                                          [irt::RelationOperation::Ule] = "jbe",
+                                          [irt::RelationOperation::Ugt] = "ja",
+                                          [irt::RelationOperation::Uge] = "jae" };
+
+/**
  * Muncher
  * **/
 
@@ -36,12 +50,20 @@ void Muncher::munchStatement(irt::Statement* stm){
         /* JUMP(exp) */
         temp::Temp munch_exp_result = munchExpression(jump_stm->exp.get());
         std::string code = "jmp `d0";
-        emit(make_unique<assem::Oper>(code, temp::TempList {munch_exp_result}, temp::TempList {}, jump_stm->label_list));
+        emit(make_unique<assem::Oper>(code, temp::TempList {munch_exp_result}, temp::TempList {}, assem::Targets(jump_stm->label_list)));
         return;
     }
     
     if(auto cjump_stm = dynamic_cast<irt::Cjump*>(stm)){
-        // TODO: Complete
+        temp::Temp left = munchExpression(cjump_stm->left.get());
+        temp::Temp right = munchExpression(cjump_stm->right.get());
+        
+        std::string comp_code = "cmp `s0, `s1";
+        emit(make_unique<assem::Oper>(comp_code, temp::TempList {}, temp::TempList {left, right}, assem::Targets {}));
+        
+        std::string jump_code = relation_operation_name[cjump_stm->rel_op] + " `j0";
+        emit(make_unique<assem::Oper>(jump_code, temp::TempList {}, temp::TempList {}, assem::Targets {*cjump_stm->true_label}));
+        
         return;
     }
     
@@ -84,8 +106,9 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp){
     
     if(auto name_exp = dynamic_cast<irt::Name*>(exp)){
         /* NAME(label) */
-        // TODO: Complete
-        return temp::Temp();
+        temp::Temp new_temporary;
+        temp_to_label[new_temporary] = name_exp->name;
+        return new_temporary;
     }
     
     if(auto const_exp = dynamic_cast<irt::Const*>(exp)){
