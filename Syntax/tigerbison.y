@@ -193,10 +193,12 @@ int main(int, char**) {
 
     // ...
   } catch (error::semantic_error& se) {
-    cout << se.getMessage() << endl;
+    cout << "Semantic error: " << se.getMessage() << endl;
   } catch (error::internal_error& ie) { 
-    cout << ie.getMessage() << endl;
+    cout << "Internal error: " << ie.getMessage() << endl;
   }
+  
+  return 0;
 }
 
 void yyerror(const char *s) {
