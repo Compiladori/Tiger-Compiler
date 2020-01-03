@@ -34,22 +34,22 @@ struct StmExpList {
 };
 
 struct Canonizator {
-    Block block;
-    StatementList* stmList;
-    ExpressionList* expList;
+    //Block block;
+    //StatementList* stmList;
+    //ExpressionList* expList;
 
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
-    struct StmExpList reorder(ExpressionList expList);
+    std::pair<irt::Statement*, ExpressionList*> reorder(ExpressionList* expList);
     // doExp returns a statement and an expression (list of one expression)
-    std::pair<irt::Statement*, ExpressionList*> doExp(irt::Expression* exp);
-
-    /*doStm
-    linear*/
+    irt::Statement* doStm(irt::Statement* stm);
+    std::pair<irt::Statement*, irt::Expression*> doExp(irt::Expression* exp);
+    irt::Statement* sequence(irt::Statement* stm1, irt::Statement* stm2);
+    std::unique_ptr<irt::Statement> makeUnique(irt::Statement* stm);
 public:
     Canonizator();
     // ............... ver tipos!!!!!
-    std::unique_ptr<StatementList> linearize(std::unique_ptr<irt::Statement> stm);
+    std::unique_ptr<StatementList> linearize(irt::Statement* stm);
     struct Block* basicBlocks(StatementList* stmList);
     StatementList* traceSchedule(Block block);
 };
