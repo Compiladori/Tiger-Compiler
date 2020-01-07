@@ -28,7 +28,7 @@ std::pair<irt::Statement*, ExpressionList*> Canonizator::reorder(ExpressionList*
 }
 
 // Transforms a statement pointer into a unique pointer to that statement
-std::unique_ptr<irt::Statement> Canonizator::makeUnique(irt::Statement* stm){
+std::unique_ptr<irt::Statement> Canonizator::makeStmUnique(irt::Statement* stm){
     std::unique_ptr<irt::Statement> stmU;
     if (auto seq = dynamic_cast<irt::Seq*>(stm)){
         stmU = std::make_unique<irt::Seq>(std::move(seq->left), std::move(seq->right));
@@ -62,10 +62,23 @@ irt::Statement* Canonizator::sequence(irt::Statement* stm1, irt::Statement* stm2
         return stm2;
     if (isNop(stm2))
         return stm1;
-    std::unique_ptr<irt::Statement> stm1U = makeUnique(stm1);
-    std::unique_ptr<irt::Statement> stm2U = makeUnique(stm2);
+    std::unique_ptr<irt::Statement> stm1U = makeStmUnique(stm1);
+    std::unique_ptr<irt::Statement> stm2U = makeStmUnique(stm2);
     auto seqRes = new irt::Seq(move(stm1U), move(stm2U));
     return seqRes;
+}
+
+// Argument exp will be a call expression
+ExpressionList* Canonizator::getCallRList(irt::Expression* exp){
+    if (auto call = dynamic_cast<irt::Call*>(exp)){
+        ExpressionList* args = call->args.get();
+        ExpressionList* expList;
+        expList->push_back(call->fun.get());
+        for(auto arg = args->begin(); arg != args->end()--; arg++)
+            expList->push_back(arg->get());
+        return expList;
+    }
+    return NULL; //  ???
 }
 
 irt::Statement* Canonizator::doStm(irt::Statement* stm){
@@ -90,10 +103,11 @@ irt::Statement* Canonizator::doStm(irt::Statement* stm){
     if (auto move = dynamic_cast<irt::Move*>(stm)){
         // move->left == dst, move->right == src
         if (auto tmp = dynamic_cast<irt::Temp*>(move->left.get()))
-            if (auto call = dynamic_cast<irt::Call*>(move->right.get())) {
-            // get_call_rlist ?? :)))))))))))))))
-
-        }
+            if (auto call = dynamic_cast<irt::Call*>(move->right.get())){
+                ExpressionList* callList = getCallRList(move->right.get());
+                std::pair<irt::Statement*, ExpressionList*> p = reorder(callList);
+                return sequence(p.first, move);
+            }
         else if (auto tmp = dynamic_cast<irt::Temp*>(move->left.get())){
             ExpressionList* expList;
             expList->push_back(move->right.get());
@@ -110,16 +124,24 @@ irt::Statement* Canonizator::doStm(irt::Statement* stm){
         else if (auto eseq = dynamic_cast<irt::Eseq*>(move->left.get())){
             irt::Statement* s = eseq->stm.get();
             irt::Statement* eseqNew = new irt::Move(std::move(eseq->exp), std::move(move->right));
-            irt::Statement* seqNew = new irt::Seq(makeUnique(s), makeUnique(seqNew));
+            irt::Statement* seqNew = new irt::Seq(makeStmUnique(s), makeStmUnique(seqNew));
             return doStm(seqNew);
         }
     }
     if (auto expr = dynamic_cast<irt::Exp*>(stm)){
-        // see what get_call_rlist means
+        ExpressionList* expList;
+        if (auto call = dynamic_cast<irt::Call*>(expr->exp.get()))
+            expList = getCallRList(call);
+        else
+            expList->push_back(expr->exp.get());
+        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
+        return sequence(p.first, expr);
     }
     return stm;
 }
 
+// Given an expression e returns a statement s and an expression e1, where e1 contains
+// no ESEQs, such that ESEQ(s, e1) would be equivalent to the original expression e
 std::pair<irt::Statement*, irt::Expression*> Canonizator::doExp(irt::Expression* exp){
     if (auto binop = dynamic_cast<irt::BinOp*>(exp)){
         ExpressionList* expList;
@@ -144,8 +166,9 @@ std::pair<irt::Statement*, irt::Expression*> Canonizator::doExp(irt::Expression*
         return std::make_pair(sequence(s, x.first), x.second);
     }
     if (auto call = dynamic_cast<irt::Call*>(exp)){
-        //return StmExp(reorder(get_call_rlist(exp)), exp);
-        //qué mierda es get_call_rlist
+        ExpressionList* expList = getCallRList(call);
+        std::pair<irt::Statement*, irt::ExpressionList*> p = reorder(expList);
+        return std::make_pair(p.first, exp);
     }
     std::pair<irt::Statement*, ExpressionList*> p = reorder(NULL);
     return std::make_pair(p.first, exp);

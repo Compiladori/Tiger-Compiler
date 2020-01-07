@@ -14,7 +14,7 @@
  *
  * Intermediate language to serve as a "bridge" between source languages and compiled languages
  * ***/
- 
+
 
 namespace irt {
 
@@ -161,6 +161,12 @@ struct Const : public Expression {
 };
 
 struct Call  : public Expression {
+    std::unique_ptr<Expression> fun;
+    std::unique_ptr<ExpressionList> args;
+
+    Call(std::unique_ptr<Expression> fun, std::unique_ptr<ExpressionList> args) :
+        fun(std::move(fun)), args(std::move(args)) {}
+
     void print() const;
 };
 

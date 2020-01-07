@@ -45,7 +45,8 @@ struct Canonizator {
     irt::Statement* doStm(irt::Statement* stm);
     std::pair<irt::Statement*, irt::Expression*> doExp(irt::Expression* exp);
     irt::Statement* sequence(irt::Statement* stm1, irt::Statement* stm2);
-    std::unique_ptr<irt::Statement> makeUnique(irt::Statement* stm);
+    std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
+    ExpressionList* getCallRList(irt::Expression* exp);
 public:
     Canonizator();
     // ............... ver tipos!!!!!
