@@ -1,0 +1,56 @@
+CONST (i): The integer constant i.
+
+NAME (n): The symbolic constant n (corresponding to an assembly language la-
+bel).
+
+TEMP (t): Temporary t. A temporary in the abstract machine is similar to a reg-
+ister in a real machine. However, the abstract machine has an infinite number
+of temporaries.
+
+BINOP (o, e1 , e2 ) The application of binary operator o to operands e1 , e2 . Subex-
+pression e 1 is evaluated before e 2 . The integer arithmetic operators are PLUS ,
+MINUS , MUL , DIV ; the integer bitwise logical operators are AND , OR , XOR ;
+the integer logical shift operators are LSHIFT , RSHIFT ; the integer arithmetic
+right-shift is ARSHIFT . The Tiger language has no logical operators, but the
+intermediate language is meant to be independent of any source language;
+also, the logical operators might be used in implementing other features of
+Tiger.
+
+MEM (e) The contents of wordSize bytes of memory starting at address e (where
+wordSize is defined in the Frame module). Note that when MEM is used as
+the left child of a MOVE , it means “store,” but anywhere else it means “fetch.”
+
+CALL ( f, l) A procedure call: the application of function f to argument list l.
+The subexpression f is evaluated before the arguments which are evaluated
+left to right.
+
+ESEQ (s, e) The statement s is evaluated for side effects, then e is evaluated for
+a result.
+The statements  of the tree language perform side effects and con-
+trol flow:
+
+MOVE ( TEMP t, e) Evaluate e and move it into temporary t.
+
+MOVE ( MEM(e1), e2 ) Evaluate e1 , yielding address a. Then evaluate e2 , and
+store the result into wordSize bytes of memory starting at a.
+
+EXP (e) Evaluate e and discard the result.
+
+JUMP (e, labs) Transfer control (jump) to address e. The destination e may be a
+literal label, as in NAME (lab), or it may be an address calculated by any other
+kind of expression. The list of labels labs specifies all
+the possible locations that the expression e can evaluate to; this is necessary
+for dataflow analysis later. The common case of jumping to a known label l is
+written as T_Jump(l,Temp_LabelList(l,NULL));
+
+CJUMP (o, e1 , e2 , t, f ) Evaluate e1 , e2 in that order, yielding values a, b. Then
+compare a, b using the relational operator o. If the result is true , jump to
+t; otherwise jump to f . The relational operators are EQ and NE for integer
+equality and nonequality (signed or unsigned); signed integer inequalities LT ,
+GT , LE , GE ; and unsigned integer inequalities ULT , ULE , UGT , UGE .
+
+SEQ (s1 , s2 ) The statement s1 followed by s2 .
+
+LABEL (n) Define the constant value of name n to be the current machine code
+address. This is like a label definition in assembly language. The value
+NAME (n) may be the target of jumps, calls, etc.

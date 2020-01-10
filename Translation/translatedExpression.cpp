@@ -14,8 +14,8 @@ unique_ptr<irt::Statement>  Ex::unNx()  {
 }
 unique_ptr<Cx>              Ex::unCx()  {
   unique_ptr<irt::Cjump> cjump = make_unique<irt::Cjump>(irt::Ne, this->unEx(), make_unique<irt::Const>(0), nullptr, nullptr);
-  PatchList trues  = {cjump->true_label.get()};
-  PatchList falses = {cjump->false_label.get()};
+  PatchList trues  = {cjump->true_label};
+  PatchList falses = {cjump->false_label};
   return make_unique<Cx>(trues, falses, move(cjump));
 }
 void Ex::print()  {}

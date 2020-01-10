@@ -19,12 +19,15 @@ public:
     GenericList(T *e) : GenericList() { this->push_back(e); }
 
     using iterator       = typename std::deque<std::unique_ptr<T>>::iterator;
+    using reverse_iterator       = typename std::deque<std::unique_ptr<T>>::reverse_iterator;
     using const_iterator = typename std::deque<std::unique_ptr<T>>::const_iterator;
 
-    iterator       begin()        { return data.begin(); }
-    iterator       end()          { return data.end(); }
-    const_iterator begin()  const { return data.cbegin(); }
-    const_iterator end()    const { return data.cend(); }
+    iterator            begin()        { return data.begin(); }
+    iterator            end()          { return data.end(); }
+    reverse_iterator    rbegin()        { return data.rbegin(); }
+    reverse_iterator    rend()          { return data.rend(); }
+    const_iterator      begin()  const { return data.cbegin(); }
+    const_iterator      end()    const { return data.cend(); }
 
     auto  size()    const { return data.size(); }
     auto  empty()   const { return data.empty(); }

@@ -73,10 +73,11 @@ struct Jump  : public Statement {
 struct Cjump : public Statement {
 	RelationOperation rel_op;
 	std::unique_ptr<Expression> left, right;
-	std::unique_ptr<temp::Label> true_label, false_label;
+	temp::Label* true_label;
+    temp::Label* false_label;
 
-	Cjump(RelationOperation rel_op, std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, std::unique_ptr<temp::Label> true_label, std::unique_ptr<temp::Label> false_label) :
-		rel_op(rel_op), left(std::move(left)), right(std::move(right)), true_label(std::move(true_label)), false_label(std::move(false_label)) {}
+	Cjump(RelationOperation rel_op, std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, temp::Label* _true_label, temp::Label* _false_label) :
+		rel_op(rel_op), left(std::move(left)), right(std::move(right)), true_label(_true_label), false_label(_false_label) {}
 
     void print() const;
 };

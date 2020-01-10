@@ -4,18 +4,21 @@
 #include "../IRT/IRT.h"
 #include "patchList.h"
 #include "../Utility/error.h"
+#include "../Utility/utility.h"
 
 
 namespace trans {
 
 /**
- * Forward declarations
+ * Abstract Datatype visible only for translation
+ * that wraps the IRT representation
  * **/
 class TranslatedExp;
 class Ex;
 class Nx;
 class Cx;
 
+using ExpressionList = util::GenericList<TranslatedExp>;
 
 /**
  * Modules used in the translation process

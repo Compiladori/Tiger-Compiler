@@ -18,7 +18,8 @@ ESCAPES_OBJ = escapes.o
 
 TRANS_HDR = ../IRT/IRT.h            \
 			patchList.h             \
-			translatedExpression.h
+			translatedExpression.h  \
+            ../Frame/frame.h
 TRANS_SRC = translation.cpp translatedExpression.cpp
 TRANS_OBJ = translation.o translatedExpression.o
 
