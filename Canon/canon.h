@@ -40,11 +40,12 @@ struct Canonizator {
 
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
-    std::pair<irt::Statement*, ExpressionList*> reorder(ExpressionList* expList);
+    irt::Statement* reorder(ExpressionList* expList);
     // doExp returns a statement and an expression (list of one expression)
     irt::Statement* doStm(irt::Statement* stm);
     std::pair<irt::Statement*, irt::Expression*> doExp(irt::Expression* exp);
     irt::Statement* sequence(irt::Statement* stm1, irt::Statement* stm2);
+    std::unique_ptr<irt::Expression> makeExpUnique(irt::Expression* exp);
     std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
     ExpressionList* getCallRList(irt::Expression* exp);
 public:
