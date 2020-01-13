@@ -68,8 +68,85 @@ void Muncher::munchStatement(irt::Statement* stm){
     }
     
     if(auto move_stm = dynamic_cast<irt::Move*>(stm)){
-        // TODO: Complete
-        return;
+        /* MOVE(...) */
+        unique_ptr<irt::Expression>& move_dst = move_stm->left;
+        
+        if(auto mem_dst = dynamic_cast<irt::Mem*>(move_dst.get())){
+            /* MOVE(MEM(...), e2) */
+            
+            if(auto binop_mem_dst = dynamic_cast<irt::BinOp*>(mem_dst->exp.get())){
+                /* MOVE(MEM(BINOP(...)), e2) */
+                
+                if(auto binop_left_const = dynamic_cast<irt::Const*>(binop_mem_dst->left.get())){
+                    /* MOVE(MEM(BINOP(OP, CONST(i), e1)), e2) */
+                    
+                    auto e1 = binop_mem_dst->right.get();
+                    auto e2 = move_stm->right.get();
+                    // TODO: set OP name accordingly and/or check what's actually allowed
+                    std::string OP_name = "+";
+                    std::string move_code = "mov [`s0 " + OP_name + " " + std::to_string(binop_left_const->i) + "], `s1";
+                    emit(make_unique<assem::Move>(move_code, temp::TempList {}, 
+                                                  temp::TempList {munchExpression(e1), munchExpression(e2)}));
+                    return;
+                }
+                
+                if(auto binop_right_const = dynamic_cast<irt::Const*>(binop_mem_dst->right.get())){
+                    /* MOVE(MEM(BINOP(OP, e1, CONST(i))), e2) */
+                    
+                    auto e1 = binop_mem_dst->left.get();
+                    auto e2 = move_stm->right.get();
+                    // TODO: set OP name accordingly and/or check what's actually allowed
+                    std::string OP_name = "+";
+                    std::string move_code = "mov [`s0 " + OP_name + " " + std::to_string(binop_right_const->i) + "], `s1";
+                    emit(make_unique<assem::Move>(move_code, temp::TempList {}, 
+                                                  temp::TempList {munchExpression(e1), munchExpression(e2)}));
+                    return;
+                }
+            }
+            
+            if(auto mem_const = dynamic_cast<irt::Const*>(mem_dst->exp.get())){
+                /* MOVE(MEM(CONST(i)), e2) */
+                
+                auto e2 = move_stm->right.get();
+                std::string move_code = "mov [`s0 + " + std::to_string(mem_const->i) +  "], `s1";
+                
+                emit(make_unique<assem::Move>(move_code, temp::TempList {}, temp::TempList {munchExpression(e2)}));
+                return;
+            }
+            
+            if(auto mem_src = dynamic_cast<irt::Mem*>(move_stm->right.get())){
+                /* MOVE(MEM(e1), MEM(e2)) */
+                
+                auto e1 = mem_dst->exp.get();
+                auto e2 = mem_src->exp.get();
+                std::string move_code = "mov [`s0], `s1";
+                
+                emit(make_unique<assem::Move>(move_code, temp::TempList {}, temp::TempList {munchExpression(e1), munchExpression(e2)}));
+                return;
+            }
+            
+            /* MOVE(MEM(e1), e2) */
+            auto e1 = mem_dst->exp.get();
+            auto e2 = move_stm->right.get();
+            std::string move_code = "mov [`s0], `s1";
+            
+            emit(make_unique<assem::Move>(move_code, temp::TempList {}, temp::TempList {munchExpression(e1), munchExpression(e2)}));
+            return;
+        }
+        
+        if(auto temp_dst = dynamic_cast<irt::Temp*>(move_dst.get())){
+            /* MOVE(TEMP(t), e2) */
+            
+            auto e2 = move_stm->left.get();
+            std::string move_code = "mov `d0, `s0";
+            
+            emit(make_unique<assem::Move>(move_code, 
+                                          temp::TempList {munchExpression(temp_dst)},
+                                          temp::TempList {munchExpression(e2)}));
+            return;
+        }
+        
+        throw error::internal_error("Didn't match any Move statement pattern", __FILE__);
     }
     
     if(auto exp_stm = dynamic_cast<irt::Exp*>(stm)){
