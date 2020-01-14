@@ -43,7 +43,7 @@ irt::Statement* Canonizator::reorder(ExpressionList* expList){
         }
         else {
             temp::Temp t = temp::Temp(); irt::Temp* tmp = new irt::Temp(t);
-            expList->pop_front(); expList->push_front(tmp);
+            expList->push_front(tmp);
             std::unique_ptr<irt::Expression> headExpU = makeExpUnique(head.second);
             irt::Move* move = new irt::Move(std::make_unique<irt::Temp>(t), std::move(headExpU));
             irt::Statement* s = sequence(move, tail);
@@ -52,6 +52,7 @@ irt::Statement* Canonizator::reorder(ExpressionList* expList){
     }
 }
 
+// Transforms an expression pointer into a unique pointer to that expression
 std::unique_ptr<irt::Expression> Canonizator::makeExpUnique(irt::Expression* exp) {
     std::unique_ptr<irt::Expression> expU;
     if (auto binop = dynamic_cast<irt::BinOp*>(exp)){
@@ -121,7 +122,7 @@ irt::Statement* Canonizator::sequence(irt::Statement* stm1, irt::Statement* stm2
         return stm1;
     std::unique_ptr<irt::Statement> stm1U = makeStmUnique(stm1);
     std::unique_ptr<irt::Statement> stm2U = makeStmUnique(stm2);
-    auto seqRes = new irt::Seq(move(stm1U), move(stm2U));
+    auto seqRes = new irt::Seq(std::move(stm1U), std::move(stm2U));
     return seqRes;
 }
 
@@ -231,6 +232,20 @@ std::pair<irt::Statement*, irt::Expression*> Canonizator::doExp(irt::Expression*
     return std::make_pair(p, exp);
 }
 
-std::unique_ptr<StatementList> Canonizator::linearize(irt::Statement* stm){}
+StatementList* Canonizator::linear(irt::Statement* stm, StatementList* right){
+    if (auto seq = dynamic_cast<irt::Seq*>(stm))
+        return linear(seq->left.get(), linear(seq->right.get(), right));
+    else {
+        StatementList* stmList;
+        stmList->push_back(stm);
+        for(auto s = right->begin(); s != right->end()--; s++)
+            stmList->push_back(s->get());
+        return stmList;
+    }
+}
+
+StatementList* Canonizator::linearize(irt::Statement* stm){
+    return linear(doStm(stm), NULL);
+}
 struct Block* Canonizator::basicBlocks(StatementList* stmList){}
 StatementList* Canonizator::traceSchedule(Block block){}

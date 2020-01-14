@@ -48,10 +48,11 @@ struct Canonizator {
     std::unique_ptr<irt::Expression> makeExpUnique(irt::Expression* exp);
     std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
     ExpressionList* getCallRList(irt::Expression* exp);
+    StatementList* linear(irt::Statement* stm, StatementList* right);
 public:
     Canonizator();
     // ............... ver tipos!!!!!
-    std::unique_ptr<StatementList> linearize(irt::Statement* stm);
+    StatementList* linearize(irt::Statement* stm);
     struct Block* basicBlocks(StatementList* stmList);
     StatementList* traceSchedule(Block block);
 };
