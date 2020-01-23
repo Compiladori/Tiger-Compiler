@@ -7,7 +7,7 @@ using namespace std;
  * Main translating class
  * **/
 
-unique_ptr<TranslatedExp> Translator::simpleVar(Access* a,Level* l) {
+unique_ptr<TranslatedExp> Translator::simpleVar(shared_ptr<trans::Access> a,shared_ptr<trans::Level> l) {
     unique_ptr<Temp> fp = make_unique<Temp>(frame::Frame::fp);
     if (a->_level == l)
         return make_unique<Ex>(frame::exp(a->_access,move(fp)));
@@ -58,18 +58,33 @@ unique_ptr<TranslatedExp> Translator::unitExp() {
 unique_ptr<TranslatedExp> Translator::nilExp() {
     return make_unique<Ex>(make_unique<Const>(0));
 }
-unique_ptr<TranslatedExp> Translator::intExp(unique_ptr<ast::IntExp> val) {
+unique_ptr<TranslatedExp> Translator::intExp(ast::IntExp* val) {
     return make_unique<Ex>(make_unique<Const>(val -> value));
 }
-unique_ptr<TranslatedExp> Translator::stringExp(unique_ptr<ast::StringExp> str) {
+unique_ptr<TranslatedExp> Translator::stringExp(ast::StringExp* str) {
   temp::Label strpos = temp::Label();
   frame::StringFrag* frag = new frame::StringFrag(strpos, str -> value);
   _frag_list -> push_back(frag);
   return make_unique<Ex>(make_unique<Name>(strpos));
 }
-unique_ptr<TranslatedExp> Translator::callExp() {
-    // TODO: Complete
-    return nullptr;
+unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc,std::shared_ptr<trans::Level> funlvl,std::shared_ptr<trans::Level> currentlvl,temp::Label name,unique_ptr<ExpressionList> list) {
+    unique_ptr<irt::ExpressionList> seq = make_unique<irt::ExpressionList>();
+    for (auto exp = list -> rbegin(); exp != list -> rend(); exp++){
+        seq -> push_back((*exp) -> unEx());
+    }
+    if(!isLibFunc){
+        unique_ptr<Expression> staticLink = frame::static_link_exp_base(make_unique<irt::Temp>(frame::Frame::fp));
+        if (funlvl -> _parent != currentlvl){
+            while(currentlvl){
+                staticLink = make_unique<Mem>(move(staticLink));
+                if(currentlvl -> _parent == funlvl -> _parent )
+                    break;
+                currentlvl = currentlvl -> _parent;
+            }
+        }
+        seq -> push_front(move(staticLink));
+    }
+    return make_unique<Ex>(make_unique<Call>(make_unique<Name>(name),move(seq))); 
 }
 void translateArOp(ast::Operation op,BinaryOperation *tr_op){
     switch (op){
@@ -171,7 +186,7 @@ unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList
                     make_unique<BinOp>(
                         Plus,
                         make_unique<Temp>(r),
-                        make_unique<Const>((fieldCount - 1)  * frame::Frame::wordSize)
+                        make_unique<Const>((fieldCount - 2)  * frame::Frame::wordSize)
                     )
                 ),
                 (*exp) -> unEx()),
@@ -196,9 +211,45 @@ unique_ptr<TranslatedExp> Translator::seqExp(unique_ptr<trans::ExpressionList> l
 unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var,unique_ptr<TranslatedExp> exp) {
     return make_unique<Nx>(make_unique<Move>(var -> unEx(),exp -> unEx()));
 }
-unique_ptr<TranslatedExp> Translator::ifExp() {
-    // TODO: Complete
-    return nullptr;
+unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, unique_ptr<TranslatedExp> then, unique_ptr<TranslatedExp> elsee, seman::ExpType* if_type) {
+    temp::Label t = temp::Label();
+    temp::Label f = temp::Label();
+    temp::Label m = temp::Label();
+    unique_ptr<Cx> res;
+    if (dynamic_cast<trans::Ex*>(test.get())) {
+        unique_ptr<Cx> testcx = test -> unCx();
+        PatchList trues  = {testcx->trues};
+        PatchList falses = {testcx->falses};
+        res =  make_unique<Cx>(trues, falses, move(testcx -> stm));
+    } else if (dynamic_cast<trans::Nx*>(test.get()))
+        exit(-1);
+    res -> trues.applyPatch(t);
+    res -> falses.applyPatch(f);
+    
+    if(if_type -> kind != seman::ExpTypeKind::NoKind  ){
+        temp::Temp r = temp::Temp();
+        unique_ptr<Statement> s = make_unique<Seq>(move(res->unCx() -> stm),
+            make_unique<Seq>(make_unique<Label>(t),
+                make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r),then -> unEx()),
+                    make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m),temp::LabelList(1,m)),
+                        make_unique<Seq>(make_unique<Label>(f),
+                            make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r),elsee -> unEx()),
+                                make_unique<Label>(m)
+        ))))));
+        if(dynamic_cast<trans::Nx*>(then.get()))
+            exit(-1);
+        if(dynamic_cast<trans::Nx*>(elsee.get()))
+            exit(-1);
+        return make_unique<Ex>(make_unique<Eseq>(move(s),make_unique<Temp>(r)));
+    }
+    return make_unique<Nx>(
+        make_unique<Seq>(move(res->unCx() -> stm),
+            make_unique<Seq>(make_unique<Label>(t),
+                make_unique<Seq>(then -> unNx(),
+                    make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m),temp::LabelList(1,m)),
+                        make_unique<Seq>(make_unique<Label>(f),
+                            make_unique<Seq>(elsee -> unNx(),
+                                make_unique<Label>(m))))))));
 }
 unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp,unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
     temp::Label test = temp::Label();
@@ -212,7 +263,7 @@ unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp,uni
                         make_unique<Label>(done))))));
     return make_unique<Nx>(move(s));
 }
-unique_ptr<TranslatedExp> Translator::forExp(trans::Access* access,trans::Level* lvl, unique_ptr<TranslatedExp> explo, unique_ptr<TranslatedExp> exphi, unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
+unique_ptr<TranslatedExp> Translator::forExp(std::shared_ptr<trans::Access> access,std::shared_ptr<trans::Level> lvl, unique_ptr<TranslatedExp> explo, unique_ptr<TranslatedExp> exphi, unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
     temp::Label test = temp::Label();
     temp::Label loopstart = temp::Label();
     temp::Temp limit = temp::Temp();
@@ -233,9 +284,12 @@ unique_ptr<TranslatedExp> Translator::forExp(trans::Access* access,trans::Level*
                         ))))))));
     return make_unique<Nx>(move(s));
 }
-unique_ptr<TranslatedExp> Translator::letExp() {
-    // TODO: Complete
-    return nullptr;
+unique_ptr<TranslatedExp> Translator::letExp(unique_ptr<ExpressionList> list, unique_ptr<TranslatedExp> body) {
+    unique_ptr<irt::Expression> res = body -> unEx();
+    for (auto exp = list -> begin(); exp != list -> end(); exp++){
+        res = make_unique<Eseq>((*exp) -> unNx(),move(res));
+    }
+    return make_unique<Ex>(move(res));
 }
 unique_ptr<TranslatedExp> Translator::breakExp(temp::Label breaklbl) {
     return make_unique<Nx>(
@@ -272,21 +326,22 @@ unique_ptr<TranslatedExp> Translator::funDec() {
     return nullptr;
 }
 
-unique_ptr<trans::Access> alloc_local(unique_ptr<Level> level,bool escape){
-    unique_ptr<frame::Access> access = level->_frame->alloc_local(escape);
-    return make_unique<Access>(level.get(),access.get());
+shared_ptr<Access> Level::alloc_local(shared_ptr<Level> lvl,bool escape){
+    shared_ptr<frame::Access> access = lvl ->_frame->alloc_local(escape);
+    return  make_shared<Access>(lvl,access);
 }
 
-unique_ptr<AccessList> formals(unique_ptr<Level> level) {
-  unique_ptr<AccessList> trans_list = make_unique<AccessList>();
-  for (auto& i : level->_frame->formals()) {
-    unique_ptr<Access> trans_access = make_unique<Access>(level.get(),i.get());
-    trans_list->push_back(move(trans_access));
+shared_ptr<AccessList> Level::formals(shared_ptr<Level> lvl) {
+  shared_ptr<AccessList> trans_list = make_shared<AccessList>();
+  for (auto& access : lvl -> _frame->formals()) {
+    shared_ptr<Access> trans_access = make_shared<Access>(lvl,access);
+    trans_list->push_back(trans_access);
   }
   return trans_list;
 }
-
-Level* outermost(){
-    temp::Label tiger_label = temp::Label("mainLevel");
-    return new trans::Level(nullptr,tiger_label,vector<bool>());
+unique_ptr<TranslatedExp> Translator::nullNx(){
+    return make_unique<Nx>(make_unique<Exp>(make_unique<Const>(0)));
+}
+unique_ptr<TranslatedExp> Translator::NoExp(){
+    return make_unique<Ex>(make_unique<Const>(0));
 }

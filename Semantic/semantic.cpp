@@ -10,6 +10,8 @@
 #include "../Utility/error.h"
 
 using namespace seman;
+using namespace trans;
+using namespace std;
 
 /**
  * SemanticChecker
@@ -22,11 +24,12 @@ using std::make_shared;
 using std::move;
 
 AssociatedExpType SemanticChecker::translate(ast::Expression* exp){
-    clear();
-    return transExpression(exp);
+    shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr,temp::Label("mainLevel"),vector<bool>());
+    clear(outermost);
+    return transExpression(outermost,exp);
 }
 
-void SemanticChecker::load_initial_values(){
+void SemanticChecker::load_initial_values(shared_ptr<trans::Level> outermost){
     auto TInt    = make_shared<IntExpType>();
     auto TString = make_shared<StringExpType>();
     auto TUnit   = make_shared<UnitExpType>();
@@ -36,24 +39,23 @@ void SemanticChecker::load_initial_values(){
     insertTypeEntry("string", make_unique<TypeEntry>(TString), true);
 
     // Runtime functions
-    using type_vector = std::vector<std::shared_ptr<ExpType>>;
+    using type_vector = vector<shared_ptr<ExpType>>;
 
-    insertValueEntry("print",     make_unique<FunEntry>(type_vector{TString}, TUnit), true);
-    insertValueEntry("flush",     make_unique<FunEntry>(type_vector{}, TUnit), true);
-    insertValueEntry("getchar",   make_unique<FunEntry>(type_vector{}, TString), true);
-    insertValueEntry("ord",       make_unique<FunEntry>(type_vector{TString}, TInt), true);
-    insertValueEntry("chr",       make_unique<FunEntry>(type_vector{TInt}, TString), true);
-    insertValueEntry("size",      make_unique<FunEntry>(type_vector{TString}, TInt), true);
-    insertValueEntry("substring", make_unique<FunEntry>(type_vector{TString, TInt, TInt}, TString), true);
-    insertValueEntry("concat",    make_unique<FunEntry>(type_vector{TString, TString}, TString), true);
-    insertValueEntry("not",       make_unique<FunEntry>(type_vector{TInt}, TInt), true);
-    insertValueEntry("exit",      make_unique<FunEntry>(type_vector{TInt}, TUnit), true);
+    insertValueEntry("print",     make_unique<FunEntry>(type_vector{TString}, TUnit,outermost,make_shared<temp::Label>("print")), true);
+    insertValueEntry("flush",     make_unique<FunEntry>(type_vector{}, TUnit,outermost,make_shared<temp::Label>("flush")), true);
+    insertValueEntry("getchar",   make_unique<FunEntry>(type_vector{}, TString,outermost,make_shared<temp::Label>("getchar")), true);
+    insertValueEntry("ord",       make_unique<FunEntry>(type_vector{TString}, TInt,outermost,make_shared<temp::Label>("ord")), true);
+    insertValueEntry("chr",       make_unique<FunEntry>(type_vector{TInt}, TString,outermost,make_shared<temp::Label>("chr")), true);
+    insertValueEntry("size",      make_unique<FunEntry>(type_vector{TString}, TInt,outermost,make_shared<temp::Label>("size")), true);
+    insertValueEntry("substring", make_unique<FunEntry>(type_vector{TString, TInt, TInt}, TString,outermost,make_shared<temp::Label>("substring")), true);
+    insertValueEntry("concat",    make_unique<FunEntry>(type_vector{TString, TString}, TString,outermost,make_shared<temp::Label>("concat")), true);
+    insertValueEntry("not",       make_unique<FunEntry>(type_vector{TInt}, TInt,outermost,make_shared<temp::Label>("not")), true);
+    insertValueEntry("exit",      make_unique<FunEntry>(type_vector{TInt}, TUnit,outermost,make_shared<temp::Label>("exit")), true);
 }
-
 void SemanticChecker::beginScope(){
     // Create a new scope without any initial insertions
-    type_insertions.push(std::stack<ast::Symbol>());
-    value_insertions.push(std::stack<ast::Symbol>());
+    type_insertions.push(stack<ast::Symbol>());
+    value_insertions.push(stack<ast::Symbol>());
 }
 
 void SemanticChecker::endScope(){
@@ -74,6 +76,12 @@ void SemanticChecker::endScope(){
         ValueEnv[symbol].pop();
     }
     value_insertions.pop();
+}
+void SemanticChecker::endBreakScope(){
+    if(break_insertions.empty()){
+        throw error::internal_error("There is no scope to end", __FILE__);
+    }
+    break_insertions.pop();
 }
 
 void SemanticChecker::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_entry, bool ignore_scope){
@@ -98,25 +106,26 @@ void SemanticChecker::insertValueEntry(ast::Symbol s, unique_ptr<ValueEntry> val
     }
 }
 
-
-AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
+AssociatedExpType SemanticChecker::transVariable(shared_ptr<trans::Level> lvl,ast::Variable* var){
     if(auto simple_var = dynamic_cast<ast::SimpleVar*>(var)){
         auto env_entry = getValueEntry(*simple_var->id);
         if(auto var_entry = dynamic_cast<VarEntry*>(env_entry)){
-            return AssociatedExpType(nullptr, var_entry->type);
+            return AssociatedExpType(translator -> simpleVar((var_entry -> access),lvl), var_entry->type);
         }
         // Error, undefined variable
         throw error::semantic_error("Undefined variable \"" + simple_var->id->name + "\"", var->pos);
     }
 
     if(auto field_var = dynamic_cast<ast::FieldVar*>(var)){
-        auto var_result = transVariable(field_var->var.get());
+        auto var_result = transVariable(lvl,field_var->var.get());
 
         if(auto record_type = dynamic_cast<RecordExpType*>(var_result.exp_type.get())){
+            int fieldIndex = 0;
             for(const auto& field : record_type->fields){
                 if(field.name == field_var->id->name){
-                    return AssociatedExpType(nullptr, field.getType());
+                    return AssociatedExpType(translator -> fieldVar(move(var_result.tr_exp),fieldIndex), field.getType());
                 }
+                fieldIndex++;
             }
             // Error, id field doesn't exist
             throw error::semantic_error("Field \"" + field_var->id->name + "\" doesn't exist" , var->pos);
@@ -126,46 +135,45 @@ AssociatedExpType SemanticChecker::transVariable(ast::Variable* var){
     }
 
     if(auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var)){
-        auto var_result = transVariable(subscript_var->var.get());
+        auto var_result = transVariable(lvl,subscript_var->var.get());
         if(var_result.exp_type->kind != ExpTypeKind::ArrayKind){
             // Error, expected array type
             throw error::semantic_error("Expected array type" , var->pos);
         }
 
-        auto exp_result = transExpression(subscript_var->exp.get());
+        auto exp_result = transExpression(lvl,subscript_var->exp.get());
         if(exp_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, expected int type in array index
             throw error::semantic_error("Expected int type in array index", var->pos);
         }
 
         auto array_result = static_cast<ArrayExpType*>(var_result.exp_type.get());
-        return AssociatedExpType(nullptr, array_result->getType());
+        return AssociatedExpType(translator -> subscriptVar(move(var_result.tr_exp),move(exp_result.tr_exp)), array_result->getType());
     }
 
     // Internal error, it should have matched some clause
     throw error::internal_error("didn't match any clause in translate variable function", __FILE__);
 }
 
-AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
+AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,ast::Expression* exp){
     if(auto var_exp = dynamic_cast<ast::VarExp*>(exp)){
-        auto result = transVariable(var_exp->var.get());
-        return AssociatedExpType(nullptr, result.exp_type);
+        return transVariable(lvl,var_exp->var.get());
     }
 
     if(/*auto unit_exp = */dynamic_cast<ast::UnitExp*>(exp)){
-        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
+        return AssociatedExpType(translator -> unitExp(), make_shared<UnitExpType>());
     }
 
     if(/*auto nil_exp = */dynamic_cast<ast::NilExp*>(exp)){
-        return AssociatedExpType(nullptr, make_shared<NilExpType>());
+        return AssociatedExpType(translator -> nilExp(), make_shared<NilExpType>());
     }
 
-    if(/*auto int_exp = */dynamic_cast<ast::IntExp*>(exp)){
-        return AssociatedExpType(nullptr, make_shared<IntExpType>());
+    if(auto int_exp = dynamic_cast<ast::IntExp*>(exp)){
+        return AssociatedExpType(translator -> intExp(int_exp), make_shared<IntExpType>());
     }
 
-    if(/*auto string_exp = */dynamic_cast<ast::StringExp*>(exp)){
-        return AssociatedExpType(nullptr, make_shared<StringExpType>());
+    if(auto string_exp = dynamic_cast<ast::StringExp*>(exp)){
+        return AssociatedExpType(translator -> stringExp(string_exp), make_shared<StringExpType>());
     }
 
     if(auto call_exp = dynamic_cast<ast::CallExp*>(exp)){
@@ -175,20 +183,20 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 // Error, function call with a different number of arguments than the required ones
                 throw error::semantic_error("Function \"" + call_exp->func->name + "\" called with a different number of arguments than the required ones", exp->pos);
             }
-
-            for(std::size_t index = 0; index < fun_entry->formals.size(); index++){
+            unique_ptr<trans::ExpressionList> explist = make_unique<trans::ExpressionList>(); 
+            for(size_t index = 0; index < fun_entry->formals.size(); index++){
                 auto& param_type = fun_entry->formals[index];
                 auto& arg_exp = (*call_exp->exp_list)[index];
 
-                auto param_result = transExpression(arg_exp.get());
-
+                auto param_result = transExpression(lvl,arg_exp.get());
+                explist -> push_front(move(param_result.tr_exp));
                 if(*param_type != *param_result.exp_type){
                     // Error, the argument type doesn't match its expression type
-                    throw error::semantic_error("Argument number " + std::to_string(index) + " has an unexpected type", exp->pos);
+                    throw error::semantic_error("Argument number " + to_string(index) + " has an unexpected type", exp->pos);
                 }
             }
 
-            return AssociatedExpType(nullptr, fun_entry->result);
+            return AssociatedExpType(translator -> callExp(false,fun_entry ->funlvl,lvl,*fun_entry ->label,move(explist)), fun_entry->result);
         }
         // Error, the function wasn't declared in this scope
         throw error::semantic_error("Function \"" + call_exp->func->name + "\" wasn't declared in this scope", exp->pos);
@@ -196,8 +204,8 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
 
     if(auto op_exp = dynamic_cast<ast::OpExp*>(exp)){
         auto oper = op_exp->oper;
-        auto result_left = transExpression(op_exp->left.get());
-        auto result_right = transExpression(op_exp->right.get());
+        auto result_left = transExpression(lvl,op_exp->left.get());
+        auto result_right = transExpression(lvl,op_exp->right.get());
 
         switch(oper){
             case ast::Plus:
@@ -213,7 +221,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     throw error::semantic_error("Operand on the right isn't an integer", exp->pos);
 
                 }
-                return AssociatedExpType(nullptr, make_shared<IntExpType>());
+                return AssociatedExpType(translator -> arExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
             }
             case ast::Lt:
             case ast::Le:
@@ -230,7 +238,13 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     // Error, operands' types must be between Int or String
                     throw error::semantic_error("Operands must have type Int or String", exp->pos);
                 }
-                return AssociatedExpType(nullptr, make_shared<IntExpType>());
+                if(left_kind == ExpTypeKind::IntKind ){
+                    return AssociatedExpType(translator -> condExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
+                }
+                if(left_kind == ExpTypeKind::StringKind){
+                    return AssociatedExpType(translator -> strExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
+                }
+                return AssociatedExpType(translator -> condExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
             }
             case ast::Eq:
             case ast::Neq: {
@@ -238,7 +252,10 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     // Error, different types on equality testing
                     throw error::semantic_error("Operands must have the same type", exp->pos);
                 }
-                return AssociatedExpType(nullptr, make_shared<IntExpType>());
+                if(result_left.exp_type->kind == ExpTypeKind::StringKind)
+                    return AssociatedExpType(translator -> strExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
+                else
+                    return AssociatedExpType(translator -> condExp(oper,move(result_left.tr_exp),move(result_right.tr_exp)), make_shared<IntExpType>());
             }
         }
 
@@ -259,7 +276,9 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 throw error::semantic_error("Wrong number of fields for record \"" + record_exp->type_id->name + "\"" , exp->pos);
             }
 
-            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
+            unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
+            int fieldCount = 0;
+            unique_ptr<ExpressionList> field_list = make_unique<ExpressionList>();
             for(const auto& field : *record_exp->fields){
                 if(declared_fields.count(*field->id)){
                     // Error, duplicated field name
@@ -285,15 +304,17 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                     throw error::semantic_error("Field \"" + field->id->name + "\" doesn't exist" , exp->pos);
                 }
 
-                auto field_type = transExpression(field->exp.get());
+                auto field_type = transExpression(lvl,field->exp.get());
+                field_list -> push_front(move(field_type.tr_exp));
 
                 if(*field_type.exp_type != *record_exp_type->fields[index].getType()){
                     // Error, field type doesn't match
                     throw error::semantic_error("Type of \"" + field->id->name + "\" doesn't match its definition" , exp->pos);
                 }
+                fieldCount++;
             }
 
-            return AssociatedExpType(nullptr, type_entry->type);
+            return AssociatedExpType(translator -> recordExp(move(field_list),fieldCount), type_entry->type);
         }
 
         // Error, record type was not defined
@@ -308,93 +329,123 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
             throw error::internal_error("expression list is empty", __FILE__);
         }
 
-        auto last_result = transExpression(list_ptr->back().get());
+        auto last_result = transExpression(lvl,list_ptr->back().get());
+        unique_ptr<ExpressionList> seqlist = make_unique<ExpressionList>();
         for(auto it = list_ptr->begin(); it != list_ptr->end()--; it++){
-            transExpression(it->get());
+            auto exp = transExpression(lvl,it->get());
+            seqlist -> push_front(move(exp.tr_exp));
         }
 
-        return AssociatedExpType(nullptr, last_result.exp_type);
+        return AssociatedExpType(translator -> seqExp(move(seqlist)), last_result.exp_type);
     }
 
     if(auto assign_exp = dynamic_cast<ast::AssignExp*>(exp)){
-        auto var_result = transVariable(assign_exp->var.get());
-        auto exp_result = transExpression(assign_exp->exp.get());
+        auto var_result = transVariable(lvl,assign_exp->var.get());
+        auto exp_result = transExpression(lvl,assign_exp->exp.get());
 
         if(*var_result.exp_type != *exp_result.exp_type){
             // Error, variable's type is different than the expression's type
             throw error::semantic_error("Variable's type is different than the expression's type" , exp->pos);
         }
 
-        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
+        return AssociatedExpType(translator -> assignExp(move(var_result.tr_exp),move(exp_result.tr_exp)), make_shared<UnitExpType>());
     }
 
     if(auto if_exp = dynamic_cast<ast::IfExp*>(exp)){
-        auto test_result = transExpression(if_exp->test.get());
+        auto test_result = transExpression(lvl,if_exp->test.get());
+        auto otherwise_result = AssociatedExpType(Translator::nullNx(),make_shared<UnitExpType>());
 
         if(test_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the if-test should be int
             throw error::semantic_error("The expression evaluated in the if clause must be an int" , exp->pos);
         }
 
-        auto then_result = transExpression(if_exp->then.get());
+        auto then_result = transExpression(lvl,if_exp->then.get());
         if(if_exp->otherwise){
-            auto otherwise_result = transExpression(if_exp->otherwise.get());
+            otherwise_result = transExpression(lvl,if_exp->otherwise.get());
 
             if(*then_result.exp_type != *otherwise_result.exp_type){
                 // Error, then and else clauses must be of the same type
                 throw error::semantic_error("Then and Else clauses must be of the same type" , exp->pos);
             }
+        }else{
+            if(then_result.exp_type->kind != ExpTypeKind::NoKind)
+                throw error::semantic_error("if-then exp body must produce no value" , exp->pos);
         }
 
-        return AssociatedExpType(nullptr, then_result.exp_type);
+        return AssociatedExpType(translator -> ifExp(move(test_result.tr_exp),move(then_result.tr_exp),move(otherwise_result.tr_exp),then_result.exp_type.get()), then_result.exp_type);
     }
 
     if(auto while_exp = dynamic_cast<ast::WhileExp*>(exp)){
-        auto test_result = transExpression(while_exp->test.get());
+        auto test_result = transExpression(lvl,while_exp->test.get());
 
         if(test_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the while-test should be int
             throw error::semantic_error("The expression evaluated in the while condition must be an int" , exp->pos);
         }
+        temp::Label breaklbl = temp::Label();
 
-        transExpression(while_exp->body.get());
-        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
+        beginScope();
+        beginBreakScope(breaklbl);
+        auto body_result = transExpression(lvl,while_exp -> body.get());
+        endBreakScope();
+        endScope();
+
+        if(body_result.exp_type->kind != ExpTypeKind::NoKind){
+            // Error, the while-test should be int
+            throw error::semantic_error("While body must produce no value" , exp->pos);
+        }
+        return AssociatedExpType(translator -> whileExp(move(test_result.tr_exp),move(body_result.tr_exp),breaklbl), make_shared<UnitExpType>());
     }
 
     if(auto for_exp = dynamic_cast<ast::ForExp*>(exp)){
-        auto lo_result = transExpression(for_exp->lo.get());
+        beginScope();
+        auto lo_result = transExpression(lvl,for_exp->lo.get());
         if(lo_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the for-lo should be int
             throw error::semantic_error("Initialization value (low) in for loop must be an int" , exp->pos);
         }
 
-        auto hi_result = transExpression(for_exp->hi.get());
+        auto hi_result = transExpression(lvl,for_exp->hi.get());
         if(hi_result.exp_type->kind != ExpTypeKind::IntKind){
             // Error, the for-hi should be int
             throw error::semantic_error("Final value (high) in for loop must be an int" , exp->pos);
         }
+        auto varentry = make_unique<VarEntry>(lo_result.exp_type,Level::alloc_local(lvl,for_exp -> escape));
+        insertValueEntry(for_exp->var->name,move(varentry) );
 
-        beginScope();
-        insertValueEntry(for_exp->var->name, make_unique<VarEntry>(lo_result.exp_type));
-        transExpression(for_exp->body.get());
+        temp::Label forbreak = temp::Label();
+        beginBreakScope(forbreak);
+        auto body_result = transExpression(lvl,for_exp->body.get());
+        endBreakScope();
+        if(body_result.exp_type->kind != ExpTypeKind::NoKind){
+            // Error, the for-lo should be int
+            throw error::semantic_error("For body must produce no value" , exp->pos);
+        }
         endScope();
 
-        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
+        return AssociatedExpType(translator -> forExp(varentry -> access,lvl,move(lo_result.tr_exp),move(hi_result.tr_exp),move(body_result.tr_exp),forbreak), make_shared<UnitExpType>());
     }
 
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
         beginScope();
+        auto letlist = make_unique<ExpressionList>();
         for(const auto& dec_list : *let_exp->decs){
             // Augment current scope by processing let declarations
-            transDeclarations(dec_list.get());
+            auto e = transDeclarations(lvl,dec_list.get());
+            letlist -> push_front(move(e));
         }
-        auto result = transExpression(let_exp->body.get());
+        auto result = transExpression(lvl,let_exp->body.get());
         endScope();
-        return result;
+        return AssociatedExpType(translator -> letExp(move(letlist),move(result.tr_exp)),result.exp_type);
     }
 
     if(/*auto break_exp = */dynamic_cast<ast::BreakExp*>(exp)){
-        return AssociatedExpType(nullptr, make_shared<UnitExpType>());
+        if(BreakScopeEmpty()){
+            throw error::semantic_error("Break must be in a loop" , exp->pos);
+        }
+        auto breaklbl = getBreakEntry();
+        return AssociatedExpType(translator -> breakExp(breaklbl), make_shared<UnitExpType>());
     }
 
     if(auto array_exp = dynamic_cast<ast::ArrayExp*>(exp)){
@@ -405,19 +456,19 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
                 throw error::semantic_error("Array type \"" + array_exp->ty->name + "\" wasn't declared in this scope" , exp->pos);
             }
 
-            auto size_result = transExpression(array_exp->size.get());
+            auto size_result = transExpression(lvl,array_exp->size.get());
             if(size_result.exp_type->kind != ExpTypeKind::IntKind){
                 // Error, array's size MUST be an int
                 throw error::semantic_error("Array's size must be an int" , exp->pos);
             }
 
-            auto init_result = transExpression(array_exp->init.get());
+            auto init_result = transExpression(lvl,array_exp->init.get());
             if(*init_result.exp_type != *array_type->getType()){
                 // Error, array type MUST match with its initialization's type
                 throw error::semantic_error("Array type must match with its initialization type" , exp->pos);
             }
 
-            return AssociatedExpType(nullptr, type_entry->type);
+            return AssociatedExpType(translator -> arrayExp(move(init_result.tr_exp),move(size_result.tr_exp)), type_entry->type);
         }
 
         // Error, array type was not declared in this scope
@@ -428,7 +479,7 @@ AssociatedExpType SemanticChecker::transExpression(ast::Expression* exp){
     throw error::internal_error("didn't match any clause in translate expression function", __FILE__);
 }
 
-void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
+unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::Level> lvl,ast::DeclarationList* dec_list){
     if(dec_list->empty()){
         // Internal error, declaration lists shouldn't be empty
         throw error::internal_error("declaration list is empty", __FILE__);
@@ -442,7 +493,7 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
             throw error::internal_error("declaration list of variables should have only one element", __FILE__);
         }
 
-        auto result = transExpression(var_dec->exp.get());
+        auto result = transExpression(lvl,var_dec->exp.get());
 
         if(var_dec->type_id){
             // Check if the explicitly specified type_id matches the type of the expression
@@ -458,14 +509,14 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
                 throw error::semantic_error("Type \"" + var_dec->type_id->name + "\" was explicitly specified but doesn't match the expression type", var_dec->pos);
             }
         }
+        auto var_entry = make_unique<VarEntry>(result.exp_type,trans::Level::alloc_local(lvl,var_dec ->escape));
+        insertValueEntry(*var_dec->id, move(var_entry));
 
-        insertValueEntry(*var_dec->id, make_unique<VarEntry>(result.exp_type));
-
-        return;
+        return translator -> assignExp(translator -> simpleVar(var_entry -> access,lvl),move(result.tr_exp));
     }
 
     if(dynamic_cast<ast::FunDec*>(first_dec)){
-        std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_functions;
+        unordered_set<ast::Symbol, ast::SymbolHasher> declared_functions;
 
         // Insert a FunEntry for each function header
         for(const auto& dec : *dec_list){
@@ -490,10 +541,10 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
 
                 return_type = return_type_entry->type;
             }
-
-            unique_ptr<FunEntry> fun_entry = make_unique<FunEntry>(return_type);
-
-            std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_arguments;
+            shared_ptr<temp::Label> label = make_shared<temp::Label>();
+            unique_ptr<FunEntry> fun_entry = make_unique<FunEntry>(return_type,label);
+            vector<bool> formals = vector<bool>();
+            unordered_set<ast::Symbol, ast::SymbolHasher> declared_arguments;
             for(const auto& type_field : *fun_dec->tyfields){
                 if(declared_arguments.count(*type_field->id)){
                     // Error, function arguments must have different names
@@ -501,7 +552,7 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
                 }
 
                 declared_arguments.insert(*type_field->id);
-
+                formals.push_back(type_field -> escape);
                 if(auto param_type_entry = getTypeEntry(*type_field->type_id)){
                     fun_entry->formals.push_back(param_type_entry->type);
                 } else {
@@ -509,7 +560,8 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
                     throw error::semantic_error("Type of parameter \"" + type_field->id->name + "\" wasn't declared" , fun_dec->pos);
                 }
             }
-
+            shared_ptr<trans::Level> funlvl = make_shared<trans::Level>(lvl,*label,formals);
+            fun_entry ->funlvl = funlvl;
             insertValueEntry(*fun_dec->id, move(fun_entry));
         }
 
@@ -518,20 +570,26 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
             auto fun_dec = static_cast<ast::FunDec*>(dec.get());
 
             if(auto fun_entry = dynamic_cast<FunEntry*>(getValueEntry(*fun_dec->id))){
+                shared_ptr<Level> funlvl = fun_entry ->funlvl;
+                shared_ptr<AccessList> formals_list = trans::Level::formals(funlvl);
                 beginScope();
 
                 // Augment current scope with function arguments as new variables
-                for(const auto& type_field : *fun_dec->tyfields){
-                    auto type_entry = getTypeEntry(*type_field->type_id);
+                auto type_field = fun_dec ->tyfields -> begin();
+                auto formal = formals_list -> begin(); 
+                while(type_field != (*fun_dec ->tyfields).end() && formal != formals_list -> end()){
+                    auto type_entry = getTypeEntry(*(*type_field) -> type_id);
                     if(not type_entry){
                         // Error, argument type not declared in this scope
-                        throw error::semantic_error("Type of argument \"" + type_field->type_id->name + "\" wasn't declared" , fun_dec->pos);
+                        throw error::semantic_error("Type of argument \"" + (*type_field)->type_id->name + "\" wasn't declared" , fun_dec->pos);
                     }
 
-                    insertValueEntry(*type_field->id, make_unique<VarEntry>(type_entry->type));
+                    insertValueEntry(*(*type_field)->id, make_unique<VarEntry>(type_entry->type,*formal ));
+                    formal++;
+                    type_field++;
                 }
 
-                auto body_result = transExpression(fun_dec->exp.get());
+                auto body_result = transExpression(lvl,fun_dec->exp.get());
                 if(*fun_entry->result != *body_result.exp_type){
                     // Error, function return type doesn't match its body type
                     throw error::semantic_error("Function return type \"" + kind_name[fun_entry->result->kind] + "\" doesn't match its body type \"" + kind_name[body_result.exp_type->kind] + "\"" , fun_dec->pos);
@@ -544,12 +602,12 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
             }
         }
 
-        return;
+        return Translator::NoExp();
     }
 
     if(dynamic_cast<ast::TypeDec*>(first_dec)){
         tpsrt::Toposorter<ast::Symbol, ast::SymbolHasher> toposorter;
-        std::unordered_map<ast::Symbol, ast::Type*, ast::SymbolHasher> symbol_to_ast_type;
+        unordered_map<ast::Symbol, ast::Type*, ast::SymbolHasher> symbol_to_ast_type;
 
         // First pass: check for duplicates and insert incomplete record / array types
         for(const auto& dec : *dec_list){
@@ -596,7 +654,7 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
         for(const auto& symbol : sorted_result.first){
             // Declare NameTypes in this scope
             if(symbol_to_ast_type.count(symbol)){
-                auto type_result = transType(symbol_to_ast_type[symbol]);
+                auto type_result = transType(lvl,symbol_to_ast_type[symbol]);
                 insertTypeEntry(symbol, make_unique<TypeEntry>(type_result));
             }
         }
@@ -608,7 +666,7 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
             if(auto record_type = dynamic_cast<ast::RecordType*>(type_dec->ty.get())){
                 auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
 
-                for(std::size_t i = 0; i < record_type->tyfields->size(); i++){
+                for(size_t i = 0; i < record_type->tyfields->size(); i++){
                     auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
                     if(not field_type_entry){
                         // Error, record type not defined in this scope
@@ -632,14 +690,14 @@ void SemanticChecker::transDeclarations(ast::DeclarationList* dec_list){
             }
         }
 
-        return;
+        return Translator::NoExp();
     }
 
     // Internal error, it should have matched some clause
     throw error::internal_error("didn't match any clause in translate declarations function", __FILE__);
 }
 
-shared_ptr<ExpType> SemanticChecker::transType(ast::Type* type){
+shared_ptr<ExpType> SemanticChecker::transType(shared_ptr<trans::Level> lvl,ast::Type* type){
     if(auto name_type = dynamic_cast<ast::NameType*>(type)){
         if(auto type_entry = getTypeEntry(*name_type->type_id)){
             return type_entry->type;
@@ -651,7 +709,7 @@ shared_ptr<ExpType> SemanticChecker::transType(ast::Type* type){
 
     if(auto record_type = dynamic_cast<ast::RecordType*>(type)){
         shared_ptr<RecordExpType> new_record_type = make_shared<RecordExpType>();
-        std::unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
+        unordered_set<ast::Symbol, ast::SymbolHasher> declared_fields;
 
         for(const auto& type_field : *record_type->tyfields){
             if(declared_fields.count(*type_field->id)){

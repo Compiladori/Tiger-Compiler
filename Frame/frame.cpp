@@ -42,23 +42,23 @@ Frame::Frame(temp::Label name, vector<bool> list){
     }
 }
 
-unique_ptr<Access> Frame::alloc_local(bool escape){
+shared_ptr<Access> Frame::alloc_local(bool escape){
     if(escape) {
-        unique_ptr<InFrame> l = make_unique<InFrame>(_offset);
+        shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
         _offset -= 8;
         _locals.push_back(move(l));
         return l;
      }
-    unique_ptr<InReg> l = make_unique<InReg>();
+    shared_ptr<InReg> l = make_unique<InReg>();
     _locals.push_back(move(l));
     return l;
 }
 
-unique_ptr<irt::Expression> frame::exp(Access* acc, unique_ptr<irt::Expression> framePtr) {
-    if(auto in_reg = dynamic_cast<InReg*>(acc))
+unique_ptr<irt::Expression> frame::exp(shared_ptr<Access> acc, unique_ptr<irt::Expression> framePtr) {
+    if(auto in_reg = dynamic_cast<InReg*>(acc.get()))
         return make_unique<irt::Temp>(in_reg->reg);
         
-    if(auto in_frame = dynamic_cast<InFrame*>(acc))
+    if(auto in_frame = dynamic_cast<InFrame*>(acc.get()))
         return make_unique<irt::Mem>(
             make_unique<irt::BinOp>(
                 irt::Plus, 
@@ -80,11 +80,11 @@ unique_ptr<irt::Expression> frame::static_link_exp_base(unique_ptr<irt::Expressi
 unique_ptr<irt::Expression> frame::static_link_jump(unique_ptr<irt::Expression> staticLink) {
   return make_unique<irt::Mem>(move(staticLink));
 }
-unique_ptr<irt::Expression> frame::exp_with_static_link(Access* acc, unique_ptr<irt::Expression> staticLink) {
-    if(auto in_reg = dynamic_cast<InReg*>(acc))
+unique_ptr<irt::Expression> frame::exp_with_static_link(shared_ptr<Access> acc, unique_ptr<irt::Expression> staticLink) {
+    if(auto in_reg = dynamic_cast<InReg*>(acc.get()))
         return make_unique<irt::Temp>(in_reg->reg);
 
-    if(auto in_frame = dynamic_cast<InFrame*>(acc))
+    if(auto in_frame = dynamic_cast<InFrame*>(acc.get()))
         return make_unique<irt::Mem>(
             make_unique<irt::BinOp>(
                 irt::Plus, 

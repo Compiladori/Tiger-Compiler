@@ -11,6 +11,12 @@
  * Frames for activaction records
  *
  * Described in Chapter 6 Appel C (2004)
+ * 
+ * Frame class holds information about
+ * formal parameters and local variables
+ * 
+ * Access represent formals and locals that
+ * may be in the frame or in registers
  * **/
 
 namespace frame {
@@ -22,15 +28,14 @@ class Frame;
 class Access;
 class Frag;
 
-std::unique_ptr<irt::Expression> exp(Access* acc, std::unique_ptr<irt::Expression> framePtr);
+std::unique_ptr<irt::Expression> exp(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> static_link_exp_base(std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> static_link_jump(std::unique_ptr<irt::Expression> staticLink);
-std::unique_ptr<irt::Expression> exp_with_static_link(Access* acc, std::unique_ptr<irt::Expression> framePtr);
+std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
 
-using AccessList = util::GenericList<Access>;
 using FragList = util::GenericList<Frag>;
-
+using AccessList = std::vector<std::shared_ptr<Access>>;
 
 class Frame {
     temp::Label _name;
@@ -43,7 +48,7 @@ public:
     Frame(temp::Label f, std::vector<bool> list);
     temp::Label name(){ return _name;}
     AccessList& formals(){ return _formals;}
-    std::unique_ptr<Access> alloc_local(bool escape);
+    std::shared_ptr<Access> alloc_local(bool escape);
 };
 
 struct Access {
