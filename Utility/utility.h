@@ -40,6 +40,8 @@ public:
     void push_back(std::unique_ptr<T> p){ data.emplace_back(std::move(p)); }
     void push_front(std::unique_ptr<T> p){ data.emplace_front(std::move(p)); }
 
+    void pop_front(){ data.pop_front(); }
+
     auto& operator[](int i){ return data[i]; }
 
     void print() const {

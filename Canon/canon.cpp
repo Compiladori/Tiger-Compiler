@@ -18,17 +18,75 @@ bool Canonizator::commute(irt::Statement* stm, irt::Expression* exp){
     return isNop(stm);
 }
 
-std::pair<irt::Statement*, ExpressionList*> Canonizator::reorder(ExpressionList* expList){
-    for(auto e = expList->begin(); e != expList->end()--; e++){
-        // llamo a doExp en cada expresion. Junto todos los stm que devuelven con SEQ(?
-        // junto todas las expressions en una lista
-
+irt::Statement* Canonizator::reorder(ExpressionList* expList){
+    if (!expList){
+        std::unique_ptr<irt::Const> cte = std::make_unique<irt::Const>(0);
+        irt::Exp* exp = new irt::Exp(std::move(cte));
+        return exp;
     }
+    else if (auto call = dynamic_cast<irt::Call*>(expList->front().get())){
+        temp::Temp t = temp::Temp();
+        std::unique_ptr<irt::Expression> expU = makeExpUnique(expList->front().get());
+        std::unique_ptr<irt::Move> move = std::make_unique<irt::Move>(std::make_unique<irt::Temp>(t), std::move(expU));
+        irt::Eseq* eseq = new irt::Eseq(std::move(move), std::make_unique<irt::Temp>(t));
+        expList->pop_front();
+        expList->push_front(eseq);
+        return reorder(expList);
+    }
+    else {
+        std::pair<irt::Statement*, irt::Expression*> head = doExp(expList->front().get());
+        expList->pop_front();
+        irt::Statement* tail = reorder(expList);
+        if (commute(tail, head.second)){
+            expList->push_front(head.second);
+            return sequence(head.first, tail);
+        }
+        else {
+            temp::Temp t = temp::Temp(); irt::Temp* tmp = new irt::Temp(t);
+            expList->push_front(tmp);
+            std::unique_ptr<irt::Expression> headExpU = makeExpUnique(head.second);
+            irt::Move* move = new irt::Move(std::make_unique<irt::Temp>(t), std::move(headExpU));
+            irt::Statement* s = sequence(move, tail);
+            return sequence(head.first, s);
+        }
+    }
+}
 
+// Transforms an expression pointer into a unique pointer to that expression
+std::unique_ptr<irt::Expression> Canonizator::makeExpUnique(irt::Expression* exp) {
+    std::unique_ptr<irt::Expression> expU;
+    if (auto binop = dynamic_cast<irt::BinOp*>(exp)){
+        expU = std::make_unique<irt::BinOp>(binop->bin_op, std::move(binop->left), std::move(binop->right));
+        return expU;
+    }
+    if (auto mem = dynamic_cast<irt::Mem*>(exp)){
+        expU = std::make_unique<irt::Mem>(std::move(mem->exp));
+        return expU;
+    }
+    if (auto temp = dynamic_cast<irt::Temp*>(exp)){
+        expU = std::make_unique<irt::Temp>(temp->temporary);
+        return expU;
+    }
+    if (auto eseq = dynamic_cast<irt::Eseq*>(exp)){
+        expU = std::make_unique<irt::Eseq>(std::move(eseq->stm), std::move(eseq->exp));
+        return expU;
+    }
+    if (auto name = dynamic_cast<irt::Name*>(exp)){
+        expU = std::make_unique<irt::Name>(name->name);
+        return expU;
+    }
+    if (auto cte = dynamic_cast<irt::Const*>(exp)){
+        expU = std::make_unique<irt::Const>(cte->i);
+        return expU;
+    }
+    if (auto call = dynamic_cast<irt::Call*>(exp)){
+        expU = std::make_unique<irt::Call>(std::move(call->fun), std::move(call->args));
+        return expU;
+    }
 }
 
 // Transforms a statement pointer into a unique pointer to that statement
-std::unique_ptr<irt::Statement> Canonizator::makeStmUnique(irt::Statement* stm){
+std::unique_ptr<irt::Statement> Canonizator::makeStmUnique(irt::Statement* stm) {
     std::unique_ptr<irt::Statement> stmU;
     if (auto seq = dynamic_cast<irt::Seq*>(stm)){
         stmU = std::make_unique<irt::Seq>(std::move(seq->left), std::move(seq->right));
@@ -64,7 +122,7 @@ irt::Statement* Canonizator::sequence(irt::Statement* stm1, irt::Statement* stm2
         return stm1;
     std::unique_ptr<irt::Statement> stm1U = makeStmUnique(stm1);
     std::unique_ptr<irt::Statement> stm2U = makeStmUnique(stm2);
-    auto seqRes = new irt::Seq(move(stm1U), move(stm2U));
+    auto seqRes = new irt::Seq(std::move(stm1U), std::move(stm2U));
     return seqRes;
 }
 
@@ -90,36 +148,36 @@ irt::Statement* Canonizator::doStm(irt::Statement* stm){
     if (auto jump = dynamic_cast<irt::Jump*>(stm)){
         ExpressionList* expList;
         expList->push_back(jump->exp.get());
-        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-        return sequence(p.first, jump);
+        irt::Statement* p = reorder(expList);
+        return sequence(p, jump);
     }
     if (auto cjump = dynamic_cast<irt::Cjump*>(stm)){
         ExpressionList* expList;
         expList->push_back(cjump->left.get());
         expList->push_back(cjump->right.get());
-        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-        return sequence(p.first, cjump);
+        irt::Statement* p = reorder(expList);
+        return sequence(p, cjump);
     }
     if (auto move = dynamic_cast<irt::Move*>(stm)){
         // move->left == dst, move->right == src
         if (auto tmp = dynamic_cast<irt::Temp*>(move->left.get()))
             if (auto call = dynamic_cast<irt::Call*>(move->right.get())){
                 ExpressionList* callList = getCallRList(move->right.get());
-                std::pair<irt::Statement*, ExpressionList*> p = reorder(callList);
-                return sequence(p.first, move);
+                irt::Statement* p = reorder(callList);
+                return sequence(p, move);
             }
         else if (auto tmp = dynamic_cast<irt::Temp*>(move->left.get())){
             ExpressionList* expList;
             expList->push_back(move->right.get());
-            std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-            return sequence(p.first, move);
+            irt::Statement* p = reorder(expList);
+            return sequence(p, move);
         }
         else if (auto mem = dynamic_cast<irt::Mem*>(move->left.get())){
             ExpressionList* expList;
             expList->push_back(move->left.get());
             expList->push_back(move->right.get());
-            std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-            return sequence(p.first, move);
+            irt::Statement* p = reorder(expList);
+            return sequence(p, move);
         }
         else if (auto eseq = dynamic_cast<irt::Eseq*>(move->left.get())){
             irt::Statement* s = eseq->stm.get();
@@ -134,8 +192,8 @@ irt::Statement* Canonizator::doStm(irt::Statement* stm){
             expList = getCallRList(call);
         else
             expList->push_back(expr->exp.get());
-        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-        return sequence(p.first, expr);
+        irt::Statement* p = reorder(expList);
+        return sequence(p, expr);
     }
     return stm;
 }
@@ -147,14 +205,14 @@ std::pair<irt::Statement*, irt::Expression*> Canonizator::doExp(irt::Expression*
         ExpressionList* expList;
         expList->push_back(binop->left.get());
         expList->push_back(binop->right.get());
-        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-        return std::make_pair(p.first, exp);
+        irt::Statement* p = reorder(expList);
+        return std::make_pair(p, exp);
     }
     if (auto mem = dynamic_cast<irt::Mem*>(exp)){
         ExpressionList* expList;
         expList->push_back(mem->exp.get());
-        std::pair<irt::Statement*, ExpressionList*> p = reorder(expList);
-        return std::make_pair(p.first, exp);
+        irt::Statement* p = reorder(expList);
+        return std::make_pair(p, exp);
     }
     if (auto eseq = dynamic_cast<irt::Eseq*>(exp)){
         std::pair<irt::Statement*, irt::Expression*> x = doExp(eseq->exp.get());
@@ -167,13 +225,27 @@ std::pair<irt::Statement*, irt::Expression*> Canonizator::doExp(irt::Expression*
     }
     if (auto call = dynamic_cast<irt::Call*>(exp)){
         ExpressionList* expList = getCallRList(call);
-        std::pair<irt::Statement*, irt::ExpressionList*> p = reorder(expList);
-        return std::make_pair(p.first, exp);
+        irt::Statement* p = reorder(expList);
+        return std::make_pair(p, exp);
     }
-    std::pair<irt::Statement*, ExpressionList*> p = reorder(NULL);
-    return std::make_pair(p.first, exp);
+    irt::Statement* p = reorder(NULL);
+    return std::make_pair(p, exp);
 }
 
-std::unique_ptr<StatementList> Canonizator::linearize(irt::Statement* stm){}
+StatementList* Canonizator::linear(irt::Statement* stm, StatementList* right){
+    if (auto seq = dynamic_cast<irt::Seq*>(stm))
+        return linear(seq->left.get(), linear(seq->right.get(), right));
+    else {
+        StatementList* stmList;
+        stmList->push_back(stm);
+        for(auto s = right->begin(); s != right->end()--; s++)
+            stmList->push_back(s->get());
+        return stmList;
+    }
+}
+
+StatementList* Canonizator::linearize(irt::Statement* stm){
+    return linear(doStm(stm), NULL);
+}
 struct Block* Canonizator::basicBlocks(StatementList* stmList){}
 StatementList* Canonizator::traceSchedule(Block block){}
