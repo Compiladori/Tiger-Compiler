@@ -18,7 +18,7 @@ struct PatchList {
 
     void applyPatch(temp::Label label) const {
         for(auto ptr : label_ptrs){
-            *ptr = label;
+            ptr = &label;
         }
     }
 

@@ -313,8 +313,9 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 }
                 fieldCount++;
             }
-
-            return AssociatedExpType(translator -> recordExp(move(field_list),fieldCount), type_entry->type);
+            auto a = translator -> recordExp(move(field_list),fieldCount);
+            a -> print();
+            return AssociatedExpType(move(a), type_entry->type);
         }
 
         // Error, record type was not defined
@@ -494,7 +495,6 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
         }
 
         auto result = transExpression(lvl,var_dec->exp.get());
-
         if(var_dec->type_id){
             // Check if the explicitly specified type_id matches the type of the expression
             auto type_entry = getTypeEntry(*var_dec->type_id);
@@ -510,9 +510,12 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
             }
         }
         auto var_entry = make_unique<VarEntry>(result.exp_type,trans::Level::alloc_local(lvl,var_dec ->escape));
+        auto access = var_entry -> access;
         insertValueEntry(*var_dec->id, move(var_entry));
-
-        return translator -> assignExp(translator -> simpleVar(var_entry -> access,lvl),move(result.tr_exp));
+        auto a = translator -> simpleVar(access,lvl);
+        a -> print();
+        result.tr_exp -> print();
+        return translator -> assignExp(move(a),move(result.tr_exp));
     }
 
     if(dynamic_cast<ast::FunDec*>(first_dec)){

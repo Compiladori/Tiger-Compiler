@@ -9,10 +9,11 @@ using namespace std;
 
 unique_ptr<TranslatedExp> Translator::simpleVar(shared_ptr<trans::Access> a,shared_ptr<trans::Level> l) {
     unique_ptr<Temp> fp = make_unique<Temp>(frame::Frame::fp);
-    if (a->_level == l)
+    if (a->_level.get() == l.get()){
         return make_unique<Ex>(frame::exp(a->_access,move(fp)));
+    }
     unique_ptr<Expression> staticLinkExp = frame::static_link_exp_base(move(fp));
-    while (a->_level != l) {
+    while (a->_level.get() != l.get()) {
         staticLinkExp = frame::static_link_jump(move(staticLinkExp));
         l = l->_parent;
     }
@@ -160,13 +161,14 @@ unique_ptr<TranslatedExp> Translator::strExp(ast::Operation op, unique_ptr<Trans
 unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList> el, int fieldCount) {
     /* Allocation */
     temp::Temp r = temp::Temp();
-    unique_ptr<Statement> alloc = make_unique<Move>(
+    unique_ptr<Move> alloc = make_unique<Move>(
             make_unique<Temp>(r),
             frame::external_call(
                 "allocRecord",
                 make_unique<irt::ExpressionList>(
                     new Const(fieldCount * frame::Frame::wordSize)
                     )));
+    alloc -> print();
     auto exp = el -> rbegin();
     unique_ptr<Statement> result = 
         make_unique<Move>(
@@ -178,6 +180,7 @@ unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList
                     )
                 ),
                 (*exp) -> unEx());
+    exp++;
     for (; exp != el -> rend(); exp++)
     {
         result = make_unique<Seq>(
@@ -209,7 +212,9 @@ unique_ptr<TranslatedExp> Translator::seqExp(unique_ptr<trans::ExpressionList> l
     return make_unique<Ex>(move(res));
 }
 unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var,unique_ptr<TranslatedExp> exp) {
-    return make_unique<Nx>(make_unique<Move>(var -> unEx(),exp -> unEx()));
+    auto a = make_unique<Nx>(make_unique<Move>(exp -> unEx(),var -> unEx()));
+    a -> print();
+    return move(a);
 }
 unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, unique_ptr<TranslatedExp> then, unique_ptr<TranslatedExp> elsee, seman::ExpType* if_type) {
     temp::Label t = temp::Label();
@@ -289,6 +294,7 @@ unique_ptr<TranslatedExp> Translator::letExp(unique_ptr<ExpressionList> list, un
     for (auto exp = list -> begin(); exp != list -> end(); exp++){
         res = make_unique<Eseq>((*exp) -> unNx(),move(res));
     }
+    res -> print();
     return make_unique<Ex>(move(res));
 }
 unique_ptr<TranslatedExp> Translator::breakExp(temp::Label breaklbl) {

@@ -46,11 +46,11 @@ shared_ptr<Access> Frame::alloc_local(bool escape){
     if(escape) {
         shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
         _offset -= 8;
-        _locals.push_back(move(l));
+        _locals.push_back(l);
         return l;
      }
-    shared_ptr<InReg> l = make_unique<InReg>();
-    _locals.push_back(move(l));
+    shared_ptr<InReg> l = make_shared<InReg>();
+    _locals.push_back(l);
     return l;
 }
 

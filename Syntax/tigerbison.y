@@ -190,7 +190,7 @@ int main(int, char**) {
     // Semantic check
     seman::SemanticChecker SC;
     auto result = SC.translate(final_ast.get());
-
+    result.tr_exp -> print();
     // ...
   } catch (error::semantic_error& se) {
     cout << "Semantic error: " << se.getMessage() << endl;

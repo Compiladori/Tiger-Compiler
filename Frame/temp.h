@@ -16,6 +16,8 @@ struct Temp {
     bool operator == (const Temp& t) const { return num == t.num; }
     
     Temp () : num(total_num++) {}
+    Temp (int n): num(n) {}
+    void print() const { std::cout << num << " "; }
 };
 
 struct TempHasher{
@@ -37,6 +39,12 @@ struct Label : public ast::Symbol {
 
 using LabelList = std::vector<Label>;
 
+static void print_labellist(LabelList const &input)
+{
+    for (auto const& i: input) {
+		i.print();
+	}
+}
 /**
  * Map of temporaries
  * 
