@@ -27,9 +27,8 @@ static const temp::Temp ra = temp::Temp();
 static const temp::Temp rv = temp::Temp();
 
 Frame::Frame(temp::Label name, vector<bool> list){
-    name = name;
+    _name = name;
     _offset = -16;
-    AccessList a_list;
     for (bool i : list) {
         if(i){
             unique_ptr<InFrame> arg = make_unique<InFrame>(_offset);

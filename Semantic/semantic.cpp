@@ -24,6 +24,7 @@ using std::make_shared;
 using std::move;
 
 AssociatedExpType SemanticChecker::translate(ast::Expression* exp){
+    auto t = temp::Label("mainLevel");
     shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr,temp::Label("mainLevel"),vector<bool>());
     clear(outermost);
     return transExpression(outermost,exp);
@@ -314,7 +315,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 fieldCount++;
             }
             auto a = translator -> recordExp(move(field_list),fieldCount);
-            a -> print();
+            // a -> print();
             return AssociatedExpType(move(a), type_entry->type);
         }
 
@@ -370,7 +371,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 throw error::semantic_error("Then and Else clauses must be of the same type" , exp->pos);
             }
         }else{
-            if(then_result.exp_type->kind != ExpTypeKind::NoKind)
+            if(then_result.exp_type->kind != ExpTypeKind::UnitKind)
                 throw error::semantic_error("if-then exp body must produce no value" , exp->pos);
         }
 
@@ -413,19 +414,22 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             throw error::semantic_error("Final value (high) in for loop must be an int" , exp->pos);
         }
         auto varentry = make_unique<VarEntry>(lo_result.exp_type,Level::alloc_local(lvl,for_exp -> escape));
+        auto access = varentry -> access; 
         insertValueEntry(for_exp->var->name,move(varentry) );
 
         temp::Label forbreak = temp::Label();
         beginBreakScope(forbreak);
         auto body_result = transExpression(lvl,for_exp->body.get());
         endBreakScope();
-        if(body_result.exp_type->kind != ExpTypeKind::NoKind){
+        if(body_result.exp_type->kind != ExpTypeKind::UnitKind){
             // Error, the for-lo should be int
             throw error::semantic_error("For body must produce no value" , exp->pos);
         }
         endScope();
-
-        return AssociatedExpType(translator -> forExp(varentry -> access,lvl,move(lo_result.tr_exp),move(hi_result.tr_exp),move(body_result.tr_exp),forbreak), make_shared<UnitExpType>());
+        lo_result.tr_exp -> print();
+        hi_result.tr_exp -> print();
+        body_result.tr_exp -> print();
+        return AssociatedExpType(translator -> forExp(access,lvl,move(lo_result.tr_exp),move(hi_result.tr_exp),move(body_result.tr_exp),forbreak), make_shared<UnitExpType>());
     }
 
     if(auto let_exp = dynamic_cast<ast::LetExp*>(exp)){
@@ -437,6 +441,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             letlist -> push_front(move(e));
         }
         auto result = transExpression(lvl,let_exp->body.get());
+        result.tr_exp -> print();
         endScope();
         return AssociatedExpType(translator -> letExp(move(letlist),move(result.tr_exp)),result.exp_type);
     }
@@ -462,13 +467,13 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 // Error, array's size MUST be an int
                 throw error::semantic_error("Array's size must be an int" , exp->pos);
             }
-
+            size_result.tr_exp -> print();
             auto init_result = transExpression(lvl,array_exp->init.get());
             if(*init_result.exp_type != *array_type->getType()){
                 // Error, array type MUST match with its initialization's type
                 throw error::semantic_error("Array type must match with its initialization type" , exp->pos);
             }
-
+            init_result.tr_exp -> print();
             return AssociatedExpType(translator -> arrayExp(move(init_result.tr_exp),move(size_result.tr_exp)), type_entry->type);
         }
 
@@ -489,6 +494,7 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
     auto first_dec = dec_list->begin()->get();
 
     if(auto var_dec = dynamic_cast<ast::VarDec*>(first_dec)){
+        var_dec -> print();
         if(dec_list->size() != 1){
             // Internal error, a declaration list of variables should only have one single element in it
             throw error::internal_error("declaration list of variables should have only one element", __FILE__);
@@ -513,7 +519,7 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
         auto access = var_entry -> access;
         insertValueEntry(*var_dec->id, move(var_entry));
         auto a = translator -> simpleVar(access,lvl);
-        a -> print();
+        // a -> print();
         result.tr_exp -> print();
         return translator -> assignExp(move(a),move(result.tr_exp));
     }
@@ -592,7 +598,7 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
                     type_field++;
                 }
 
-                auto body_result = transExpression(lvl,fun_dec->exp.get());
+                auto body_result = transExpression(funlvl,fun_dec->exp.get());
                 if(*fun_entry->result != *body_result.exp_type){
                     // Error, function return type doesn't match its body type
                     throw error::semantic_error("Function return type \"" + kind_name[fun_entry->result->kind] + "\" doesn't match its body type \"" + kind_name[body_result.exp_type->kind] + "\"" , fun_dec->pos);

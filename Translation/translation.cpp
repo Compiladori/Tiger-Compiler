@@ -54,7 +54,7 @@ unique_ptr<TranslatedExp> Translator::subscriptVar(unique_ptr<TranslatedExp> var
  * Expression translation
  * **/
 unique_ptr<TranslatedExp> Translator::unitExp() {
-    return make_unique<Nx>(nullptr);
+    return make_unique<Nx>(make_unique<Exp>(make_unique<Const>(0)));
 }
 unique_ptr<TranslatedExp> Translator::nilExp() {
     return make_unique<Ex>(make_unique<Const>(0));
@@ -133,8 +133,10 @@ unique_ptr<TranslatedExp> Translator::condExp(ast::Operation op, unique_ptr<Tran
     RelationOperation tr_op;
     translateCondOp(op,&tr_op);
     unique_ptr<irt::Cjump> cjump = make_unique<Cjump>(tr_op,exp1 -> unEx(),exp2 -> unEx(),nullptr,nullptr);
-    PatchList trues  = {cjump->true_label};
-    PatchList falses = {cjump->false_label};
+    PatchList trues  = PatchList(); 
+    trues.push_back(&cjump->true_label);
+    PatchList falses = PatchList();
+    falses.push_back(&cjump->false_label);
     return make_unique<Cx>(trues, falses, move(cjump));
 }
 unique_ptr<TranslatedExp> Translator::strExp(ast::Operation op, unique_ptr<TranslatedExp> exp1,unique_ptr<TranslatedExp> exp2) {
@@ -154,8 +156,10 @@ unique_ptr<TranslatedExp> Translator::strExp(ast::Operation op, unique_ptr<Trans
         unique_ptr<irt::Expression> e = frame::external_call("stringCompare",move(list));
         cjump = make_unique<Cjump>(tr_op,move(e),make_unique<Const>(0),nullptr,nullptr);
     }
-    PatchList trues  = {cjump->true_label};
-    PatchList falses = {cjump->false_label};
+    PatchList trues  = PatchList(); 
+    trues.push_back(&cjump->true_label);
+    PatchList falses = PatchList();
+    falses.push_back(&cjump->false_label);
     return make_unique<Cx>(trues, falses, move(cjump));
 }
 unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList> el, int fieldCount) {
@@ -217,27 +221,29 @@ unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var,un
     return move(a);
 }
 unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, unique_ptr<TranslatedExp> then, unique_ptr<TranslatedExp> elsee, seman::ExpType* if_type) {
-    temp::Label t = temp::Label();
-    temp::Label f = temp::Label();
+    temp::Label* t = new temp::Label();
+    temp::Label* f = new temp::Label();
     temp::Label m = temp::Label();
-    unique_ptr<Cx> res;
+    Cx* res;
     if (dynamic_cast<trans::Ex*>(test.get())) {
         unique_ptr<Cx> testcx = test -> unCx();
-        PatchList trues  = {testcx->trues};
-        PatchList falses = {testcx->falses};
-        res =  make_unique<Cx>(trues, falses, move(testcx -> stm));
-    } else if (dynamic_cast<trans::Nx*>(test.get()))
+        PatchList trues  = testcx->trues;
+        PatchList falses = testcx->falses;
+        res =  new Cx(trues, falses, move(testcx -> stm));
+    } else if (auto rescx = dynamic_cast<trans::Cx*>(test.get()))
+        res = rescx;
+    else if (dynamic_cast<trans::Nx*>(test.get()))
         exit(-1);
     res -> trues.applyPatch(t);
     res -> falses.applyPatch(f);
-    
+    res -> print();
     if(if_type -> kind != seman::ExpTypeKind::NoKind  ){
         temp::Temp r = temp::Temp();
         unique_ptr<Statement> s = make_unique<Seq>(move(res->unCx() -> stm),
-            make_unique<Seq>(make_unique<Label>(t),
+            make_unique<Seq>(make_unique<Label>(*t),
                 make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r),then -> unEx()),
                     make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m),temp::LabelList(1,m)),
-                        make_unique<Seq>(make_unique<Label>(f),
+                        make_unique<Seq>(make_unique<Label>(*f),
                             make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r),elsee -> unEx()),
                                 make_unique<Label>(m)
         ))))));
@@ -245,16 +251,19 @@ unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, uniq
             exit(-1);
         if(dynamic_cast<trans::Nx*>(elsee.get()))
             exit(-1);
+        s -> print();
         return make_unique<Ex>(make_unique<Eseq>(move(s),make_unique<Temp>(r)));
     }
-    return make_unique<Nx>(
+    auto a = make_unique<Nx>(
         make_unique<Seq>(move(res->unCx() -> stm),
-            make_unique<Seq>(make_unique<Label>(t),
+            make_unique<Seq>(make_unique<Label>(*t),
                 make_unique<Seq>(then -> unNx(),
                     make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m),temp::LabelList(1,m)),
-                        make_unique<Seq>(make_unique<Label>(f),
+                        make_unique<Seq>(make_unique<Label>(*f),
                             make_unique<Seq>(elsee -> unNx(),
-                                make_unique<Label>(m))))))));
+                                make_unique<Label>(m)))))))); 
+    a -> print();
+    return move(a);
 }
 unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp,unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
     temp::Label test = temp::Label();
@@ -306,8 +315,10 @@ unique_ptr<TranslatedExp> Translator::breakExp(temp::Label breaklbl) {
     );
 }
 unique_ptr<TranslatedExp> Translator::arrayExp(unique_ptr<TranslatedExp> init,unique_ptr<TranslatedExp> size) {
-    unique_ptr<irt::ExpressionList> list = make_unique<irt::ExpressionList>((size -> unEx()).get());
-    list -> push_back((init -> unEx()).get());
+    unique_ptr<irt::ExpressionList> list = make_unique<irt::ExpressionList>();
+    list -> push_back(size -> unEx());
+    list -> push_back(init -> unEx());
+    list -> print();
     return make_unique<Ex>(
         frame::external_call(
             "initArray",

@@ -24,6 +24,7 @@ class Translator {
     // Stuff
     std::unique_ptr<frame::FragList> _frag_list;
 public:
+    Translator() { _frag_list = std::make_unique<frame::FragList>(); }
     /**
      * Variable translation
      * **/
