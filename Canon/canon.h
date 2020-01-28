@@ -3,6 +3,7 @@
 
 #include "../IRT/IRT.h"
 #include "../Translation/translatedExpression.h"
+#include "../Semantic/environmentTable.h"
 
 /***
  * Canonical tree, basic blocks and traces
@@ -15,6 +16,7 @@ namespace canon {
 using StatementList = util::GenericList<irt::Statement>;
 using ExpressionList = util::GenericList<irt::Expression>;
 using StatementListList = util::GenericList<StatementList>;
+using StmListLabel = util::GenericList<std::pair<StatementList*, temp::Label>>;
 
 struct Block {
     StatementListList* stmLists;
@@ -34,10 +36,8 @@ struct StmExpList {
 };
 
 struct Canonizator {
-    //Block block;
-    //StatementList* stmList;
-    //ExpressionList* expList;
-
+    StmListLabel*  q;
+    Block globalBlock;
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
     irt::Statement* reorder(ExpressionList* expList);
@@ -49,6 +49,10 @@ struct Canonizator {
     std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
     ExpressionList* getCallRList(irt::Expression* exp);
     StatementList* linear(irt::Statement* stm, StatementList* right);
+    StatementListList* createBlocks(StatementList* stmList, temp::Label label);
+    StatementListList* next(StatementList* prevStm, StatementList* stm, temp::Label done);
+    StatementList* getNext();
+    void trace(StatementList* stmList);
 public:
     Canonizator();
     // ............... ver tipos!!!!!
