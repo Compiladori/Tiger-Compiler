@@ -10,6 +10,7 @@
   #include "../Semantic/semantic.h"
   #include "../Escapes/escapes.h"
   #include "../Utility/error.h"
+  #include "../Canon/canon.h"
   using namespace std;
 
   // stuff from flex that bison needs to know about:
@@ -190,8 +191,9 @@ int main(int, char**) {
     // Semantic check
     seman::SemanticChecker SC;
     auto result = SC.translate(final_ast.get());
-    result.tr_exp -> print();
-    // ...
+    result->front() -> print();
+    // Canonical conversion
+    canon::Canonizator C;
   } catch (error::semantic_error& se) {
     cout << "Semantic error: " << se.getMessage() << endl;
   } catch (error::internal_error& ie) { 

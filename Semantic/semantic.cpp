@@ -23,11 +23,13 @@ using std::move;
 using std::shared_ptr;
 using std::unique_ptr;
 
-AssociatedExpType SemanticChecker::translate(ast::Expression* exp) {
+unique_ptr<frame::FragList> SemanticChecker::translate(ast::Expression* exp) {
   auto t = temp::Label("mainLevel");
   shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("mainLevel"), vector<bool>());
   clear(outermost);
-  return transExpression(outermost, exp);
+  AssociatedExpType result = transExpression(outermost, exp);
+  translator -> proc_entry_exit(outermost,move(result.tr_exp));
+  return move(translator -> _frag_list);
 }
 
 void SemanticChecker::load_initial_values(shared_ptr<trans::Level> outermost) {
@@ -602,7 +604,7 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
           // Error, function return type doesn't match its body type
           throw error::semantic_error("Function return type \"" + kind_name[fun_entry->result->kind] + "\" doesn't match its body type \"" + kind_name[body_result.exp_type->kind] + "\"", fun_dec->pos);
         }
-
+        translator -> proc_entry_exit(funlvl,move(body_result.tr_exp));
         endScope();
       } else {
         // Internal error, function's entry got somehow overriden or deleted

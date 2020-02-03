@@ -19,7 +19,7 @@ bool Canonizator::commute(irt::Statement* stm, irt::Expression* exp){
 }
 
 irt::Statement* Canonizator::reorder(ExpressionList* expList){
-    if (!expList){
+    if (!expList or expList->size() == 0){
         std::unique_ptr<irt::Const> cte = std::make_unique<irt::Const>(0);
         irt::Exp* exp = new irt::Exp(std::move(cte));
         return exp;
@@ -187,7 +187,7 @@ irt::Statement* Canonizator::doStm(irt::Statement* stm){
         }
     }
     if (auto expr = dynamic_cast<irt::Exp*>(stm)){
-        ExpressionList* expList;
+        ExpressionList* expList = new ExpressionList();
         if (auto call = dynamic_cast<irt::Call*>(expr->exp.get()))
             expList = getCallRList(call);
         else
@@ -236,10 +236,11 @@ StatementList* Canonizator::linear(irt::Statement* stm, StatementList* right){
     if (auto seq = dynamic_cast<irt::Seq*>(stm))
         return linear(seq->left.get(), linear(seq->right.get(), right));
     else {
-        StatementList* stmList;
-        stmList->push_back(stm);
-        for(auto s = right->begin(); s != right->end()--; s++)
-            stmList->push_back(s->get());
+        StatementList* stmList = new StatementList(stm);
+        //stmList->push_back(stm);
+        if (right)
+            for(auto s = right->begin(); s != right->end()--; s++)
+                stmList->push_back(s->get());
         return stmList;
     }
 }
@@ -249,7 +250,7 @@ StatementList* Canonizator::linearize(irt::Statement* stm){
 }
 
 StatementListList* Canonizator::createBlocks(StatementList* stmList, temp::Label done){
-    if (!stmList)
+    if (!stmList or stmList->size() == 0)
         return NULL;
     if (auto lab = dynamic_cast<irt::Label*>(stmList->front().get())){
         StatementList* tail = stmList; tail->pop_front();
@@ -263,21 +264,26 @@ StatementListList* Canonizator::createBlocks(StatementList* stmList, temp::Label
     return createBlocks(stmList, done);
 }
 
+// looks for a Jump/Cjump or a Label to end or start, respectively, a block in stm
 StatementListList* Canonizator::next(StatementList* prevStm, StatementList* stm, temp::Label done){
-    if (!stm){ // “special” last block – put a JUMP(NAME done) at the end of the last block.
+    if (!stm or stm->size() == 0){ // “special” last block – put a JUMP(NAME done) at the end of the last block.
       StatementList* stmListJump = new StatementList();
       temp::LabelList label_list; label_list.push_back(done);
       irt::Jump* jump = new irt::Jump(std::make_unique<irt::Name>(done), label_list);
-      stmListJump->push_back(jump);
+      stmListJump->push_front(jump);
       return next(prevStm, stmListJump, done);
     }
     if (dynamic_cast<irt::Jump*>(stm->front().get()) or dynamic_cast<irt::Cjump*>(stm->front().get())){
       StatementListList* stmLists;
-      irt::Statement* tmp = prevStm->front().get(); prevStm->pop_front();
-      prevStm = stm; prevStm->push_front(tmp);
+      for(auto s = stm->begin(); s != stm->end(); s++) // push stm elements to the end of prevStm
+          prevStm->push_back(s->get());
+      //irt::Statement* tmp = prevStm->front().get(); prevStm->pop_front();
+      //prevStm = stm; prevStm->push_front(tmp);
       StatementList* tail = stm; tail->pop_front();
       stmLists = createBlocks(tail, done);
-      tmp = stm->front().get(); stm->pop_front();
+      irt::Statement* tmp = stm->front().get();
+      //if (stm->size() <= 1) return NULL;
+      /*else*/ stm->pop_front();
       stm = NULL; stm->push_front(tmp);
       return stmLists;
     }
@@ -292,7 +298,9 @@ StatementListList* Canonizator::next(StatementList* prevStm, StatementList* stm,
     else {
       irt::Statement* tmp = prevStm->front().get(); prevStm->pop_front();
       prevStm = stm; prevStm->push_front(tmp);
-      StatementList* tail = stm; tail->pop_front(); // check
+      StatementList* tail = stm;
+      /*if (tail->size() <= 1) tail = NULL;
+      else*/ tail->pop_front(); // check
       return next(stm, tail, done);
     }
 }
@@ -378,14 +386,14 @@ void Canonizator::trace(StatementList* stmList){
 }
 
 StatementList* Canonizator::getNext(){
-    if (!globalBlock.stmLists){
+    if (!globalBlock->stmLists){
         StatementList* stmList = new StatementList();
-        irt::Label* lab = new irt::Label(globalBlock.label);
+        irt::Label* lab = new irt::Label(globalBlock->label);
         stmList->push_back(lab);
         return stmList;
     }
     else {
-        StatementList* head = globalBlock.stmLists->front().get();
+        StatementList* head = globalBlock->stmLists->front().get();
         auto headhead = dynamic_cast<irt::Label*>(head->front().get());
         auto stmPair = q -> begin();
         while (stmPair != q -> end()){ // see if label exists in the list
@@ -395,15 +403,15 @@ StatementList* Canonizator::getNext(){
             }
             stmPair++;
         }
-        globalBlock.stmLists->pop_front();
+        globalBlock->stmLists->pop_front();
         return getNext();
     }
 }
 
-StatementList* Canonizator::traceSchedule(Block block){
+StatementList* Canonizator::traceSchedule(Block* block){
     StatementListList* stmLists;
     globalBlock = block;
-    for (stmLists = globalBlock.stmLists; stmLists; stmLists->pop_front()){
+    for (stmLists = globalBlock->stmLists; stmLists; stmLists->pop_front()){
         auto head = stmLists->front().get();
         auto headhead = dynamic_cast<irt::Label*>(head->front().get());
         std::pair<StatementList*, temp::Label> pair = std::make_pair(head, headhead->label);

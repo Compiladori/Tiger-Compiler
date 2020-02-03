@@ -14,16 +14,16 @@ using namespace std;
 
 int Frame::wordSize = 8;
 temp::Temp Frame::fp = temp::Temp();
-static const temp::Temp eax = temp::Temp();
-static const temp::Temp ecx = temp::Temp();
-static const temp::Temp edx = temp::Temp();
-static const temp::Temp ebx = temp::Temp();
-static const temp::Temp esi = temp::Temp();
-static const temp::Temp edi = temp::Temp();
-static const temp::Temp sp = temp::Temp();
-static const temp::Temp zero = temp::Temp();
-static const temp::Temp ra = temp::Temp();
-static const temp::Temp rv = temp::Temp();
+temp::Temp Frame::eax = temp::Temp();
+temp::Temp Frame::ecx = temp::Temp();
+temp::Temp Frame::edx = temp::Temp();
+temp::Temp Frame::ebx = temp::Temp();
+temp::Temp Frame::esi = temp::Temp();
+temp::Temp Frame::edi = temp::Temp();
+temp::Temp Frame::sp = temp::Temp();
+temp::Temp Frame::zero = temp::Temp();
+temp::Temp Frame::ra = temp::Temp();
+temp::Temp Frame::rv = temp::Temp();
 
 Frame::Frame(temp::Label name, vector<bool> list) {
   _name = name;
@@ -89,3 +89,5 @@ unique_ptr<irt::Expression> frame::exp_with_static_link(shared_ptr<Access> acc, 
 unique_ptr<irt::Expression> frame::external_call(string s, unique_ptr<irt::ExpressionList> args) {
   return make_unique<irt::Call>(make_unique<irt::Name>(temp::Label(s)), move(args));
 }
+unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame,unique_ptr<irt::Statement> stm) {
+  return move(stm);}

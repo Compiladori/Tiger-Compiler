@@ -33,7 +33,7 @@ std::unique_ptr<irt::Expression> static_link_exp_base(std::unique_ptr<irt::Expre
 std::unique_ptr<irt::Expression> static_link_jump(std::unique_ptr<irt::Expression> staticLink);
 std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
-
+std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> stm);
 using FragList = util::GenericList<Frag>;
 using AccessList = std::vector<std::shared_ptr<Access>>;
 
@@ -46,6 +46,16 @@ class Frame {
  public:
   static int wordSize;
   static temp::Temp fp;
+  static temp::Temp eax;
+  static temp::Temp ecx;
+  static temp::Temp edx;
+  static temp::Temp ebx;
+  static temp::Temp esi;
+  static temp::Temp edi;
+  static temp::Temp sp;
+  static temp::Temp zero;
+  static temp::Temp ra;
+  static temp::Temp rv;
   Frame(temp::Label f, std::vector<bool> list);
   temp::Label name() { return _name; }
   AccessList &formals() { return _formals; }
@@ -79,12 +89,12 @@ struct StringFrag : public Frag {
   void print() const {}
 };
 
-// struct ProcFrag : public Frag {
-//     Frame _frame;
-//     std::unique_ptr<irt::Statement> body;
-//     ProcFrag(Frame frame,std::unique_ptr<irt::Statement> body) : _frame(frame)  {}
-//     void print() const {}
-// };
+struct ProcFrag : public Frag {
+    std::shared_ptr<Frame> _frame;
+    std::unique_ptr<irt::Statement> body;
+    ProcFrag(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> body) : _frame(frame)  {}
+    void print() const {}
+};
 
 };  // namespace frame
 

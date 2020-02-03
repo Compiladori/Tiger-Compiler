@@ -60,7 +60,7 @@ unique_ptr<TranslatedExp> Translator::stringExp(ast::StringExp* str) {
   _frag_list->push_back(frag);
   return make_unique<Ex>(make_unique<Name>(strpos));
 }
-unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, std::shared_ptr<trans::Level> funlvl, std::shared_ptr<trans::Level> currentlvl, temp::Label name, unique_ptr<ExpressionList> list) {
+unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, shared_ptr<trans::Level> funlvl, shared_ptr<trans::Level> currentlvl, temp::Label name, unique_ptr<ExpressionList> list) {
   unique_ptr<irt::ExpressionList> seq = make_unique<irt::ExpressionList>();
   for (auto exp = list->rbegin(); exp != list->rend(); exp++) {
     seq->push_back((*exp)->unEx());
@@ -220,7 +220,7 @@ unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp, un
                                                                                                                  make_unique<Label>(done))))));
   return make_unique<Nx>(move(s));
 }
-unique_ptr<TranslatedExp> Translator::forExp(std::shared_ptr<trans::Access> access, std::shared_ptr<trans::Level> lvl, unique_ptr<TranslatedExp> explo, unique_ptr<TranslatedExp> exphi, unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
+unique_ptr<TranslatedExp> Translator::forExp(shared_ptr<trans::Access> access, shared_ptr<trans::Level> lvl, unique_ptr<TranslatedExp> explo, unique_ptr<TranslatedExp> exphi, unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
   temp::Label test = temp::Label();
   temp::Label loopstart = temp::Label();
   temp::Temp limit = temp::Temp();
@@ -265,6 +265,15 @@ unique_ptr<TranslatedExp> Translator::arrayExp(unique_ptr<TranslatedExp> init, u
           move(list)));
 }
 
+void Translator::proc_entry_exit(shared_ptr<Level> lvl, unique_ptr<TranslatedExp> body){
+  unique_ptr<irt::Statement> stm = make_unique<Move>(
+    make_unique<Temp>(frame::Frame::rv),
+    body -> unEx()
+  );
+  unique_ptr<irt::Statement> procstm = frame::proc_entry_exit1(lvl->_frame,move(stm));
+  auto frag = make_unique<frame::ProcFrag>(lvl -> _frame,move(procstm));
+  _frag_list -> push_front(move(frag));
+}
 shared_ptr<Access> Level::alloc_local(shared_ptr<Level> lvl, bool escape) {
   shared_ptr<frame::Access> access = lvl->_frame->alloc_local(escape);
   return make_shared<Access>(lvl, access);

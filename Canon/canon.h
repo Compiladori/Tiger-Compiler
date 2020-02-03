@@ -24,7 +24,6 @@ struct Block {
     virtual ~Block() {}
 
     Block(StatementListList* stmLists, temp::Label label) : stmLists(stmLists), label(label) {}
-
 };
 
 struct StmExpList {
@@ -37,7 +36,7 @@ struct StmExpList {
 
 struct Canonizator {
     StmListLabel*  q;
-    Block globalBlock;
+    Block* globalBlock;
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
     irt::Statement* reorder(ExpressionList* expList);
@@ -54,11 +53,10 @@ struct Canonizator {
     StatementList* getNext();
     void trace(StatementList* stmList);
 public:
-    Canonizator();
-    // ............... ver tipos!!!!!
+    Canonizator() : q(nullptr), globalBlock(nullptr) {};
     StatementList* linearize(irt::Statement* stm);
     struct Block* basicBlocks(StatementList* stmList);
-    StatementList* traceSchedule(Block block);
+    StatementList* traceSchedule(Block* block);
 };
 
 

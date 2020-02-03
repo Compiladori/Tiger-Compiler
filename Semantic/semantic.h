@@ -96,7 +96,7 @@ class SemanticChecker {
  public:
   SemanticChecker() { translator = std::make_unique<trans::Translator>(); }
 
-  seman::AssociatedExpType translate(ast::Expression *exp);
+  std::unique_ptr<frame::FragList> translate(ast::Expression *exp);
 };
 
 };  // namespace seman

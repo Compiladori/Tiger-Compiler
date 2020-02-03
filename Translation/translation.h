@@ -22,9 +22,9 @@ using AccessList = std::vector<std::shared_ptr<Access>>;
  * **/
 class Translator {
   // Stuff
-  std::unique_ptr<frame::FragList> _frag_list;
 
  public:
+  std::unique_ptr<frame::FragList> _frag_list;
   Translator() { _frag_list = std::make_unique<frame::FragList>(); }
   /**
      * Variable translation
@@ -53,13 +53,13 @@ class Translator {
   std::unique_ptr<TranslatedExp> letExp(std::unique_ptr<ExpressionList> list, std::unique_ptr<TranslatedExp> body);
   std::unique_ptr<TranslatedExp> breakExp(temp::Label breaklbl);
   std::unique_ptr<TranslatedExp> arrayExp(std::unique_ptr<TranslatedExp> init, std::unique_ptr<TranslatedExp> size);
-
+  std::unique_ptr<frame::FragList> procEntryExit(std::shared_ptr<Level> lvl, std::unique_ptr<TranslatedExp> body, std::shared_ptr<AccessList> formals); 
   /**
      * Utility Functions
      * **/
   static std::unique_ptr<TranslatedExp> nullNx();
   static std::unique_ptr<TranslatedExp> NoExp();
-
+  void proc_entry_exit(std::shared_ptr<Level> lvl, std::unique_ptr<TranslatedExp> body);
  private:
   irt::RelationOperation translateCondOp(ast::Operation op);
   irt::BinaryOperation translateArOp(ast::Operation op);
