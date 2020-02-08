@@ -92,7 +92,7 @@ struct StringFrag : public Frag {
 struct ProcFrag : public Frag {
     std::shared_ptr<Frame> _frame;
     std::unique_ptr<irt::Statement> body;
-    ProcFrag(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> body) : _frame(frame)  {}
+    ProcFrag(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> body) : _frame(frame), body(std::move(body))  {}
     void print() const {}
 };
 

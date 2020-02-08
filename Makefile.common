@@ -33,7 +33,7 @@ SEMAN_HDR = environmentTable.h     \
 SEMAN_SRC = semantic.cpp
 SEMAN_OBJ = semantic.o
 
-SYNTAX_OBJ = lex.yy.o tigerbison.tab.o
+SYNTAX_OBJ = lex.yy.o tigerbison.tab.o main.o
 
 
 FRAME_HDR = ../AST/AST.h              \

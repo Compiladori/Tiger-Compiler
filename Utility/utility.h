@@ -1,8 +1,8 @@
 #ifndef __UTILITY_H__
 #define __UTILITY_H__
 
-#include <iostream>
 #include <deque>
+#include <iostream>
 
 namespace util {
 
@@ -13,56 +13,61 @@ namespace util {
  * **/
 template <class T>
 class GenericList {
-    std::deque<std::unique_ptr<T>> data;
-public:
-    GenericList()     = default;
-    GenericList(T *e) : GenericList() { this->push_back(e); }
+  std::deque<std::unique_ptr<T>> data;
 
-    using iterator       = typename std::deque<std::unique_ptr<T>>::iterator;
-    using reverse_iterator       = typename std::deque<std::unique_ptr<T>>::reverse_iterator;
-    using const_iterator = typename std::deque<std::unique_ptr<T>>::const_iterator;
+ public:
+  GenericList() = default;
+  GenericList(T* e) : GenericList() { this->push_back(e); }
 
-    iterator            begin()        { return data.begin(); }
-    iterator            end()          { return data.end(); }
-    reverse_iterator    rbegin()        { return data.rbegin(); }
-    reverse_iterator    rend()          { return data.rend(); }
-    const_iterator      begin()  const { return data.cbegin(); }
-    const_iterator      end()    const { return data.cend(); }
+  using iterator = typename std::deque<std::unique_ptr<T>>::iterator;
+  using reverse_iterator = typename std::deque<std::unique_ptr<T>>::reverse_iterator;
+  using const_iterator = typename std::deque<std::unique_ptr<T>>::const_iterator;
 
-    auto  size()    const { return data.size(); }
-    auto  empty()   const { return data.empty(); }
-    auto& back()    const { return data.back(); }
-    auto& front()   const { return data.front(); }
+  iterator begin() { return data.begin(); }
+  iterator end() { return data.end(); }
+  reverse_iterator rbegin() { return data.rbegin(); }
+  reverse_iterator rend() { return data.rend(); }
+  const_iterator begin() const { return data.cbegin(); }
+  const_iterator end() const { return data.cend(); }
 
-    void push_back(T *e){ data.emplace_back(std::unique_ptr<T>(e)); }
-    void push_front(T *e){ data.emplace_front(std::unique_ptr<T>(e)); }
+  auto size() const { return data.size(); }
+  auto empty() const { return data.empty(); }
+  auto& back() const { return data.back(); }
+  auto& front() const { return data.front(); }
 
-    void push_back(std::unique_ptr<T> p){ data.emplace_back(std::move(p)); }
-    void push_front(std::unique_ptr<T> p){ data.emplace_front(std::move(p)); }
+  void push_back(T* e) { data.emplace_back(std::unique_ptr<T>(e)); }
+  void push_front(T* e) { data.emplace_front(std::unique_ptr<T>(e)); }
 
-    void pop_front(){ data.pop_front(); }
+  void push_back(std::unique_ptr<T> p) { data.emplace_back(std::move(p)); }
+  void push_front(std::unique_ptr<T> p) { data.emplace_front(std::move(p)); }
 
-    auto& operator[](int i){ return data[i]; }
+  auto pop_front() {
+    std::unique_ptr<T> temp_ptr(move(data.back()));
+    data.pop_back();
+    return move(temp_ptr);
+  }
 
-    void print() const {
-        std::cout << "List ";
-        for(auto& p : data){
-            std::cout << "(";
-            p -> print();
-            std::cout << ")";
-        }
+  auto& operator[](int i) { return data[i]; }
+
+  void print() const {
+    std::cout << "List ";
+    for (auto& p : data) {
+      std::cout << "(";
+      p->print();
+      std::cout << ")";
     }
+  }
 };
 
 /**
  * Derivated type test
  * **/
 template <typename T, typename U>
-bool testSameDerivatedTypes(T a, T b){
-    // Check if both a and b are of the same type U derivated from T
-    return dynamic_cast<U>(a) and dynamic_cast<U>(b);
+bool testSameDerivatedTypes(T a, T b) {
+  // Check if both a and b are of the same type U derivated from T
+  return dynamic_cast<U>(a) and dynamic_cast<U>(b);
 }
 
-};
+};  // namespace util
 
 #endif

@@ -162,47 +162,6 @@ l_value : id				{ $$ = new SimpleVar($1, yylineno); }
 
 %%
 
-int main(int, char**) {
-  // open a file handle to a particular file:
-  FILE *myfile = fopen("test.file", "r");
-  // make sure it's valid:
-  if (!myfile) {
-    cout << "I can't open a.snazzle.file!" << endl;
-    return -1;
-  }
-  // Set flex to read from it instead of defaulting to STDIN:
-  yyin = myfile;
-
-  // Parse through the input:
-  yyparse();
-
-  // TODO: Separate into a different main file
-  try {
-    unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
-
-    // Print the final built AST
-    final_ast->print();
-    cout << endl;
-
-    // Set variable escapes
-    esc::Escapator E;
-    E.setEscapes(final_ast.get());
-
-    // Semantic check
-    seman::SemanticChecker SC;
-    auto result = SC.translate(final_ast.get());
-    result->front() -> print();
-    // Canonical conversion
-    canon::Canonizator C;
-  } catch (error::semantic_error& se) {
-    cout << "Semantic error: " << se.getMessage() << endl;
-  } catch (error::internal_error& ie) { 
-    cout << "Internal error: " << ie.getMessage() << endl;
-  }
-  
-  return 0;
-}
-
 void yyerror(const char *s) {
   extern int yylineno;
   extern int line_num;

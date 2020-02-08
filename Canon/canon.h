@@ -12,11 +12,8 @@
  * ***/
 
 namespace canon {
-
-using StatementList = util::GenericList<irt::Statement>;
-using ExpressionList = util::GenericList<irt::Expression>;
-using StatementListList = util::GenericList<StatementList>;
-using StmListLabel = util::GenericList<std::pair<StatementList*, temp::Label>>;
+using StatementListList = util::GenericList<irt::StatementList>;
+using StmListLabel = util::GenericList<std::pair<irt::StatementList*, temp::Label>>;
 
 struct Block {
     StatementListList* stmLists;
@@ -28,7 +25,7 @@ struct Block {
 
 struct StmExpList {
     std::unique_ptr<irt::Statement> stm;
-    std::unique_ptr<ExpressionList> expList;
+    std::unique_ptr<irt::ExpressionList> expList;
     virtual ~StmExpList() {}
 
     StmExpList(irt::Statement* stm, irt::ExpressionList* expList) : stm(stm), expList(expList) {}
@@ -39,24 +36,23 @@ struct Canonizator {
     Block* globalBlock;
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
-    irt::Statement* reorder(ExpressionList* expList);
-    // doExp returns a statement and an expression (list of one expression)
-    irt::Statement* doStm(irt::Statement* stm);
-    std::pair<irt::Statement*, irt::Expression*> doExp(irt::Expression* exp);
-    irt::Statement* sequence(irt::Statement* stm1, irt::Statement* stm2);
+    std::pair<std::unique_ptr<irt::Statement>, std::unique_ptr<irt::ExpressionList>> reorder(std::unique_ptr<irt::ExpressionList> expList);    std::unique_ptr<irt::Statement> doStm(std::unique_ptr<irt::Statement> stm);
+    std::pair<std::unique_ptr<irt::Statement>, std::unique_ptr<irt::Expression>> doExp(std::unique_ptr<irt::Expression> exp);
+    std::unique_ptr<irt::Statement> sequence(std::unique_ptr<irt::Statement> stm1,std::unique_ptr<irt::Statement> stm2);
     std::unique_ptr<irt::Expression> makeExpUnique(irt::Expression* exp);
     std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
-    ExpressionList* getCallRList(irt::Expression* exp);
-    StatementList* linear(irt::Statement* stm, StatementList* right);
-    StatementListList* createBlocks(StatementList* stmList, temp::Label label);
-    StatementListList* next(StatementList* prevStm, StatementList* stm, temp::Label done);
-    StatementList* getNext();
-    void trace(StatementList* stmList);
+    std::unique_ptr<irt::ExpressionList> getCallRList(std::unique_ptr<irt::Expression> exp);
+    void applyCallRList(irt::Expression* exp,irt::ExpressionList* expList);
+    std::unique_ptr<irt::StatementList> linear(std::unique_ptr<irt::Statement> stm, std::unique_ptr<irt::StatementList> right);
+    StatementListList* createBlocks(irt::StatementList* stmList, temp::Label label);
+    StatementListList* next(irt::StatementList* prevStm, irt::StatementList* stm, temp::Label done);
+    irt::StatementList* getNext();
+    void trace(irt::StatementList* stmList);
 public:
     Canonizator() : q(nullptr), globalBlock(nullptr) {};
-    StatementList* linearize(irt::Statement* stm);
-    struct Block* basicBlocks(StatementList* stmList);
-    StatementList* traceSchedule(Block* block);
+    std::unique_ptr<irt::StatementList> linearize(std::unique_ptr<irt::Statement> stm);
+    struct Block* basicBlocks(irt::StatementList* stmList);
+    irt::StatementList* traceSchedule(Block* block);
 };
 
 
