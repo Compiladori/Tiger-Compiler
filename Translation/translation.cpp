@@ -56,8 +56,7 @@ unique_ptr<TranslatedExp> Translator::intExp(ast::IntExp* val) {
 }
 unique_ptr<TranslatedExp> Translator::stringExp(ast::StringExp* str) {
   temp::Label strpos = temp::Label();
-  frame::StringFrag* frag = new frame::StringFrag(strpos, str->value);
-  _frag_list->push_back(frag);
+  _frag_list->push_back(make_unique<frame::StringFrag>(strpos, str->value));
   return make_unique<Ex>(make_unique<Name>(strpos));
 }
 unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, shared_ptr<trans::Level> funlvl, shared_ptr<trans::Level> currentlvl, temp::Label name, unique_ptr<ExpressionList> list) {
@@ -117,12 +116,13 @@ unique_ptr<TranslatedExp> Translator::strExp(ast::Operation op, unique_ptr<Trans
 unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList> el, int fieldCount) {
   /* Allocation */
   temp::Temp r = temp::Temp();
+  auto list = make_unique<irt::ExpressionList>();
+  list -> push_back(make_unique<Const>(fieldCount * frame::Frame::wordSize));
   unique_ptr<Move> alloc = make_unique<Move>(
       make_unique<Temp>(r),
       frame::external_call(
           "allocRecord",
-          make_unique<irt::ExpressionList>(
-              new Const(fieldCount * frame::Frame::wordSize))));
+          move(list)));
   // alloc -> print();
   auto exp = el->rbegin();
   unique_ptr<Statement> result =
