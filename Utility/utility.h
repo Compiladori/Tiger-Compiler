@@ -42,8 +42,8 @@ class GenericList {
   void push_front(std::unique_ptr<T> p) { data.emplace_front(std::move(p)); }
 
   auto pop_front() {
-    std::unique_ptr<T> temp_ptr(move(data.back()));
-    data.pop_back();
+    std::unique_ptr<T> temp_ptr(move(data.front()));
+    data.pop_front();
     return move(temp_ptr);
   }
 

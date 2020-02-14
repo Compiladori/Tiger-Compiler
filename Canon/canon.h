@@ -41,8 +41,8 @@ struct Canonizator {
     std::unique_ptr<irt::Statement> sequence(std::unique_ptr<irt::Statement> stm1,std::unique_ptr<irt::Statement> stm2);
     std::unique_ptr<irt::Expression> makeExpUnique(irt::Expression* exp);
     std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
-    std::unique_ptr<irt::ExpressionList> getCallRList(std::unique_ptr<irt::Expression> exp);
-    void applyCallRList(irt::Expression* exp,irt::ExpressionList* expList);
+    std::unique_ptr<irt::ExpressionList> getCallRList(std::unique_ptr<irt::Expression> fun,std::unique_ptr<irt::ExpressionList> args);
+    std::unique_ptr<irt::Expression> applyCallRList(std::unique_ptr<irt::Expression> exp,std::unique_ptr<irt::ExpressionList> expList);
     std::unique_ptr<irt::StatementList> linear(std::unique_ptr<irt::Statement> stm, std::unique_ptr<irt::StatementList> right);
     StatementListList* createBlocks(irt::StatementList* stmList, temp::Label label);
     StatementListList* next(irt::StatementList* prevStm, irt::StatementList* stm, temp::Label done);

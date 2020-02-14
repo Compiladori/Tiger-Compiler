@@ -159,8 +159,9 @@ unique_ptr<TranslatedExp> Translator::seqExp(unique_ptr<trans::ExpressionList> l
   }
   return make_unique<Ex>(move(res));
 }
-unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var, unique_ptr<TranslatedExp> exp) {
-  auto a = make_unique<Nx>(make_unique<Move>(exp->unEx(), var->unEx()));
+unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var, unique_ptr<TranslatedExp> exp) {  
+  auto a = make_unique<Nx>(make_unique<Move>(var->unEx(), exp->unEx()));
+  // cout<<"Assign Exp"<<endl;
   // a -> print();
   return move(a);
 }

@@ -24,7 +24,9 @@ pair<unique_ptr<Statement>, unique_ptr<ExpressionList>> Canonizator::reorder(uni
     expList->print();
     cout << endl;
   }
-  if (!expList || !expList->size()) {
+  if (!expList) {
+    return make_pair(make_unique<Exp>(make_unique<Const>(0)), make_unique<ExpressionList>());
+  } else if (!expList->size()) {
     return make_pair(make_unique<Exp>(make_unique<Const>(0)), move(expList));
   } else if (auto call = dynamic_cast<Call*>(expList->front().get())) {
     temp::Temp t = temp::Temp();
@@ -123,23 +125,19 @@ unique_ptr<Statement> Canonizator::sequence(unique_ptr<Statement> stm1, unique_p
 }
 
 // Argument exp will be a call expression
-unique_ptr<ExpressionList> Canonizator::getCallRList(unique_ptr<Expression> exp) {
-  if (auto call = dynamic_cast<Call*>(exp.get())) {
-    auto args = move(call->args);
-    auto expList = make_unique<ExpressionList>();
-    expList->push_back(move(call->fun));
-    for (int i = 0; i < args->size(); ++i)
-      expList->push_back(args->pop_front());
-    return expList;
-  }
-  return nullptr;  //  ???
+unique_ptr<ExpressionList> Canonizator::getCallRList(unique_ptr<Expression> fun, unique_ptr<ExpressionList> args) {
+  auto expList = make_unique<ExpressionList>();
+  expList->push_back(move(fun));
+  for (int i = 0; i < args->size(); ++i)
+    expList->push_back(args->pop_front());
+  return expList;
 }
-void Canonizator::applyCallRList(Expression* exp, ExpressionList* expList) {
-  if (auto call = dynamic_cast<Call*>(exp)) {
+unique_ptr<Expression> Canonizator::applyCallRList(unique_ptr<Expression> exp, unique_ptr<ExpressionList> expList) {
+  if (auto call = dynamic_cast<Call*>(exp.get())) {
     call->fun = expList->pop_front();
-    for (int i = 0; i < expList->size(); ++i)
-      call->args->push_back(expList->pop_front());
+    call->args = move(expList);
   }
+  return move(exp);
 }
 
 unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
@@ -169,8 +167,8 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
     // move->left == dst, move->right == src
     if (auto tmp = dynamic_cast<Temp*>(move_stm->left.get())) {
       if (auto call = dynamic_cast<Call*>(move_stm->right.get())) {
-        auto result = reorder(getCallRList(move(move_stm->right)));
-        applyCallRList(move_stm->right.get(), result.second.get());
+        auto result = reorder(getCallRList(move(call->fun),move(call->args)));
+        move_stm -> right = applyCallRList(move(move_stm -> right), move(result.second));
         return sequence(move(result.first), move(stm));
       }
       auto expList = make_unique<ExpressionList>();
@@ -191,8 +189,8 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
   if (auto expr = dynamic_cast<Exp*>(stm.get())) {
     auto expList = make_unique<ExpressionList>();
     if (auto call = dynamic_cast<Call*>(expr->exp.get())) {
-      auto result = reorder(getCallRList(move(expr->exp)));
-      applyCallRList(expr->exp.get(), result.second.get());
+      auto result = reorder(getCallRList(move(call -> fun),move(call -> args)));
+      expr->exp = applyCallRList(move(expr->exp), move(result.second));
       return sequence(move(result.first), move(stm));
     }
     expList->push_back(move(expr->exp));
@@ -230,8 +228,8 @@ pair<unique_ptr<Statement>, unique_ptr<Expression>> Canonizator::doExp(unique_pt
     return make_pair(sequence(doStm(move(eseq->stm)), move(x.first)), move(x.second));
   }
   if (auto call = dynamic_cast<Call*>(exp.get())) {
-    auto result = reorder(getCallRList(move(exp)));
-    applyCallRList(exp.get(), result.second.get());
+    auto result = reorder(getCallRList(move(call->fun),move(call->args)));
+    exp = applyCallRList(move(exp), move(result.second));
     return make_pair(move(result.first), move(exp));
   }
   auto result = reorder(nullptr);
