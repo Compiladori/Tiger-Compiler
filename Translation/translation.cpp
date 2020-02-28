@@ -117,7 +117,7 @@ unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList
   /* Allocation */
   temp::Temp r = temp::Temp();
   auto list = make_unique<irt::ExpressionList>();
-  list -> push_back(make_unique<Const>(fieldCount * frame::Frame::wordSize));
+  list->push_back(make_unique<Const>(fieldCount * frame::Frame::wordSize));
   unique_ptr<Move> alloc = make_unique<Move>(
       make_unique<Temp>(r),
       frame::external_call(
@@ -159,55 +159,30 @@ unique_ptr<TranslatedExp> Translator::seqExp(unique_ptr<trans::ExpressionList> l
   }
   return make_unique<Ex>(move(res));
 }
-unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var, unique_ptr<TranslatedExp> exp) {  
+unique_ptr<TranslatedExp> Translator::assignExp(unique_ptr<TranslatedExp> var, unique_ptr<TranslatedExp> exp) {
   auto a = make_unique<Nx>(make_unique<Move>(var->unEx(), exp->unEx()));
   // cout<<"Assign Exp"<<endl;
   // a -> print();
   return move(a);
 }
 unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, unique_ptr<TranslatedExp> then, unique_ptr<TranslatedExp> elsee, seman::ExpType* if_type) {
-  temp::Label* t = new temp::Label();
-  temp::Label* f = new temp::Label();
+  temp::Label t = temp::Label();
+  temp::Label f = temp::Label();
   temp::Label m = temp::Label();
-  Cx* res;
-  if (dynamic_cast<trans::Ex*>(test.get())) {
-    unique_ptr<Cx> testcx = test->unCx();
-    PatchList trues = testcx->trues;
-    PatchList falses = testcx->falses;
-    res = new Cx(trues, falses, move(testcx->stm));
-  } else if (auto rescx = dynamic_cast<trans::Cx*>(test.get()))
-    res = rescx;
-  else if (dynamic_cast<trans::Nx*>(test.get()))
-    exit(-1);
-  res->trues.applyPatch(t);
-  res->falses.applyPatch(f);
+  unique_ptr<Cx> res = test->unCx();
+  res->trues.applyPatch(&t);
+  res->falses.applyPatch(&f);
   // res -> print();
-  if (if_type->kind != seman::ExpTypeKind::NoKind) {
-    temp::Temp r = temp::Temp();
-    unique_ptr<Statement> s = make_unique<Seq>(move(res->unCx()->stm),
-                                               make_unique<Seq>(make_unique<Label>(*t),
-                                                                make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r), then->unEx()),
-                                                                                 make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m), temp::LabelList(1, m)),
-                                                                                                  make_unique<Seq>(make_unique<Label>(*f),
-                                                                                                                   make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r), elsee->unEx()),
-                                                                                                                                    make_unique<Label>(m)))))));
-    if (dynamic_cast<trans::Nx*>(then.get()))
-      exit(-1);
-    if (dynamic_cast<trans::Nx*>(elsee.get()))
-      exit(-1);
-    // s -> print();
-    return make_unique<Ex>(make_unique<Eseq>(move(s), make_unique<Temp>(r)));
-  }
-  auto a = make_unique<Nx>(
-      make_unique<Seq>(move(res->unCx()->stm),
-                       make_unique<Seq>(make_unique<Label>(*t),
-                                        make_unique<Seq>(then->unNx(),
-                                                         make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m), temp::LabelList(1, m)),
-                                                                          make_unique<Seq>(make_unique<Label>(*f),
-                                                                                           make_unique<Seq>(elsee->unNx(),
-                                                                                                            make_unique<Label>(m))))))));
-  // a -> print();
-  return move(a);
+  temp::Temp r = temp::Temp();
+  unique_ptr<Statement> s = make_unique<Seq>(move(res->stm),
+                                             make_unique<Seq>(make_unique<Label>(t),
+                                                              make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r), then->unEx()),
+                                                                               make_unique<Seq>(make_unique<Jump>(make_unique<Name>(m), temp::LabelList(1, m)),
+                                                                                                make_unique<Seq>(make_unique<Label>(f),
+                                                                                                                 make_unique<Seq>(make_unique<Move>(make_unique<Temp>(r), elsee->unEx()),
+                                                                                                                                  make_unique<Label>(m)))))));
+  // s -> print();
+  return make_unique<Ex>(make_unique<Eseq>(move(s), make_unique<Temp>(r)));
 }
 unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp, unique_ptr<TranslatedExp> body, temp::Label breaklbl) {
   temp::Label test = temp::Label();
@@ -266,14 +241,13 @@ unique_ptr<TranslatedExp> Translator::arrayExp(unique_ptr<TranslatedExp> init, u
           move(list)));
 }
 
-void Translator::proc_entry_exit(shared_ptr<Level> lvl, unique_ptr<TranslatedExp> body){
+void Translator::proc_entry_exit(shared_ptr<Level> lvl, unique_ptr<TranslatedExp> body) {
   unique_ptr<irt::Statement> stm = make_unique<Move>(
-    make_unique<Temp>(frame::Frame::rv),
-    body -> unEx()
-  );
-  unique_ptr<irt::Statement> procstm = frame::proc_entry_exit1(lvl->_frame,move(stm));
-  auto frag = make_unique<frame::ProcFrag>(lvl -> _frame,move(procstm));
-  _frag_list -> push_front(move(frag));
+      make_unique<Temp>(frame::Frame::rv),
+      body->unEx());
+  unique_ptr<irt::Statement> procstm = frame::proc_entry_exit1(lvl->_frame, move(stm));
+  auto frag = make_unique<frame::ProcFrag>(lvl->_frame, move(procstm));
+  _frag_list->push_front(move(frag));
 }
 shared_ptr<Access> Level::alloc_local(shared_ptr<Level> lvl, bool escape) {
   shared_ptr<frame::Access> access = lvl->_frame->alloc_local(escape);

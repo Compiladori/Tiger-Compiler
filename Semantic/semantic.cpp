@@ -240,9 +240,6 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
           // Error, operands' types must be between Int or String
           throw error::semantic_error("Operands must have type Int or String", exp->pos);
         }
-        if (left_kind == ExpTypeKind::IntKind) {
-          return AssociatedExpType(translator->condExp(oper, move(result_left.tr_exp), move(result_right.tr_exp)), make_shared<IntExpType>());
-        }
         if (left_kind == ExpTypeKind::StringKind) {
           return AssociatedExpType(translator->strExp(oper, move(result_left.tr_exp), move(result_right.tr_exp)), make_shared<IntExpType>());
         }
