@@ -17,10 +17,29 @@ extern ast::Expression* ast_raw_ptr;
 
 using namespace std;
 void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
+  cout << "Entered doProc!!!!" <<endl;
+  cout << endl;
+  cout << endl;
   canon::Canonizator C;
   auto stmList = C.linearize(move(body));
   cout<<endl;
   stmList -> print();
+  cout<<endl;
+  cout << "Linerize !!!!" <<endl;
+  cout << endl;
+  cout << endl;
+  auto basic_b = C.basicBlocks(move(stmList));
+  basic_b -> stmLists -> print();
+  cout<<endl;
+  cout << "BasicBLock List!!!!" <<endl;
+  cout << endl;
+  cout << endl;
+  auto stm_list = C.traceSchedule(move(basic_b));
+  stm_list -> print();
+  cout<<endl;
+  cout << "traceSchedule!!!!" <<endl;
+  cout << endl;
+  cout << endl;
 }
 int main(int, char**) {
   // open a file handle to a particular file:

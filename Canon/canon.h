@@ -4,7 +4,8 @@
 #include "../IRT/IRT.h"
 #include "../Translation/translatedExpression.h"
 #include "../Semantic/environmentTable.h"
-
+#include "../Utility/utility.h"
+#include <map>
 /***
  * Canonical tree, basic blocks and traces
  *
@@ -16,11 +17,18 @@ using StatementListList = util::GenericList<irt::StatementList>;
 using StmListLabel = util::GenericList<std::pair<irt::StatementList*, temp::Label>>;
 
 struct Block {
-    StatementListList* stmLists;
+    std::unique_ptr<StatementListList> stmLists;
     temp::Label label;
     virtual ~Block() {}
 
-    Block(StatementListList* stmLists, temp::Label label) : stmLists(stmLists), label(label) {}
+    Block(std::unique_ptr<StatementListList> stmLists, temp::Label label) : stmLists(move(stmLists)), label(label) {}
+};
+struct StatementListHasher{
+   std::size_t operator()(const std::unique_ptr<irt::StatementList>& l) const {
+      if(auto label = dynamic_cast<irt::Label*>(l->front().get()))
+          return std::hash<std::string>()(label -> label.name);
+      exit(-1);
+   }
 };
 
 struct StmExpList {
@@ -31,28 +39,24 @@ struct StmExpList {
     StmExpList(irt::Statement* stm, irt::ExpressionList* expList) : stm(stm), expList(expList) {}
 };
 
-struct Canonizator {
-    StmListLabel*  q;
-    Block* globalBlock;
+class Canonizator {
+    std::map<temp::Label, irt::StatementList*> basic_blocks_table;
     bool isNop(irt::Statement* stm);
     bool commute(irt::Statement* stm, irt::Expression* exp);
     std::pair<std::unique_ptr<irt::Statement>, std::unique_ptr<irt::ExpressionList>> reorder(std::unique_ptr<irt::ExpressionList> expList);    std::unique_ptr<irt::Statement> doStm(std::unique_ptr<irt::Statement> stm);
     std::pair<std::unique_ptr<irt::Statement>, std::unique_ptr<irt::Expression>> doExp(std::unique_ptr<irt::Expression> exp);
     std::unique_ptr<irt::Statement> sequence(std::unique_ptr<irt::Statement> stm1,std::unique_ptr<irt::Statement> stm2);
-    std::unique_ptr<irt::Expression> makeExpUnique(irt::Expression* exp);
-    std::unique_ptr<irt::Statement> makeStmUnique(irt::Statement* stm);
     std::unique_ptr<irt::ExpressionList> getCallRList(std::unique_ptr<irt::Expression> fun,std::unique_ptr<irt::ExpressionList> args);
     std::unique_ptr<irt::Expression> applyCallRList(std::unique_ptr<irt::Expression> exp,std::unique_ptr<irt::ExpressionList> expList);
     std::unique_ptr<irt::StatementList> linear(std::unique_ptr<irt::Statement> stm, std::unique_ptr<irt::StatementList> right);
-    StatementListList* createBlocks(irt::StatementList* stmList, temp::Label label);
-    StatementListList* next(irt::StatementList* prevStm, irt::StatementList* stm, temp::Label done);
-    irt::StatementList* getNext();
-    void trace(irt::StatementList* stmList);
+    std::unique_ptr<StatementListList> createBlocks(std::unique_ptr<irt::StatementList> stmList, temp::Label label,std::unique_ptr<StatementListList> res);
+    std::unique_ptr<StatementListList> next(std::unique_ptr<irt::StatementList> prevStm, std::unique_ptr<StatementListList> stm, temp::Label done);
+    std::unique_ptr<irt::StatementList> getNext(std::unique_ptr<Block> block,std::unique_ptr<irt::StatementList> res,temp::Label lbl);
+    // std::unique_ptr<irt::StatementList> trace(std::unique_ptr<irt::StatementList> stmList);
 public:
-    Canonizator() : q(nullptr), globalBlock(nullptr) {};
     std::unique_ptr<irt::StatementList> linearize(std::unique_ptr<irt::Statement> stm);
-    struct Block* basicBlocks(irt::StatementList* stmList);
-    irt::StatementList* traceSchedule(Block* block);
+    std::unique_ptr<Block> basicBlocks(std::unique_ptr<irt::StatementList> stmList);
+    std::unique_ptr<irt::StatementList> traceSchedule(std::unique_ptr<Block> block);
 };
 
 

@@ -394,7 +394,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
     endBreakScope();
     endScope();
 
-    if (body_result.exp_type->kind != ExpTypeKind::NoKind) {
+    if (body_result.exp_type->kind != ExpTypeKind::UnitKind) {
       // Error, the while-test should be int
       throw error::semantic_error("While body must produce no value", exp->pos);
     }

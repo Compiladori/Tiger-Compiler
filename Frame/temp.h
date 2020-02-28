@@ -31,7 +31,9 @@ using TempList = std::vector<Temp>;
 /** Label **/
 struct Label : public ast::Symbol {
   static int labels;
-
+  bool operator <(const Label& rhs) const{
+        return name < rhs.name;
+    }
   Label() : Label("L" + std::to_string(labels++)) {}
   Label(std::string s) : Symbol(s) {}
 };

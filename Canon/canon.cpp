@@ -53,69 +53,6 @@ pair<unique_ptr<Statement>, unique_ptr<ExpressionList>> Canonizator::reorder(uni
     }
   }
 }
-// Transforms an expression pointer into a unique pointer to that expression
-unique_ptr<Expression> Canonizator::makeExpUnique(Expression* exp) {
-  unique_ptr<Expression> expU;
-  if (auto binop = dynamic_cast<BinOp*>(exp)) {
-    expU = make_unique<BinOp>(binop->bin_op, move(binop->left), move(binop->right));
-    return expU;
-  }
-  if (auto mem = dynamic_cast<Mem*>(exp)) {
-    expU = make_unique<Mem>(move(mem->exp));
-    return expU;
-  }
-  if (auto temp = dynamic_cast<Temp*>(exp)) {
-    expU = make_unique<Temp>(temp->temporary);
-    return expU;
-  }
-  if (auto eseq = dynamic_cast<Eseq*>(exp)) {
-    expU = make_unique<Eseq>(move(eseq->stm), move(eseq->exp));
-    return expU;
-  }
-  if (auto name = dynamic_cast<Name*>(exp)) {
-    expU = make_unique<Name>(name->name);
-    return expU;
-  }
-  if (auto cte = dynamic_cast<Const*>(exp)) {
-    expU = make_unique<Const>(cte->i);
-    return expU;
-  }
-  if (auto call = dynamic_cast<Call*>(exp)) {
-    expU = make_unique<Call>(move(call->fun), move(call->args));
-    return expU;
-  }
-}
-
-// Transforms a statement pointer into a unique pointer to that statement
-unique_ptr<Statement> Canonizator::makeStmUnique(Statement* stm) {
-  unique_ptr<Statement> stmU;
-  if (auto seq = dynamic_cast<Seq*>(stm)) {
-    stmU = make_unique<Seq>(move(seq->left), move(seq->right));
-    return stmU;
-  }
-  if (auto lab = dynamic_cast<Label*>(stm)) {
-    stmU = make_unique<Label>(lab->label);
-    return stmU;
-  }
-  if (auto jmp = dynamic_cast<Jump*>(stm)) {
-    stmU = make_unique<Jump>(move(jmp->exp), jmp->label_list);
-    return stmU;
-  }
-  if (auto cjmp = dynamic_cast<Cjump*>(stm)) {
-    stmU = make_unique<Cjump>(cjmp->rel_op, move(cjmp->left), move(cjmp->right),
-                              move(cjmp->true_label), move(cjmp->false_label));
-    return stmU;
-  }
-  if (auto mov = dynamic_cast<Move*>(stm)) {
-    stmU = make_unique<Move>(move(mov->left), move(mov->right));
-    return stmU;
-  }
-  if (auto expr = dynamic_cast<Exp*>(stm)) {
-    stmU = make_unique<Exp>(move(expr->exp));
-    return stmU;
-  }
-}
-
 unique_ptr<Statement> Canonizator::sequence(unique_ptr<Statement> stm1, unique_ptr<Statement> stm2) {
   if (isNop(stm1.get()))
     return move(stm2);
@@ -167,8 +104,8 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
     // move->left == dst, move->right == src
     if (auto tmp = dynamic_cast<Temp*>(move_stm->left.get())) {
       if (auto call = dynamic_cast<Call*>(move_stm->right.get())) {
-        auto result = reorder(getCallRList(move(call->fun),move(call->args)));
-        move_stm -> right = applyCallRList(move(move_stm -> right), move(result.second));
+        auto result = reorder(getCallRList(move(call->fun), move(call->args)));
+        move_stm->right = applyCallRList(move(move_stm->right), move(result.second));
         return sequence(move(result.first), move(stm));
       }
       auto expList = make_unique<ExpressionList>();
@@ -189,7 +126,7 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
   if (auto expr = dynamic_cast<Exp*>(stm.get())) {
     auto expList = make_unique<ExpressionList>();
     if (auto call = dynamic_cast<Call*>(expr->exp.get())) {
-      auto result = reorder(getCallRList(move(call -> fun),move(call -> args)));
+      auto result = reorder(getCallRList(move(call->fun), move(call->args)));
       expr->exp = applyCallRList(move(expr->exp), move(result.second));
       return sequence(move(result.first), move(stm));
     }
@@ -228,7 +165,7 @@ pair<unique_ptr<Statement>, unique_ptr<Expression>> Canonizator::doExp(unique_pt
     return make_pair(sequence(doStm(move(eseq->stm)), move(x.first)), move(x.second));
   }
   if (auto call = dynamic_cast<Call*>(exp.get())) {
-    auto result = reorder(getCallRList(move(call->fun),move(call->args)));
+    auto result = reorder(getCallRList(move(call->fun), move(call->args)));
     exp = applyCallRList(move(exp), move(result.second));
     return make_pair(move(result.first), move(exp));
   }
@@ -247,189 +184,137 @@ unique_ptr<StatementList> Canonizator::linearize(unique_ptr<Statement> stm) {
   return linear(doStm(move(stm)), make_unique<StatementList>());
 }
 
-StatementListList* Canonizator::createBlocks(StatementList* stmList, temp::Label done) {
+unique_ptr<StatementListList> Canonizator::createBlocks(unique_ptr<StatementList> stmList, temp::Label done, unique_ptr<StatementListList> res) {
   if (!stmList or stmList->size() == 0)
-    return nullptr;
+    return move(res);
   if (auto lab = dynamic_cast<Label*>(stmList->front().get())) {
-    StatementList* tail = stmList;
-    tail->pop_front();
-    StatementListList* res = next(stmList, tail, done);
-    res->push_front(stmList);
-    return res;
+    auto label = stmList->pop_front();
+    auto label_list = make_unique<StatementList>();
+    label_list->push_front(move(label));
+    res->push_back(move(label_list));
+    return next(move(stmList), move(res), done);
   }
-  temp::Label l = temp::Label();
-  unique_ptr<Label> lab = make_unique<Label>(l);
-  stmList->push_front(move(lab));
-  return createBlocks(stmList, done);
+  stmList->push_front(make_unique<Label>(temp::Label()));
+  return createBlocks(move(stmList), done, move(res));
 }
 
 // looks for a Jump/Cjump or a Label to end or start, respectively, a block in stm
-StatementListList* Canonizator::next(StatementList* prevStm, StatementList* stm, temp::Label done) {
-  if (!stm or stm->size() == 0) {  // “special” last block – put a JUMP(NAME done) at the end of the last block.
-    StatementList* stmListJump = new StatementList();
+unique_ptr<StatementListList> Canonizator::next(unique_ptr<StatementList> stmList, unique_ptr<StatementListList> res, temp::Label done) {
+  if (!stmList or stmList->size() == 0) {  // “special” last block – put a JUMP(NAME done) at the end of the last block.
     temp::LabelList label_list;
     label_list.push_back(done);
-    Jump* jump = new Jump(make_unique<Name>(done), label_list);
-    stmListJump->push_front(jump);
-    return next(prevStm, stmListJump, done);
+    auto jump = make_unique<Jump>(make_unique<Name>(done), label_list);
+    stmList->push_front(move(jump));
+    return next(move(stmList), move(res), done);
   }
-  if (dynamic_cast<Jump*>(stm->front().get()) or dynamic_cast<Cjump*>(stm->front().get())) {
-    StatementListList* stmLists;
-    for (auto s = stm->begin(); s != stm->end(); s++)  // push stm elements to the end of prevStm
-      prevStm->push_back(s->get());
-    //Statement* tmp = prevStm->front().get(); prevStm->pop_front();
-    //prevStm = stm; prevStm->push_front(tmp);
-    StatementList* tail = stm;
-    tail->pop_front();
-    stmLists = createBlocks(tail, done);
-    Statement* tmp = stm->front().get();
-    //if (stm->size() <= 1) return nullptr;
-    /*else*/ stm->pop_front();
-    stm = nullptr;
-    stm->push_front(tmp);
-    return stmLists;
-  } else if (auto label = dynamic_cast<Label*>(stm->front().get())) {
+  if (dynamic_cast<Jump*>(stmList->front().get()) or dynamic_cast<Cjump*>(stmList->front().get())) {
+    res->back()->push_back(stmList->pop_front());
+    return createBlocks(move(stmList), done, move(res));
+  } else if (auto label = dynamic_cast<Label*>(stmList->front().get())) {
     temp::Label lab = label->label;
-    StatementList* newStm = stm;
     temp::LabelList label_list;
     label_list.push_back(lab);
-    Jump* jump = new Jump(make_unique<Name>(lab), label_list);
-    newStm->push_front(jump);
-    return next(prevStm, newStm, done);
+    auto jump = make_unique<Jump>(make_unique<Name>(lab), label_list);
+    stmList->push_front(move(jump));
+    return next(move(stmList), move(res), done);
   } else {
-    Statement* tmp = prevStm->front().get();
-    prevStm->pop_front();
-    prevStm = stm;
-    prevStm->push_front(tmp);
-    StatementList* tail = stm;
-    /*if (tail->size() <= 1) tail = nullptr;
-      else*/
-    tail->pop_front();  // check
-    return next(stm, tail, done);
+    res->back()->push_back(stmList->pop_front());
+    return next(move(stmList), move(res), done);
   }
 }
 
-struct Block* Canonizator::basicBlocks(StatementList* stmList) {
+unique_ptr<Block> Canonizator::basicBlocks(unique_ptr<StatementList> stmList) {
   temp::Label label = temp::Label();
-  StatementListList* stmLists = createBlocks(stmList, label);
-  struct Block* block = new Block(stmLists, label);
-  return block;
+  auto stmLists = createBlocks(move(stmList), label, make_unique<StatementListList>());
+  return make_unique<Block>(move(stmLists), label);
 }
 
-void Canonizator::trace(StatementList* stmList) {
-  StatementList *lastTwo = stmList, *tmp;
-  for (; lastTwo->size() > 2; lastTwo->pop_front())
-    ;
-  tmp = lastTwo;
-  tmp->pop_front();
-  Statement* last = tmp->front().get();  // s == last, last == lasttwo
-  auto label = dynamic_cast<Label*>(stmList->front().get());
-  pair<StatementList*, temp::Label> pair = make_pair((StatementList*)nullptr, label->label);
-  q->push_back(&pair);
-  if (auto jump = dynamic_cast<Jump*>(last)) {
-    StatementList* lab = nullptr;
-    temp::LabelList tailLabList(jump->label_list.begin() + 1, jump->label_list.end());
-    for (auto stm = q->begin(); stm != q->end(); stm++) {
-      if (jump->label_list.front() == stm->get()->second and
-          !tailLabList.size()) {
-        Statement* head = lastTwo->front().get();
-        lastTwo->pop_front();
-        lastTwo = stm->get()->first;
-        lastTwo->push_front(head);  //remove jump
-        trace(stm->get()->first);
-      }
-    }
-    StatementList* tailtail = getNext();
-    for (auto stm = tailtail->begin(); stm != tailtail->end(); stm++)
-      lastTwo->push_back(stm->get());
-  } else if (auto cjump = dynamic_cast<Cjump*>(last)) {
-    // look for the true and false label
-    StatementList *trueLabel = nullptr, *falseLabel = nullptr;
-    for (auto stm = q->begin(); stm != q->end(); stm++) {
-      if (stm->get()->second == *(cjump->true_label))
-        trueLabel = stm->get()->first;
-      if (stm->get()->second == *(cjump->false_label))
-        falseLabel = stm->get()->first;
-    }
-    if (falseLabel) {
-      for (auto stm = falseLabel->begin(); stm != falseLabel->end(); stm++)
-        lastTwo->push_back(stm->get());
-      trace(falseLabel);
-    } else if (trueLabel) {
-      RelationOperation notOp;
-      switch (cjump->rel_op) {
-        case Eq:
-          notOp = Ne;
-        case Ne:
-          notOp = Eq;
-        case Lt:
-          notOp = Ge;
-        case Gt:
-          notOp = Le;
-        case Le:
-          notOp = Gt;
-        case Ge:
-          notOp = Lt;
-        case Ult:
-          notOp = Uge;
-        case Ule:
-          notOp = Ugt;
-        case Ugt:
-          notOp = Ule;
-        case Uge:
-          notOp = Ult;
-      }
-      Cjump* headCjump = new Cjump(notOp, move(cjump->left),
-                                   move(cjump->right), cjump->false_label, cjump->true_label);
-      trueLabel->push_front(headCjump);
-      for (auto stm = trueLabel->begin(); stm != trueLabel->end(); stm++)
-        lastTwo->push_back(stm->get());
-      trace(trueLabel);
-    } else {
-      temp::Label falseL = temp::Label();
-      Label* fLabel = new Label(falseL);
-      Cjump* headCjump = new Cjump(cjump->rel_op, move(cjump->left),
-                                   move(cjump->right), cjump->true_label, cjump->false_label);
-      StatementList* tail = getNext();
-      tail->push_front(fLabel);
-      tail->push_front(headCjump);
-      for (auto stm = tail->begin(); stm != tail->end(); stm++)
-        lastTwo->push_back(stm->get());
-    }
+RelationOperation NegateRelOp(RelationOperation r) {
+  switch (r) {
+    case Eq:
+      return Ne;
+    case Ne:
+      return Eq;
+    case Lt:
+      return Ge;
+    case Ge:
+      return Lt;
+    case Gt:
+      return Le;
+    case Le:
+      return Gt;
+    case Ult:
+      return Uge;
+    case Uge:
+      return Ult;
+    case Ule:
+      return Ugt;
+    case Ugt:
+      return Ule;
   }
-  // else error
+  exit(-1);
 }
-
-StatementList* Canonizator::getNext() {
-  if (!globalBlock->stmLists) {
-    StatementList* stmList = new StatementList();
-    Label* lab = new Label(globalBlock->label);
-    stmList->push_back(lab);
-    return stmList;
+unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_ptr<StatementList> res, temp::Label label) {
+  if (!block->stmLists or !block->stmLists->size()) {
+    res->push_back(make_unique<Label>(block->label));
+    return move(res);
+  }
+  if (!block->stmLists->front()->size()) {
+    block->stmLists->pop_front();
+    return getNext(move(block), move(res), label);
+  }
+  if (basic_blocks_table.count(label)) {
+    auto stm_ptr = basic_blocks_table[label];
+    basic_blocks_table.erase(label);
+    for (auto const& stm : *stm_ptr) {
+      res->push_back(stm_ptr->pop_front());
+    }
+    block->stmLists->pop_front();
+    if (auto last_stm = dynamic_cast<irt::Jump*>(res->back().get())) {
+      if (last_stm->label_list.size() == 1)
+        res->pop_back();
+    } else if (auto last_stm = dynamic_cast<irt::Cjump*>(res->back().get())) {
+      if (basic_blocks_table.count(*last_stm->false_label)) {
+        return getNext(move(block), move(res), *last_stm->false_label);
+      }
+      if (basic_blocks_table.count(*last_stm->true_label)) {
+        res->pop_back();
+        res->push_back(make_unique<Cjump>(NegateRelOp(last_stm->rel_op), move(last_stm->left), move(last_stm->right), last_stm->false_label, last_stm->true_label));
+        return getNext(move(block), move(res), *last_stm->true_label);
+      }
+      res->pop_back();
+      auto new_label = temp::Label();
+      res->push_back(make_unique<irt::Cjump>(last_stm->rel_op, move(last_stm->left), move(last_stm->right), last_stm->true_label, &new_label));
+      res->push_back(make_unique<irt::Label>(new_label));
+    }
+    return getNext(move(block), move(res), label);
   } else {
-    StatementList* head = globalBlock->stmLists->front().get();
-    auto headhead = dynamic_cast<Label*>(head->front().get());
-    auto stmPair = q->begin();
-    while (stmPair != q->end()) {                       // see if label exists in the list
-      if (stmPair->get()->second == headhead->label) {  // can I compare temp::Labels?
-        trace(head);
-        return head;
+    for (const auto& p : *block->stmLists) {
+      if (!block->stmLists->front()->size())
+        block->stmLists->pop_front();
+      else {
+        if (auto lbl_stm = dynamic_cast<irt::Label*>(block->stmLists->front()->front().get()))
+          return getNext(move(block), move(res), lbl_stm->label);
+        else
+          //should be a label
+          exit(-1);
       }
-      stmPair++;
     }
-    globalBlock->stmLists->pop_front();
-    return getNext();
   }
 }
-
-StatementList* Canonizator::traceSchedule(Block* block) {
-  StatementListList* stmLists;
-  globalBlock = block;
-  for (stmLists = globalBlock->stmLists; stmLists; stmLists->pop_front()) {
-    auto head = stmLists->front().get();
-    auto headhead = dynamic_cast<Label*>(head->front().get());
-    pair<StatementList*, temp::Label> pair = make_pair(head, headhead->label);
-    q->push_back(&pair);
+unique_ptr<StatementList> Canonizator::traceSchedule(unique_ptr<Block> block) {
+  for (const auto& p : *block->stmLists) {
+    if (auto label = dynamic_cast<irt::Label*>(p->front().get())) {
+      if (not basic_blocks_table.count(label->label))
+        basic_blocks_table[label->label] = p.get();
+      else
+        // this means that the first element of a list isn't an unique id, big issue
+        exit(-1);
+    } else {
+      // this means that the first element of a list isn't a label, big issue
+      exit(-1);
+    }
   }
-  return getNext();
+  auto label = dynamic_cast<irt::Label*>(block->stmLists->front()->front().get());
+  return getNext(move(block), make_unique<StatementList>(), label->label);
 }

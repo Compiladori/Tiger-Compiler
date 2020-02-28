@@ -46,7 +46,11 @@ class GenericList {
     data.pop_front();
     return move(temp_ptr);
   }
-
+  auto pop_back() {
+    std::unique_ptr<T> temp_ptr(move(data.back()));
+    data.pop_back();
+    return move(temp_ptr);
+  }
   auto& operator[](int i) { return data[i]; }
 
   void print() const {
@@ -54,7 +58,7 @@ class GenericList {
     for (auto& p : data) {
       std::cout << "(";
       p->print();
-      std::cout << ")";
+      std::cout << "), ";
     }
   }
 };
