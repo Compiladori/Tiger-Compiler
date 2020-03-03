@@ -76,8 +76,17 @@ int main(int, char**) {
       if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
         proc_frag -> body -> print();
         cout << endl;
+      } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
+        cout << "StringFrag "<< string_frag ->str<< endl;
+      }
+    }
+    for (const auto& frag : *frags) {
+      if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
+        proc_frag -> body -> print();
+        cout << endl;
         doProc(proc_frag->_frame, move(proc_frag->body));
       } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
+        cout << "StringFrag "<< endl;
       }
     }
   } catch (error::semantic_error& se) {

@@ -84,7 +84,7 @@ unique_ptr<TranslatedExp> Translator::arExp(ast::Operation op, unique_ptr<Transl
 }
 unique_ptr<TranslatedExp> Translator::condExp(ast::Operation op, unique_ptr<TranslatedExp> exp1, unique_ptr<TranslatedExp> exp2) {
   RelationOperation tr_op = translateCondOp(op);
-  unique_ptr<irt::Cjump> cjump = make_unique<Cjump>(tr_op, exp1->unEx(), exp2->unEx(), nullptr, nullptr);
+  unique_ptr<irt::Cjump> cjump = make_unique<Cjump>(tr_op, exp1->unEx(), exp2->unEx());
   PatchList trues = PatchList();
   trues.push_back(&cjump->true_label);
   PatchList falses = PatchList();
@@ -99,13 +99,13 @@ unique_ptr<TranslatedExp> Translator::strExp(ast::Operation op, unique_ptr<Trans
     list->push_back(exp1->unEx());
     list->push_back(exp2->unEx());
     unique_ptr<irt::Expression> e = frame::external_call("stringEqual", move(list));
-    cjump = make_unique<Cjump>(tr_op, move(e), make_unique<Const>(1), nullptr, nullptr);
+    cjump = make_unique<Cjump>(tr_op, move(e), make_unique<Const>(1));
   } else {
     unique_ptr<irt::ExpressionList> list = make_unique<irt::ExpressionList>();
     list->push_back(exp1->unEx());
     list->push_back(exp2->unEx());
     unique_ptr<irt::Expression> e = frame::external_call("stringCompare", move(list));
-    cjump = make_unique<Cjump>(tr_op, move(e), make_unique<Const>(0), nullptr, nullptr);
+    cjump = make_unique<Cjump>(tr_op, move(e), make_unique<Const>(0));
   }
   PatchList trues = PatchList();
   trues.push_back(&cjump->true_label);
@@ -170,8 +170,8 @@ unique_ptr<TranslatedExp> Translator::ifExp(unique_ptr<TranslatedExp> test, uniq
   temp::Label f = temp::Label();
   temp::Label m = temp::Label();
   unique_ptr<Cx> res = test->unCx();
-  res->trues.applyPatch(&t);
-  res->falses.applyPatch(&f);
+  res->trues.applyPatch(t);
+  res->falses.applyPatch(f);
   // res -> print();
   temp::Temp r = temp::Temp();
   unique_ptr<Statement> s = make_unique<Seq>(move(res->stm),
@@ -189,7 +189,7 @@ unique_ptr<TranslatedExp> Translator::whileExp(unique_ptr<TranslatedExp> exp, un
   temp::Label done = breaklbl;
   temp::Label loopstart = temp::Label();
   unique_ptr<Statement> s = make_unique<Seq>(make_unique<Label>(test),
-                                             make_unique<Seq>(make_unique<Cjump>(Ne, exp->unEx(), make_unique<Const>(0), &loopstart, &done),
+                                             make_unique<Seq>(make_unique<Cjump>(Ne, exp->unEx(), make_unique<Const>(0), loopstart, done),
                                                               make_unique<Seq>(make_unique<Label>(loopstart),
                                                                                make_unique<Seq>(body->unNx(),
                                                                                                 make_unique<Seq>(make_unique<Jump>(make_unique<Name>(test), temp::LabelList(1, test)),
@@ -208,7 +208,7 @@ unique_ptr<TranslatedExp> Translator::forExp(shared_ptr<trans::Access> access, s
   unique_ptr<Statement> s = make_unique<Seq>(make_unique<Move>(move(var_s), explo->unEx()),
                                              make_unique<Seq>(make_unique<Label>(test),
                                                               make_unique<Seq>(make_unique<Move>(make_unique<Temp>(limit), exphi->unEx()),
-                                                                               make_unique<Seq>(make_unique<Cjump>(Le, move(var_s3), make_unique<Temp>(limit), &loopstart, &done),
+                                                                               make_unique<Seq>(make_unique<Cjump>(Le, move(var_s3), make_unique<Temp>(limit), loopstart, done),
                                                                                                 make_unique<Seq>(make_unique<Label>(loopstart),
                                                                                                                  make_unique<Seq>(body->unNx(),
                                                                                                                                   make_unique<Seq>(make_unique<Move>(move(var_s1), make_unique<BinOp>(Plus, move(var_s2), make_unique<Const>(1))),

@@ -23,21 +23,6 @@ struct Block {
 
     Block(std::unique_ptr<StatementListList> stmLists, temp::Label label) : stmLists(move(stmLists)), label(label) {}
 };
-struct StatementListHasher{
-   std::size_t operator()(const std::unique_ptr<irt::StatementList>& l) const {
-      if(auto label = dynamic_cast<irt::Label*>(l->front().get()))
-          return std::hash<std::string>()(label -> label.name);
-      exit(-1);
-   }
-};
-
-struct StmExpList {
-    std::unique_ptr<irt::Statement> stm;
-    std::unique_ptr<irt::ExpressionList> expList;
-    virtual ~StmExpList() {}
-
-    StmExpList(irt::Statement* stm, irt::ExpressionList* expList) : stm(stm), expList(expList) {}
-};
 
 class Canonizator {
     std::map<temp::Label, irt::StatementList*> basic_blocks_table;

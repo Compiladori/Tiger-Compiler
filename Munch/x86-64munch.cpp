@@ -62,7 +62,7 @@ void Muncher::munchStatement(irt::Statement* stm){
         emit(make_unique<assem::Oper>(comp_code, temp::TempList {}, temp::TempList {left, right}, assem::Targets {}));
         
         std::string jump_code = relation_operation_name[cjump_stm->rel_op] + " `j0";
-        emit(make_unique<assem::Oper>(jump_code, temp::TempList {}, temp::TempList {}, assem::Targets {*cjump_stm->true_label}));
+        emit(make_unique<assem::Oper>(jump_code, temp::TempList {}, temp::TempList {}, assem::Targets {cjump_stm->true_label}));
         
         return;
     }

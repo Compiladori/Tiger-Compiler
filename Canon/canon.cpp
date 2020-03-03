@@ -274,17 +274,17 @@ unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_p
       if (last_stm->label_list.size() == 1)
         res->pop_back();
     } else if (auto last_stm = dynamic_cast<irt::Cjump*>(res->back().get())) {
-      if (basic_blocks_table.count(*last_stm->false_label)) {
-        return getNext(move(block), move(res), *last_stm->false_label);
+      if (basic_blocks_table.count(last_stm->false_label)) {
+        return getNext(move(block), move(res), last_stm->false_label);
       }
-      if (basic_blocks_table.count(*last_stm->true_label)) {
+      if (basic_blocks_table.count(last_stm->true_label)) {
         res->pop_back();
         res->push_back(make_unique<Cjump>(NegateRelOp(last_stm->rel_op), move(last_stm->left), move(last_stm->right), last_stm->false_label, last_stm->true_label));
-        return getNext(move(block), move(res), *last_stm->true_label);
+        return getNext(move(block), move(res), last_stm->true_label);
       }
       res->pop_back();
       auto new_label = temp::Label();
-      res->push_back(make_unique<irt::Cjump>(last_stm->rel_op, move(last_stm->left), move(last_stm->right), last_stm->true_label, &new_label));
+      res->push_back(make_unique<irt::Cjump>(last_stm->rel_op, move(last_stm->left), move(last_stm->right), last_stm->true_label, new_label));
       res->push_back(make_unique<irt::Label>(new_label));
     }
     return getNext(move(block), move(res), label);
