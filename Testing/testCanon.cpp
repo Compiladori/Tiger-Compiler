@@ -189,7 +189,7 @@ TEST_CASE("traceSchedule", "[canon]") {
   unique_ptr<irt::Jump> jump1 = make_unique<irt::Jump>(move(exp), label_list);
   temp::Label label = temp::Label();
 
-  SECTION("[[Label1, Jump1]]"){ 
+  SECTION("[[Label1, Jump1]]"){
     stmList1->push_back(move(jump1));
     stmLists->push_back(move(stmList1));
     unique_ptr<canon::Block> b = make_unique<canon::Block>(move(stmLists), label);
@@ -269,7 +269,6 @@ TEST_CASE("traceSchedule", "[canon]") {
     stmLists->push_back(move(stmList3));
     unique_ptr<canon::Block> b = make_unique<canon::Block>(move(stmLists), label);
     unique_ptr<irt::StatementList> res = c.traceSchedule(move(b));
-    res->print();
     REQUIRE(res->size() == 6);
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
     REQUIRE(dynamic_cast<irt::Label*>(res->back().get()));

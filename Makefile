@@ -29,6 +29,8 @@ all:
 	$(MAKE) -C Canon all
 	$(MAKE) -C Munch depend
 	$(MAKE) -C Munch all
+	$(MAKE) -C Testing depend
+	$(MAKE) -C Testing all
 
 clean:
 		$(MAKE) -C AST clean
@@ -40,5 +42,6 @@ clean:
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
 		$(MAKE) -C Munch clean
+		$(MAKE) -C Testing clean
 
 include Makefile.common

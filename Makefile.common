@@ -49,9 +49,13 @@ CANON_OBJ = canon.o
 
 MUNCH_HDR = ../IRT/IRT.h             \
             ../Frame/temp.h          \
-            munch.h assem.h 
+            munch.h assem.h
 MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
+
+TESTING_HDR = catch2/catch.hpp
+TESTING_SRC = testMain.cpp testCanon.cpp 
+TESTING_OBJ = testMain.o testCanon.o
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
@@ -63,9 +67,10 @@ SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 CANON_OBJ_DIR = $(patsubst %, Canon/%, $(CANON_OBJ))
 MUNCH_OBJ_DIR = $(patsubst %, Munch/%, $(MUNCH_OBJ))
+TESTING_OBJ_DIR = $(patsubst %, Testing/%, $(TESTING_OBJ))
 
 PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
               $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR)    \
               $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
               $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-              $(MUNCH_OBJ_DIR)
+              $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)

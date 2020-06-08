@@ -19,11 +19,6 @@ bool Canonizator::commute(Statement* stm, Expression* exp) {
 }
 
 pair<unique_ptr<Statement>, unique_ptr<ExpressionList>> Canonizator::reorder(unique_ptr<ExpressionList> expList) {
-  if (expList) {
-    cout << "Reorder ";
-    expList->print();
-    cout << endl;
-  }
   if (!expList) {
     return make_pair(make_unique<Exp>(make_unique<Const>(0)), make_unique<ExpressionList>());
   } else if (!expList->size()) {
@@ -53,6 +48,7 @@ pair<unique_ptr<Statement>, unique_ptr<ExpressionList>> Canonizator::reorder(uni
     }
   }
 }
+
 unique_ptr<Statement> Canonizator::sequence(unique_ptr<Statement> stm1, unique_ptr<Statement> stm2) {
   if (isNop(stm1.get()))
     return move(stm2);
@@ -69,6 +65,7 @@ unique_ptr<ExpressionList> Canonizator::getCallRList(unique_ptr<Expression> fun,
     expList->push_back(args->pop_front());
   return expList;
 }
+
 unique_ptr<Expression> Canonizator::applyCallRList(unique_ptr<Expression> exp, unique_ptr<ExpressionList> expList) {
   if (auto call = dynamic_cast<Call*>(exp.get())) {
     call->fun = expList->pop_front();
@@ -78,9 +75,6 @@ unique_ptr<Expression> Canonizator::applyCallRList(unique_ptr<Expression> exp, u
 }
 
 unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
-  cout << "dostm ";
-  stm->print();
-  cout << endl;
   if (auto seq = dynamic_cast<Seq*>(stm.get())) {
     return sequence(doStm(move(seq->left)), doStm(move(seq->right)));
   }
@@ -141,9 +135,6 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
 // Given an expression e returns a statement s and an expression e1, where e1 contains
 // no ESEQs, such that ESEQ(s, e1) would be equivalent to the original expression e
 pair<unique_ptr<Statement>, unique_ptr<Expression>> Canonizator::doExp(unique_ptr<Expression> exp) {
-  cout << "doExp ";
-  exp->print();
-  cout << endl;
   if (auto binop = dynamic_cast<BinOp*>(exp.get())) {
     auto expList = make_unique<ExpressionList>();
     expList->push_back(move(binop->left));
@@ -254,6 +245,7 @@ RelationOperation NegateRelOp(RelationOperation r) {
   }
   exit(-1);
 }
+
 unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_ptr<StatementList> res, temp::Label label) {
   if (!block->stmLists or !block->stmLists->size()) {
     res->push_back(make_unique<Label>(block->label));
@@ -302,6 +294,7 @@ unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_p
     }
   }
 }
+
 unique_ptr<StatementList> Canonizator::traceSchedule(unique_ptr<Block> block) {
   for (const auto& p : *block->stmLists) {
     if (auto label = dynamic_cast<irt::Label*>(p->front().get())) {
