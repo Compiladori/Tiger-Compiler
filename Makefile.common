@@ -33,7 +33,7 @@ SEMAN_HDR = environmentTable.h     \
 SEMAN_SRC = semantic.cpp
 SEMAN_OBJ = semantic.o
 
-SYNTAX_OBJ = lex.yy.o tigerbison.tab.o main.o
+SYNTAX_OBJ = lex.yy.o tigerbison.tab.o 
 
 
 FRAME_HDR = ../AST/AST.h              \
@@ -54,7 +54,7 @@ MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
 
 TESTING_HDR = catch2/catch.hpp
-TESTING_SRC = testMain.cpp testCanon.cpp 
+TESTING_SRC = testMain.cpp testCanon.cpp
 TESTING_OBJ = testMain.o testCanon.o
 
 
