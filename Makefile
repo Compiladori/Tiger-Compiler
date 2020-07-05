@@ -7,18 +7,18 @@ MAKE = make
 SH   = bash
 
 LDFLAGS = -std=c++17
-.PHONY: all clean
+.PHONY: allD allC cleanD cleanC
 
-myprogram: all
-	g++ $(LDFLAGS) $(PROGRAM_OBJ) -o tiger.exe
-all:
+default: allD # executes Testing main
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
+allD:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
 	$(MAKE) -C IRT depend
 	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax all
+	$(MAKE) -C Syntax allD
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
@@ -32,16 +32,49 @@ all:
 	$(MAKE) -C Testing depend
 	$(MAKE) -C Testing all
 
-clean:
+
+custom: allC
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
+allC:
+	$(MAKE) -C AST depend
+	$(MAKE) -C AST all
+	$(MAKE) -C IRT depend
+	$(MAKE) -C IRT all
+	$(MAKE) -C Escapes depend
+	$(MAKE) -C Escapes all
+	$(MAKE) -C Syntax allC
+	$(MAKE) -C Frame depend
+	$(MAKE) -C Frame all
+	$(MAKE) -C Semantic depend
+	$(MAKE) -C Semantic all
+	$(MAKE) -C Translation depend
+	$(MAKE) -C Translation all
+	$(MAKE) -C Canon depend
+	$(MAKE) -C Canon all
+	$(MAKE) -C Munch depend
+	$(MAKE) -C Munch all
+
+cleanD:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
-		$(MAKE) -C Syntax clean
+		$(MAKE) -C Syntax cleanD
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
 		$(MAKE) -C Munch clean
 		$(MAKE) -C Testing clean
+
+cleanC:
+		$(MAKE) -C AST clean
+		$(MAKE) -C IRT clean
+		$(MAKE) -C Escapes clean
+		$(MAKE) -C Syntax cleanC
+		$(MAKE) -C Frame clean
+		$(MAKE) -C Semantic clean
+		$(MAKE) -C Translation clean
+		$(MAKE) -C Canon clean
+		$(MAKE) -C Munch clean
 
 include Makefile.common
