@@ -55,8 +55,8 @@ MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
 
 TESTING_HDR = catch2/catch.hpp
-TESTING_SRC = testMain.cpp testCanon.cpp testSeman.cpp
-TESTING_OBJ = testMain.o testCanon.o testSeman.o
+TESTING_SRC = testMain.cpp testCanon.cpp
+TESTING_OBJ = testMain.o testCanon.o 
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
