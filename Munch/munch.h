@@ -11,6 +11,7 @@
 #include "assem.h"
 #include "../IRT/IRT.h"
 #include "../Frame/temp.h"
+#include "../Frame/frame.h"
 #include "../Utility/utility.h"
 
 namespace munch {
@@ -29,7 +30,7 @@ class Muncher {
 public:
     Muncher(frame::Frame frame) : codegen_frame(frame) {}
     
-    util::GenericList<assem::Instruction> munchExpressionList(irt::StatementList stm_list);
+    util::GenericList<assem::Instruction> munchStatementList(irt::StatementList stm_list);
 };
 
 

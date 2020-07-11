@@ -1,10 +1,10 @@
 #include <string>
 #include <map>
-#include "frame.h"
 #include "munch.h"
 #include "assem.h"
 #include "../Utility/error.h"
 #include "../Frame/temp.h"
+#include "../Frame/frame.h"
 
 using namespace munch;
 using std::unique_ptr;
@@ -211,12 +211,12 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp){
 }
 
 
-util::GenericList<assem::Instruction> Muncher::munchExpressionList(irt::StatementList stm_list){
+util::GenericList<assem::Instruction> Muncher::munchStatementList(irt::StatementList stm_list){
     instruction_list.clear();
     temp_to_label.clear();
 
 	for (auto& stm : stm_list)
 		munchStatement(stm.get());
     
-	return instruction_list;
+	return move(instruction_list);
 }
