@@ -1,4 +1,6 @@
 #include <string>
+#include <map>
+#include "frame.h"
 #include "munch.h"
 #include "assem.h"
 #include "../Utility/error.h"
@@ -12,16 +14,18 @@ using std::move;
 /**
  * Corresponding assembly names to IRT's relation operators
  * **/
-std::string relation_operation_name[] = { [irt::RelationOperation::Eq] = "je",
-                                          [irt::RelationOperation::Ne] = "jne",
-                                          [irt::RelationOperation::Lt] = "jl",
-                                          [irt::RelationOperation::Gt] = "jg",
-                                          [irt::RelationOperation::Le] = "jle",
-                                          [irt::RelationOperation::Ge] = "jge",
-                                          [irt::RelationOperation::Ult] = "jb",
-                                          [irt::RelationOperation::Ule] = "jbe",
-                                          [irt::RelationOperation::Ugt] = "ja",
-                                          [irt::RelationOperation::Uge] = "jae" };
+std::map<irt::RelationOperation, std::string> relation_operation_name = {
+    {irt::RelationOperation::Eq, "je"},
+    {irt::RelationOperation::Ne, "jne"},
+    {irt::RelationOperation::Lt, "jl"},
+    {irt::RelationOperation::Gt, "jg"},
+    {irt::RelationOperation::Le, "jle"},
+    {irt::RelationOperation::Ge, "jge"},
+    {irt::RelationOperation::Ult, "jb"},
+    {irt::RelationOperation::Ule, "jbe"},
+    {irt::RelationOperation::Ugt, "ja"},
+    {irt::RelationOperation::Uge, "jae"}
+};
 
 /**
  * Muncher
@@ -207,3 +211,12 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp){
 }
 
 
+util::GenericList<assem::Instruction> Muncher::munchExpressionList(irt::StatementList stm_list){
+    instruction_list.clear();
+    temp_to_label.clear();
+
+	for (auto& stm : stm_list)
+		munchStatement(stm.get());
+    
+	return instruction_list;
+}
