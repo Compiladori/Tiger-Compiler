@@ -52,6 +52,32 @@ shared_ptr<Access> Frame::alloc_local(bool escape) {
   return l;
 }
 
+RegToTempMap Frame::register_temporaries;
+RegList Frame::get_arg_regs(){ return RegList {"rdi", "rsi", "rdx", "rcx", "r8", "r9"}; }
+RegList Frame::get_caller_saved_regs(){ return RegList {"rax", "r10", "r11"}; }
+RegList Frame::get_callee_saved_regs(){ return RegList {"r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
+RegList Frame::get_calldefs(){ return Frame::get_caller_saved_regs(); }
+RegToTempMap& Frame::get_reg_to_temp_map(){
+  // Returns the static Frame::register_temporaries only if it's already filled up
+  if(Frame::register_temporaries.empty()){
+    std::vector<std::string> register_names;
+
+    RegList arg_regs          = Frame::get_arg_regs();
+    RegList caller_saved_regs = Frame::get_caller_saved_regs();
+    RegList callee_saved_regs = Frame::get_callee_saved_regs();
+
+    register_names.insert(register_names.end(), arg_regs.begin(),          arg_regs.end());
+    register_names.insert(register_names.end(), caller_saved_regs.begin(), caller_saved_regs.end());
+    register_names.insert(register_names.end(), callee_saved_regs.begin(), callee_saved_regs.end());
+
+    for(auto& reg_name : register_names){
+      // Assign a new temporary to each register
+      Frame::register_temporaries[reg_name] = temp::Temp();
+    }
+  }
+  return Frame::register_temporaries;
+}
+
 unique_ptr<irt::Expression> frame::exp(shared_ptr<Access> acc, unique_ptr<irt::Expression> framePtr) {
   if (auto in_reg = dynamic_cast<InReg *>(acc.get()))
     return make_unique<irt::Temp>(in_reg->reg);

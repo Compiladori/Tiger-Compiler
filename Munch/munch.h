@@ -20,15 +20,15 @@ namespace munch {
 
 class Muncher {
     util::GenericList<assem::Instruction> instruction_list;
-    temp::TempMap temp_to_label;
-    frame::Frame codegen_frame;
+    frame::Frame munch_frame;
     
     void emit(std::unique_ptr<assem::Instruction> ins);
 
-    void       munchStatement (irt::Statement*  stm);
-    temp::Temp munchExpression(irt::Expression* exp);
+    void           munchStatement (irt::Statement*  stm);
+    temp::TempList munchArgs(irt::ExpressionList* exp_list);
+    temp::Temp     munchExpression(irt::Expression* exp);
 public:
-    Muncher(frame::Frame frame) : codegen_frame(frame) {}
+    Muncher(frame::Frame frame) : munch_frame(frame) {}
     
     util::GenericList<assem::Instruction> munchStatementList(irt::StatementList stm_list);
 };

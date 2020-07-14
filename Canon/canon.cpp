@@ -234,14 +234,6 @@ RelationOperation NegateRelOp(RelationOperation r) {
       return Le;
     case Le:
       return Gt;
-    case Ult:
-      return Uge;
-    case Uge:
-      return Ult;
-    case Ule:
-      return Ugt;
-    case Ugt:
-      return Ule;
   }
   exit(-1);
 }
