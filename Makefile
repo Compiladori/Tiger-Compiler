@@ -11,6 +11,7 @@ LDFLAGS = -std=c++17
 
 myprogram: all
 	g++ $(LDFLAGS) $(PROGRAM_OBJ) -o tiger.exe
+
 all:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
@@ -18,7 +19,7 @@ all:
 	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax all
+	# $(MAKE) -C Syntax all
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
@@ -27,6 +28,8 @@ all:
 	$(MAKE) -C Translation all
 	$(MAKE) -C Canon depend
 	$(MAKE) -C Canon all
+	$(MAKE) -C Liveness depend
+	$(MAKE) -C Liveness all
 	$(MAKE) -C Munch depend
 	$(MAKE) -C Munch all
 
@@ -40,5 +43,5 @@ clean:
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
 		$(MAKE) -C Munch clean
-
+		$(MAKE) -C Liveness clean
 include Makefile.common
