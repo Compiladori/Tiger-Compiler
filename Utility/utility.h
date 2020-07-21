@@ -34,6 +34,7 @@ class GenericList {
   auto empty() const { return data.empty(); }
   auto& back() const { return data.back(); }
   auto& front() const { return data.front(); }
+  auto clear() { return data.clear(); }
 
   void push_back(T* e) { data.emplace_back(std::unique_ptr<T>(e)); }
   void push_front(T* e) { data.emplace_front(std::unique_ptr<T>(e)); }

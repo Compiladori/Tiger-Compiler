@@ -4,6 +4,13 @@ using namespace trans;
 using namespace std;
 
 /**
+ * Implementation of the translatedExpression.h header
+ * 
+ * The Move(left,right) IRT statements are built using Intel Syntax:
+ * move destination, source
+ * */
+
+/**
  * Ex (expression)
  * **/
 unique_ptr<irt::Expression> Ex::unEx()  {

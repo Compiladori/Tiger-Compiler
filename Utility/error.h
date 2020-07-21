@@ -21,7 +21,7 @@ class internal_error : public std::exception {
 public:
         internal_error(std::string msg, const char* file) : info(msg), file(file) {}
 
-        std::string getMessage() { return "Internal error: " + info + "in file: " + file; }
+        std::string getMessage() { return "Internal error: " + info + " in file: " + file; }
     };
 
 

@@ -11,6 +11,7 @@
 #include "assem.h"
 #include "../IRT/IRT.h"
 #include "../Frame/temp.h"
+#include "../Frame/frame.h"
 #include "../Utility/utility.h"
 
 namespace munch {
@@ -19,14 +20,17 @@ namespace munch {
 
 class Muncher {
     util::GenericList<assem::Instruction> instruction_list;
-    temp::TempMap temp_to_label;
+    frame::Frame munch_frame;
     
     void emit(std::unique_ptr<assem::Instruction> ins);
+
+    void           munchStatement (irt::Statement*  stm);
+    temp::TempList munchArgs(irt::ExpressionList* exp_list);
+    temp::Temp     munchExpression(irt::Expression* exp);
 public:
-    Muncher() = default;
+    Muncher(frame::Frame frame) : munch_frame(frame) {}
     
-    void       munchStatement (irt::Statement*  stm);
-    temp::Temp munchExpression(irt::Expression* exp);
+    util::GenericList<assem::Instruction> munchStatementList(irt::StatementList stm_list);
 };
 
 

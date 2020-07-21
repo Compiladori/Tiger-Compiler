@@ -15,7 +15,6 @@
 namespace assem {
 
 
-using Targets = temp::LabelList;
 
 struct Instruction {
     virtual ~Instruction() = default;
@@ -25,11 +24,11 @@ struct Instruction {
 
 struct Oper : public Instruction {
     std::string assm;
-    temp::TempList dst, src;
-    Targets jumps;
+    temp::TempList src, dst;
+    temp::LabelList jumps;
 
-    Oper(std::string assm, temp::TempList dst, temp::TempList src, Targets jumps) :
-        assm(assm), dst(dst), src(src), jumps(jumps) {}
+    Oper(std::string assm, temp::TempList dst, temp::TempList src, temp::LabelList jumps) :
+        assm(assm), src(src), dst(dst), jumps(jumps) {}
     
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
@@ -45,10 +44,10 @@ struct Label : public Instruction {
 
 struct Move : public Instruction {
     std::string assm;
-    temp::TempList dst, src;
+    temp::TempList src, dst;
 
     Move(std::string assm, temp::TempList dst, temp::TempList src) : 
-        assm(assm), dst(dst), src(src) {}
+        assm(assm), src(src), dst(dst) {}
     
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
