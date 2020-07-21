@@ -1,11 +1,11 @@
 #include <cstdio>
 #include <iostream>
-#include "../AST/AST.h"
-#include "../Canon/canon.h"
-#include "../Escapes/escapes.h"
-#include "../Semantic/semantic.h"
-#include "../Utility/error.h"
-#include "tigerbison.tab.h"
+#include "AST/AST.h"
+#include "Canon/canon.h"
+#include "Escapes/escapes.h"
+#include "Semantic/semantic.h"
+#include "Utility/error.h"
+#include "Syntax/tigerbison.tab.h"
 extern FILE* yyin;
 extern int yylineno;
 
