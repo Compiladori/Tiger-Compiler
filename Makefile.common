@@ -33,7 +33,8 @@ SEMAN_HDR = environmentTable.h     \
 SEMAN_SRC = semantic.cpp
 SEMAN_OBJ = semantic.o
 
-SYNTAX_OBJ = lex.yy.o tigerbison.tab.o main.o
+SYNTAX_OBJ_D = lex.yy.o tigerbison.tab.o
+SYNTAX_OBJ_C = lex.yy.o tigerbison.tab.o app.o
 
 
 FRAME_HDR = ../AST/AST.h              \
@@ -49,27 +50,40 @@ CANON_OBJ = canon.o
 
 MUNCH_HDR = ../IRT/IRT.h             \
             ../Frame/temp.h          \
-            munch.h assem.h 
+            munch.h assem.h
 MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
 
-LIVENESS_HDR = flowgraph.h graph.h 
+LIVENESS_HDR = flowgraph.h graph.h
 LIVENESS_SRC = flowgraph.cpp graph.cpp
 LIVENESS_OBJ = flowgraph.o graph.o
+
+TESTING_HDR = catch2/catch.hpp
+TESTING_SRC = testMain.cpp testCanon.cpp
+TESTING_OBJ = testMain.o testCanon.o
+
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
 IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
 ESCAPES_OBJ_DIR = $(patsubst %, Escapes/%, $(ESCAPES_OBJ))
-SYNTAX_OBJ_DIR = $(patsubst %, Syntax/%, $(SYNTAX_OBJ))
+SYNTAX_OBJ_DIR_D = $(patsubst %, Syntax/%, $(SYNTAX_OBJ_D))
+SYNTAX_OBJ_DIR_C = $(patsubst %, Syntax/%, $(SYNTAX_OBJ_C))
 FRAME_OBJ_DIR = $(patsubst %, Frame/%, $(FRAME_OBJ))
 SEMAN_OBJ_DIR = $(patsubst %, Semantic/%, $(SEMAN_OBJ))
 TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 CANON_OBJ_DIR = $(patsubst %, Canon/%, $(CANON_OBJ))
 MUNCH_OBJ_DIR = $(patsubst %, Munch/%, $(MUNCH_OBJ))
 LIVENESS_OBJ_DIR = $(patsubst %, Liveness/%, $(LIVENESS_OBJ))
+TESTING_OBJ_DIR = $(patsubst %, Testing/%, $(TESTING_OBJ))
 
-PROGRAM_OBJ = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
-              $(ESCAPES_OBJ_DIR)                      \
-              $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-              $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-              $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)
+PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
+                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)    \
+                $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
+                $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
+                $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)
+
+PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
+                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)    \
+                $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
+                $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
+                $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)

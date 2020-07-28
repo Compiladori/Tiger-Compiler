@@ -17,6 +17,11 @@ struct Temp {
 
   Temp() : num(total_num++) {}
   Temp(int n) : num(n) {}
+
+  // Define custom copy constructor and copy assignment just in case by default the static total_num is changed
+  Temp(const Temp &t) : num(t.num) {} // Copy constructor
+  Temp& operator=(const Temp &t) { num = t.num; return *this; } // Copy assignment
+
   void print() const { std::cout << num << " "; }
 };
 
@@ -36,6 +41,10 @@ struct Label : public ast::Symbol {
     }
   Label() : Label("L" + std::to_string(labels++)) {}
   Label(std::string s) : Symbol(s) {}
+
+  // Define custom copy constructor and copy assignment just in case by default the static labels is changed
+  Label(const Label &l) : Label(l.name) {} // Copy constructor
+  Label& operator=(const Label &l) { name = l.name; return *this; } // Copy assignment
 };
 
 using LabelList = std::vector<Label>;

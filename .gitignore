@@ -32,17 +32,11 @@
 *.out
 *.app
 
-# Ignore binary files
-*
-!*.*
-!*/
-!Makefile
-
 # Ignore flex and bison
 tiger.exe
 *.tab.c
 *.tab.h
 *.yy.c
 
-# Ignore makefiles
+# Makefiles
 *.depends

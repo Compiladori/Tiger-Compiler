@@ -1,13 +1,11 @@
 #include <cstdio>
 #include <iostream>
-#include "../AST/AST.h"
-#include "../Canon/canon.h"
-#include "../Escapes/escapes.h"
-#include "../Semantic/semantic.h"
-#include "../Utility/error.h"
-#include "tigerbison.tab.h"
-extern int yylex();
-extern int yyparse();
+#include "AST/AST.h"
+#include "Canon/canon.h"
+#include "Escapes/escapes.h"
+#include "Semantic/semantic.h"
+#include "Utility/error.h"
+#include "Syntax/tigerbison.tab.h"
 extern FILE* yyin;
 extern int yylineno;
 
@@ -16,6 +14,7 @@ extern void yyerror(const char* s);
 extern ast::Expression* ast_raw_ptr;
 
 using namespace std;
+
 void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << "Entered doProc!!!!" <<endl;
   cout << endl;
@@ -41,8 +40,8 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << endl;
   cout << endl;
 }
-int main(int, char**) {
-  // open a file handle to a particular file:
+
+int main(int argc, char** argv) {
   FILE* myfile = fopen("test.file", "r");
   // make sure it's valid:
   if (!myfile) {
@@ -94,6 +93,6 @@ int main(int, char**) {
   } catch (error::internal_error& ie) {
     cout << "Internal error: " << ie.getMessage() << endl;
   }
-
+  fclose(myfile);
   return 0;
 }
