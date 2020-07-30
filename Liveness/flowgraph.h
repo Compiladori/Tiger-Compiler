@@ -14,26 +14,27 @@ class Node;
 class Graph;
 using NodeList = util::GenericList<Node>;
 struct Node {
-  static int total_num;
-  int key;
-  assem::Instruction* _info;
-  Node(assem::Instruction* info) : _info(info), key(total_num++) {}
+    static int total_num;
+    int key;
+    assem::Instruction* _info;
+    Node(assem::Instruction* info) : _info(info), key(total_num++) {}
 
-  bool operator==(const Node& s) const { return key == s.key; }
+    bool operator==(const Node& s) const { return key == s.key; }
 };
 struct NodeHasher {
-  std::size_t operator()(const Node* s) const {
-    return std::hash<int>()((*s).key);
-  }
+    std::size_t operator()(const Node* s) const {
+        return std::hash<int>()((*s).key);
+    }
 };
 struct FlowGraph {
-  std::unordered_map<temp::Label, Node*, ast::SymbolHasher> label_map;
-  graph::Graph<Node*, NodeHasher> _flow_graph;
-  NodeList node_list;
-  FlowGraph(util::GenericList<assem::Instruction> instruction_list);
-  private:
-  void addJumps(Node* t);
+    std::unordered_map<temp::Label, Node*, ast::SymbolHasher> label_map;
+    graph::Graph<Node*, NodeHasher> _flow_graph;
+    NodeList node_list;
+    FlowGraph(util::GenericList<assem::Instruction> instruction_list);
+
+   private:
+    void addJumps(Node* t);
 };
 
-};  // namespace flowgraph
+};    // namespace flowgraph
 #endif
