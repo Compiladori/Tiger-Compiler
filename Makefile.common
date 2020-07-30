@@ -59,8 +59,8 @@ LIVENESS_SRC = flowgraph.cpp graph.cpp
 LIVENESS_OBJ = flowgraph.o graph.o
 
 TESTING_HDR = catch2/catch.hpp
-TESTING_SRC = testMain.cpp testCanon.cpp
-TESTING_OBJ = testMain.o testCanon.o
+TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp
+TESTING_OBJ = testMain.o testCanon.o testLiveness.o
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
@@ -80,7 +80,8 @@ PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
                 $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)    \
                 $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
                 $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-                $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)
+                $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)     \
+                $(LIVENESS_OBJ_DIR)
 
 PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
                 $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)    \
