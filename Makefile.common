@@ -58,6 +58,10 @@ LIVENESS_HDR = flowgraph.h graph.h
 LIVENESS_SRC = flowgraph.cpp graph.cpp
 LIVENESS_OBJ = flowgraph.o graph.o
 
+REGALLOC_HDR = regalloc.h
+REGALLOC_SRC = regalloc.cpp
+REGALLOC_OBJ = regalloc.o 
+
 TESTING_HDR = catch2/catch.hpp
 TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp
 TESTING_OBJ = testMain.o testCanon.o testLiveness.o
@@ -74,6 +78,7 @@ TRANS_OBJ_DIR = $(patsubst %, Translation/%, $(TRANS_OBJ))
 CANON_OBJ_DIR = $(patsubst %, Canon/%, $(CANON_OBJ))
 MUNCH_OBJ_DIR = $(patsubst %, Munch/%, $(MUNCH_OBJ))
 LIVENESS_OBJ_DIR = $(patsubst %, Liveness/%, $(LIVENESS_OBJ))
+REGALLOC_OBJ_DIR = $(patsubst %, RegAlloc/%, $(REGALLOC_OBJ))
 TESTING_OBJ_DIR = $(patsubst %, Testing/%, $(TESTING_OBJ))
 
 PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
@@ -81,10 +86,11 @@ PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
                 $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
                 $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
                 $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)     \
-                $(LIVENESS_OBJ_DIR)
+                $(LIVENESS_OBJ_DIR) $(REGALLOC_OBJ_DIR)
 
 PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
                 $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)    \
                 $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
                 $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-                $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)
+                $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)    \
+                $(REGALLOC_OBJ_DIR)

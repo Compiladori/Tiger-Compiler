@@ -54,6 +54,8 @@ class GenericList {
   }
   auto& operator[](int i) { return data[i]; }
 
+  auto erase(iterator i) { data.erase(i); };
+
   void print() const {
     std::cout << "List ";
     for (auto& p : data) {
