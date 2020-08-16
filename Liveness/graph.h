@@ -50,6 +50,9 @@ class Graph {
         int id_t2 = getId(t2);
         return std::count(graph[id_t1].begin(), graph[id_t1].end(), id_t2);
     }
+    std::vector<int> getSuccessors(int t){
+        return graph[t];
+    }
     void show_graph() {
         for ( int i = 0; i < graph.size(); ++i ) {
             std::cout << "Adjacent list for node" << i << std::endl;

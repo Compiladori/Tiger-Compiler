@@ -1,5 +1,10 @@
 #include "flowgraph.h"
 
+#include <algorithm>    // std::set_union, std::sort
+#include <iostream>     // std::cout
+#include <set>
+#include <vector>    // std::vec
+
 using namespace flowgraph;
 using namespace std;
 
@@ -45,4 +50,18 @@ FlowGraph::FlowGraph(util::GenericList<assem::Instruction> instruction_list) {
     for ( const auto &node : node_list )
         addJumps(node.get());
     _flow_graph.show_graph();
+}
+
+std::set<temp::Temp> convertToSet(temp::TempList v) {
+    std::set<temp::Temp> s;
+    for ( auto x : v ) s.insert(x);
+    return s;
+}
+
+std::set<temp::Temp> Node::get_use() {
+    return convertToSet(_info->get_src());
+}
+
+std::set<temp::Temp> Node::get_def() {
+    return convertToSet(_info->get_dst());
 }

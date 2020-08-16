@@ -54,9 +54,9 @@ MUNCH_HDR = ../IRT/IRT.h             \
 MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
 
-LIVENESS_HDR = flowgraph.h graph.h
-LIVENESS_SRC = flowgraph.cpp graph.cpp
-LIVENESS_OBJ = flowgraph.o graph.o
+LIVENESS_HDR = flowgraph.h graph.h liveness.h
+LIVENESS_SRC = flowgraph.cpp graph.cpp liveness.cpp
+LIVENESS_OBJ = flowgraph.o graph.o liveness.o
 
 TESTING_HDR = catch2/catch.hpp
 TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp
