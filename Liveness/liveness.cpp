@@ -27,7 +27,7 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph flow_graph) {
     // TODO agarrar la lista de los nodos
     vector<set<temp::Temp>> in, out, def, use;
     set<temp::Temp> _in,_out;
-    auto node_list = flow_graph.node_list;
+    const auto& node_list = flow_graph.node_list;
     for ( auto i = node_list.begin(); i != node_list.end(); ++i ) {
         set<temp::Temp> temp1;
         in.push_back(temp1);
@@ -35,7 +35,7 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph flow_graph) {
         use.push_back((*i)->get_use());
         def.push_back((*i)->get_def());
     }
-
+    
     bool done = false;
     while ( !done ) {
         for ( int i = 0; i < node_list.size(); ++i ) {
@@ -59,5 +59,5 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph flow_graph) {
 }
 
 Liveness::Liveness(flowgraph::FlowGraph flow_graph) {
-    GenerateLiveInfo(flow_graph);
+    GenerateLiveInfo(move(flow_graph));
 }

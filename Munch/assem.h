@@ -29,8 +29,8 @@ struct Oper : public Instruction {
 
     Oper(std::string assm, temp::TempList dst, temp::TempList src, temp::LabelList jumps) : assm(assm), src(src), dst(dst), jumps(jumps) {}
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
-    virtual temp::TempList get_src() { return src; };
-    virtual temp::TempList get_dst() { return dst; };
+    virtual temp::TempList get_src() const { return src; };
+    virtual temp::TempList get_dst() const { return dst; };
 };
 
 struct Label : public Instruction {
@@ -38,8 +38,8 @@ struct Label : public Instruction {
     temp::Label label;
 
     Label(std::string assm, temp::Label label) : assm(assm), label(label) {}
-    virtual temp::TempList get_src() { return temp::TempList(); };
-    virtual temp::TempList get_dst() { return temp::TempList(); };
+    virtual temp::TempList get_src() const { return temp::TempList(); };
+    virtual temp::TempList get_dst() const { return temp::TempList(); };
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
 
@@ -48,8 +48,8 @@ struct Move : public Instruction {
     temp::TempList src, dst;
 
     Move(std::string assm, temp::TempList dst, temp::TempList src) : assm(assm), src(src), dst(dst) {}
-    virtual temp::TempList get_src() { return src; };
-    virtual temp::TempList get_dst() { return dst; };
+    virtual temp::TempList get_src() const { return src; };
+    virtual temp::TempList get_dst() const { return dst; };
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
 };
 
