@@ -5,7 +5,6 @@ using namespace std;
 
 #include <algorithm>    // std::set_union, std::sort
 #include <iostream>     // std::cout
-#include <vector>       // std::vec
 
 template <typename T>
 std::set<T> getUnion(const std::set<T>& a, const std::set<T>& b) {
@@ -21,12 +20,11 @@ std::set<T> getDiff(const std::set<T>& a, const std::set<T>& b) {
     return result;
 }
 
-void Liveness::GenerateLiveInfo(flowgraph::FlowGraph flow_graph) {
+void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
     // in[n] = use[n] U (out[n] - def[n])
     //  out[n] = U in[s] {s, s->succ[n]}
     // TODO agarrar la lista de los nodos
-    vector<set<temp::Temp>> in, out, def, use;
-    set<temp::Temp> _in,_out;
+    set<temp::Temp> _in, _out;
     const auto& node_list = flow_graph.node_list;
     for ( auto i = node_list.begin(); i != node_list.end(); ++i ) {
         set<temp::Temp> temp1;
@@ -35,29 +33,30 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph flow_graph) {
         use.push_back((*i)->get_use());
         def.push_back((*i)->get_def());
     }
-    
+
     bool done = false;
     while ( !done ) {
+        done = true;
         for ( int i = 0; i < node_list.size(); ++i ) {
             _in = in[i];
             _out = out[i];
             //    in[n] = use[n] U (out[n] - def[n])
             //    equation 1
-
             in[i] = getUnion(use[i], getDiff(out[i], def[i]));
-
             // out[n] = U in[s] {s, s->succ[n]}
             // equation 2
             set<temp::Temp> temp_in;
-            for ( auto p: flow_graph._flow_graph.getSuccessors(i) ) {
+            for ( auto p : flow_graph._flow_graph.getSuccessors(i) ) {
                 temp_in = getUnion(temp_in, in[p]);
             }
             out[i] = temp_in;
-            if(in[i] != _in || out[i] != _out  ) done = false;
+            if ( in[i] != _in || out[i] != _out ) done = false;
         }
     }
+
+    return;
 }
 
-Liveness::Liveness(flowgraph::FlowGraph flow_graph) {
-    GenerateLiveInfo(move(flow_graph));
+Liveness::Liveness(flowgraph::FlowGraph& flow_graph) {
+    GenerateLiveInfo(flow_graph);
 }

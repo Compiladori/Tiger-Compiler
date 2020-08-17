@@ -28,7 +28,7 @@ void FlowGraph::addJumps(Node *t) {
     }
 }
 
-FlowGraph::FlowGraph(util::GenericList<assem::Instruction> instruction_list) {
+FlowGraph::FlowGraph(util::GenericList<assem::Instruction> &instruction_list) {
     auto i = instruction_list.begin();
     auto prev = make_unique<Node>((*i).get());
     auto prev_ptr = prev.get();
@@ -49,7 +49,7 @@ FlowGraph::FlowGraph(util::GenericList<assem::Instruction> instruction_list) {
     }
     for ( const auto &node : node_list )
         addJumps(node.get());
-    _flow_graph.show_graph();
+     _flow_graph.show_graph();
 }
 
 std::set<temp::Temp> convertToSet(temp::TempList v) {

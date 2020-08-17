@@ -20,6 +20,7 @@ struct Instruction {
     virtual temp::TempList get_src() const = 0;
     virtual temp::TempList get_dst() const = 0;
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const = 0;    // Instruction output
+    virtual void get_assm() const = 0;
 };
 
 struct Oper : public Instruction {
@@ -31,6 +32,7 @@ struct Oper : public Instruction {
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
     virtual temp::TempList get_src() const { return src; };
     virtual temp::TempList get_dst() const { return dst; };
+    virtual void get_assm() const { std::cout<< assm << std::endl; };
 };
 
 struct Label : public Instruction {
@@ -41,6 +43,8 @@ struct Label : public Instruction {
     virtual temp::TempList get_src() const { return temp::TempList(); };
     virtual temp::TempList get_dst() const { return temp::TempList(); };
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
+    virtual void get_assm() const { std::cout<< assm << std::endl; };
+
 };
 
 struct Move : public Instruction {
@@ -51,6 +55,8 @@ struct Move : public Instruction {
     virtual temp::TempList get_src() const { return src; };
     virtual temp::TempList get_dst() const { return dst; };
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
+    virtual void get_assm() const { std::cout<< assm << std::endl; };
+
 };
 
 };    // namespace assem

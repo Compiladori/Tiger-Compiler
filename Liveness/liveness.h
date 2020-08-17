@@ -8,6 +8,7 @@
  * **/
 
 #include <set>
+#include <vector>
 
 #include "../Frame/temp.h"
 #include "../Munch/assem.h"
@@ -20,11 +21,10 @@
 
 namespace liveness {
 
-class Liveness {
-    void GenerateLiveInfo(flowgraph::FlowGraph flow_graph);
-
-   public:
-    Liveness(flowgraph::FlowGraph flow_graph);
+struct Liveness {
+    std::vector<std::set<temp::Temp>> in, out, def ,use;
+    Liveness(flowgraph::FlowGraph &flow_graph);
+    void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);
 };
 
 };    // namespace liveness

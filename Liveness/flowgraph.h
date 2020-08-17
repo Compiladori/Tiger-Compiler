@@ -35,7 +35,7 @@ struct FlowGraph {
     std::unordered_map<temp::Label, Node*, ast::SymbolHasher> label_map;
     graph::Graph<Node*, NodeHasher> _flow_graph;
     NodeList node_list;
-    FlowGraph(util::GenericList<assem::Instruction> instruction_list);
+    FlowGraph(util::GenericList<assem::Instruction> &instruction_list);
 
    private:
     void addJumps(Node* t);
