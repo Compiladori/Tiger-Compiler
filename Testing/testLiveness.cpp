@@ -18,12 +18,12 @@ TEST_CASE("flowgraph", "[liveness]") {
         auto lbl_3 = temp::Label();
         auto lbl_2 = temp::Label();
         temp::Temp a, b, c;
-        list.push_back(make_unique<assem::Move>(code_move, temp::TempList{a}, temp::TempList{}));
+        list.push_back(make_unique<assem::Move>(code_move, temp::TempList{}, temp::TempList{a}));
         list.push_back(make_unique<assem::Label>(str, lbl_1));
-        list.push_back(make_unique<assem::Oper>(code_move, temp::TempList{b}, temp::TempList{a}, temp::LabelList{}));
-        list.push_back(make_unique<assem::Oper>(code_move, temp::TempList{c}, temp::TempList{c, b}, temp::LabelList{}));
         list.push_back(make_unique<assem::Oper>(code_move, temp::TempList{a}, temp::TempList{b}, temp::LabelList{}));
-        list.push_back(make_unique<assem::Oper>(comp_code, temp::TempList{a}, temp::TempList{}, temp::LabelList{}));
+        list.push_back(make_unique<assem::Oper>(code_move, temp::TempList{c, b}, temp::TempList{c}, temp::LabelList{}));
+        list.push_back(make_unique<assem::Oper>(code_move, temp::TempList{b}, temp::TempList{a}, temp::LabelList{}));
+        list.push_back(make_unique<assem::Oper>(comp_code, temp::TempList{}, temp::TempList{a}, temp::LabelList{}));
         list.push_back(make_unique<assem::Oper>(jump_code, temp::TempList{}, temp::TempList{}, temp::LabelList{lbl_1, lbl_2}));
         list.push_back(make_unique<assem::Label>(str, lbl_2));
 
