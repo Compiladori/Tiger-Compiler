@@ -28,7 +28,7 @@ struct Oper : public Instruction {
     temp::TempList src, dst;
     temp::LabelList jumps;
 
-    Oper(std::string assm, temp::TempList dst, temp::TempList src, temp::LabelList jumps) : assm(assm), src(src), dst(dst), jumps(jumps) {}
+    Oper(std::string assm, temp::TempList src, temp::TempList dst, temp::LabelList jumps) : assm(assm), src(src), dst(dst), jumps(jumps) {}
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;
     virtual temp::TempList get_src() const { return src; };
     virtual temp::TempList get_dst() const { return dst; };
@@ -51,7 +51,7 @@ struct Move : public Instruction {
     std::string assm;
     temp::TempList src, dst;
 
-    Move(std::string assm, temp::TempList dst, temp::TempList src) : assm(assm), src(src), dst(dst) {}
+    Move(std::string assm, temp::TempList src, temp::TempList dst) : assm(assm), src(src), dst(dst) {}
     virtual temp::TempList get_src() const { return src; };
     virtual temp::TempList get_dst() const { return dst; };
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const override;

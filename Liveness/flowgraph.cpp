@@ -49,7 +49,7 @@ FlowGraph::FlowGraph(util::GenericList<assem::Instruction> &instruction_list) {
     }
     for ( const auto &node : node_list )
         addJumps(node.get());
-     _flow_graph.show_graph();
+    // _flow_graph.show_graph();
 }
 
 std::set<temp::Temp> convertToSet(temp::TempList v) {
