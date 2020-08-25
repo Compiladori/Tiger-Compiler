@@ -21,10 +21,25 @@
 
 namespace liveness {
 
+struct Node {
+    int key;
+    temp::Temp _info;
+    Node(temp::Temp info) : _info(info) {}
+    bool operator==(const Node& s) const { return _info == s._info; }
+};
+
+struct NodeHasher {
+    std::size_t operator()(const Node s) const {
+        return std::hash<int>()(s._info.num);
+    }
+};
+
 struct Liveness {
     std::vector<std::set<temp::Temp>> in, out, def ,use;
+    graph::Graph<Node,NodeHasher> _interference_graph;
     Liveness(flowgraph::FlowGraph &flow_graph);
     void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);
+    void InferenceGraph(flowgraph::FlowGraph& flow_graph);
 };
 
 };    // namespace liveness
