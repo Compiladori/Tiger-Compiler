@@ -40,6 +40,10 @@ class Graph {
     auto empty() const { return graph.empty(); }
     auto size() const { return graph.size(); }
 
+    void addNode(const T& t1) {
+        getId(t1);
+    }
+
     void addDirectedEdge(const T& t1, const T& t2) {
         int id_t1 = getId(t1);
         int id_t2 = getId(t2);

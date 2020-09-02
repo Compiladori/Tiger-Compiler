@@ -15,31 +15,39 @@
 #include "../Utility/utility.h"
 #include "flowgraph.h"
 
-// TODO: Implement the Liveness module. Use either the set-equation algorithm with
-// the array-of-boolean or sorted-list-of-temporaries representation of sets, or
-// the one-variable-at-a-time method.
-
 namespace liveness {
+class TempNode;
 
-struct Node {
+struct TempNode {
+    static int total_num;
     int key;
     temp::Temp _info;
-    Node(temp::Temp info) : _info(info) {}
-    bool operator==(const Node& s) const { return _info == s._info; }
+    TempNode(temp::Temp info) : _info(info), key(total_num++) {}
+    bool operator==(const TempNode &s) const { return _info == s._info; }
+    TempNode() = default;
 };
 
-struct NodeHasher {
-    std::size_t operator()(const Node s) const {
-        return std::hash<int>()(s._info.num);
+struct TempNodeHasher {
+    std::size_t operator()(const TempNode s) const {
+        return std::hash<int>()(s.key);
     }
 };
 
+struct Move {
+    TempNode dst;
+    TempNode src;
+    Move(TempNode dst, TempNode src) : dst(dst), src(src) {}
+};
+
 struct Liveness {
-    std::vector<std::set<temp::Temp>> in, out, def ,use;
-    graph::Graph<Node,NodeHasher> _interference_graph;
+    std::vector<std::set<temp::Temp>> in, out, def, use;
+    graph::Graph<TempNode, TempNodeHasher> _interference_graph;
+    std::unordered_map<temp::Temp, TempNode, TempNodeHasher> temp_to_node;
+    std::vector<Move> moves;
     Liveness(flowgraph::FlowGraph &flow_graph);
     void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);
-    void InferenceGraph(flowgraph::FlowGraph& flow_graph);
+    void InferenceGraph(flowgraph::FlowGraph &flow_graph);
+    void initItfGraph(const flowgraph::NodeList &node_list);
 };
 
 };    // namespace liveness
