@@ -65,7 +65,6 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
     return;
 }
 
-
 void Liveness::initItfGraph(const flowgraph::NodeList& node_list) {
     std::set<temp::Temp> temps;
     for ( auto i = node_list.begin(); i != node_list.end(); ++i ) {
@@ -82,7 +81,7 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
     const auto& node_list = flow_graph.node_list;
     initItfGraph(node_list);
     set<temp::Temp> defs, srcs;
-    int flowgraph_node_index=0;
+    int flowgraph_node_index = 0;
     for ( auto i = node_list.begin(); i != node_list.end(); ++i ) {
         defs = (*i)->get_def();
         // si es move agrega una para cada live out que no coincida con el que lo definio
