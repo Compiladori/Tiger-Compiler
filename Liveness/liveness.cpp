@@ -82,7 +82,7 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
     const auto& node_list = flow_graph.node_list;
     initItfGraph(node_list);
     set<temp::Temp> defs, srcs;
-    int j;
+    int flowgraph_node_index=0;
     for ( auto i = node_list.begin(); i != node_list.end(); ++i ) {
         defs = (*i)->get_def();
         // si es move agrega una para cada live out que no coincida con el que lo definio
@@ -92,24 +92,25 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
             auto dst = temp_to_node[getFirstElement(defs)];
             auto src = temp_to_node[getFirstElement(srcs)];
             moves.push_back(Move(dst, src));
-            auto liveouts = out[j];
+            auto liveouts = out[flowgraph_node_index];
             for ( auto t = liveouts.begin(); t != liveouts.end(); ++t ) {
-                auto t_node = TempNode(*t);
+                auto t_node = temp_to_node[*t];
                 if ( t_node == dst ) continue;
-                _interference_graph.addDirectedEdge(dst, t_node);
+                // duplicar linea
+                _interference_graph.addUndirectedEdge(dst, t_node);
             }
         } else {
             for ( auto def = defs.begin(); def != defs.end(); ++def ) {
-                auto liveouts = out[j];
-                auto dst = TempNode(*def);
+                auto liveouts = out[flowgraph_node_index];
+                auto dst = temp_to_node[*def];
                 for ( auto t = liveouts.begin(); t != liveouts.end(); ++t ) {
-                    auto src = TempNode(*t);
+                    auto src = temp_to_node[*t];
                     if ( *t == *def ) continue;
-                    _interference_graph.addDirectedEdge(dst, src);
+                    _interference_graph.addUndirectedEdge(dst, src);
                 }
             }
         }
-        j++;
+        flowgraph_node_index++;
     }
 }
 

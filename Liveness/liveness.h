@@ -28,8 +28,8 @@ struct TempNode {
 };
 
 struct TempNodeHasher {
-    std::size_t operator()(const TempNode s) const {
-        return std::hash<int>()(s.key);
+    std::size_t operator()(const TempNode &s) const {
+        return std::hash<int>()(s._info.num);
     }
 };
 
