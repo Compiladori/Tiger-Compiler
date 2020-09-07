@@ -29,8 +29,6 @@ T getFirstElement(const std::set<T>& a) {
 
 int TempNode::total_num = 0;
 void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
-    // in[n] = use[n] U (out[n] - def[n])
-    //  out[n] = U in[s] {s, s->succ[n]}
     // TODO agarrar la lista de los nodos
     set<temp::Temp> _in, _out;
     const auto& node_list = flow_graph.node_list;
@@ -95,7 +93,7 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
             for ( auto t = liveouts.begin(); t != liveouts.end(); ++t ) {
                 auto t_node = temp_to_node[*t];
                 if ( t_node == dst ) continue;
-                // duplicar linea
+                if ( t_node == src ) continue;
                 _interference_graph.addUndirectedEdge(dst, t_node);
             }
         } else {
