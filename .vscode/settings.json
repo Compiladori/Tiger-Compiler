@@ -1,5 +1,8 @@
 {
   "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0, PointerAlignment: Middle, SpacesBeforeTrailingComments: 4,SpacesInConditionalStatement: true }",
-  "window.zoomLevel": 0,
-  "explorer.confirmDragAndDrop": false
+  "window.zoomLevel": -1,
+  "explorer.confirmDragAndDrop": false,
+  "files.associations": {
+    "iosfwd": "cpp"
+  }
 }

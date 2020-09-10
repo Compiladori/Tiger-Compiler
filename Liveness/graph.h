@@ -1,11 +1,12 @@
 #ifndef __GRAPH_H__
 #define __GRAPH_H__
 
+#include <algorithm>
+#include <iostream>
 #include <queue>
+#include <set>
 #include <unordered_map>
 #include <vector>
-#include <iostream>
-#include <algorithm>
 namespace graph {
 /**
  * Graph
@@ -15,7 +16,7 @@ namespace graph {
  * **/
 template <typename T, typename H>
 class Graph {
-    using AdjacentList = typename std::vector<std::vector<int>>;
+    using AdjacentList = typename std::vector<std::set<int>>;
 
     AdjacentList graph;
     std::unordered_map<T, int, H> key_to_id;
@@ -29,7 +30,7 @@ class Graph {
         key_to_id[key] = new_id;
         id_to_key[new_id] = key;
 
-        graph.push_back(std::vector<int>());
+        graph.push_back(std::set<int>());
         return new_id;
     }
 
@@ -40,21 +41,35 @@ class Graph {
     auto empty() const { return graph.empty(); }
     auto size() const { return graph.size(); }
 
+    void addNode(const T& t1) {
+        getId(t1);
+    }
+
+    void addUndirectedEdge(const T& t1, const T& t2) {
+        addDirectedEdge(t1, t2);
+        addDirectedEdge(t2, t1);
+    }
+
     void addDirectedEdge(const T& t1, const T& t2) {
         int id_t1 = getId(t1);
         int id_t2 = getId(t2);
-        graph[id_t1].push_back(id_t2);
+        graph[id_t1].insert(id_t2);
     }
+
     bool hasDirectEdge(const T& t1, const T& t2) {
         int id_t1 = getId(t1);
         int id_t2 = getId(t2);
         return std::count(graph[id_t1].begin(), graph[id_t1].end(), id_t2);
     }
+
+    std::set<int> getSuccessors(int t) {
+        return graph[t];
+    }
     void show_graph() {
         for ( int i = 0; i < graph.size(); ++i ) {
             std::cout << "Adjacent list for node" << i << std::endl;
-            for ( int j = 0; j < graph[i].size(); ++j ) {
-                std::cout << graph[i][j] << ", ";
+            for ( auto node = graph[i].begin(); node != graph[i].end(); ++node ) {
+                std::cout << *node << ", ";
             }
             std::cout << std::endl;
         }
