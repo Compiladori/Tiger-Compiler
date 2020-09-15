@@ -1,29 +1,61 @@
 #include "regalloc.h"
 
 using namespace regalloc;
+using namespace std;
 
-void addEdge(flowgraph::Node u, flowgraph::Node v){}
+void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v){
+//   if ((u, v)  ∈ adjSet) ∧ (u  = v) then
+//    adjSet ← adjSet ∪ {(u, v), (v, u)}
+//    if u  ∈ precolored then
+//      adjList[u] ← adjList[u] ∪ {v}
+//      degree[u] ← degree[u] + 1
+//    if v  ∈ precolored then
+//      adjList[v] ← adjList[v] ∪ {u}
+//      degree[v] ← degree[v] + 1
+  if (!isIn(u, adjacentNodes[v]) and !(u == v)){
+    if (!isIn(u, precolored)){
+      adjacentNodes[u].push_back(v);
+      degree[u] = degree[u] + 1;
+    }
+    if (!isIn(v, precolored)){
+      adjacentNodes[v].push_back(u);
+      degree[v] = degree[v] + 1;
+    }
+  }
 
-bool RegAllocator::isMoveRelated(flowgraph::Node* node){
-  // for (auto it = worklistMoves.begin(); it != worklistMoves.end(); it++)
-  //   if (it->get()->src == node || it->get()->dst == node)
-  //     return true;
-
-  // for (auto it = activeMoves.begin(); it != activeMoves.end(); it++)
-  //   if (it->get()->src == node || it->get()->dst == node)
-  //     return true;
-  // return false;
 }
 
-void RegAllocator::decrementDegree(flowgraph::Node* m){
-  int d = degree[m->key];
-  degree[m->key] = d-1;
-  if (d == K){
-    flowgraph::NodeList* adj = adjacentNodes[m->key];
-    adj->push_front(m);
+vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n){
+  vector<liveness::TempNode> adjList = adjacentNodes[n];
+  vector<liveness::TempNode> except = selectStack;
+  for (auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++)
+    except.push_back(*it);
+  for (auto it1 = adjList.begin(); it1 != adjList.end(); it1++){
+    auto it2 = find(except.begin(), except.end(), *it1);
+    if (it2 != except.end())  
+      adjList.erase(it1);    
+  }
+}
+
+bool RegAllocator::isMoveRelated(liveness::TempNode node){
+  for (auto it = worklistMoves.begin(); it != worklistMoves.end(); it++)
+    if (it->src == node || it->dst == node) 
+      return true;
+
+  for (auto it = activeMoves.begin(); it != activeMoves.end(); it++)
+    if (it->src == node || it->dst == node)
+      return true;
+  return false;
+}
+
+void RegAllocator::decrementDegree(liveness::TempNode m){
+  auto d = degree[m];
+  degree[m] = d-1;
+  if (d == K && !isIn(m, precolored)){
+    vector<liveness::TempNode> adj = adjacent(m);
+    adj.push_back(m);
     enableMoves(adj);
-    auto it = spillWorklist.begin();
-    for(; it->get() != m; it++);
+    auto it = find(spillWorklist.begin(), spillWorklist.end(), m);
     spillWorklist.erase(it);
 
     if (isMoveRelated(m))
@@ -33,76 +65,180 @@ void RegAllocator::decrementDegree(flowgraph::Node* m){
   }
 }
 
-void RegAllocator::enableMoves(flowgraph::NodeList* nodes){
-  // for (auto it1 = nodes->begin(); it1 != nodes->end(); it1++){
-  //   for (auto it2 = activeMoves.begin(); it2 != activeMoves.end(); it2++){
-  //     if (it2->get()->src == it1->get() || it2->get()->dst == it1->get()){
-  //       activeMoves.erase(it2);
-  //       worklistMoves.push_back(it2->get());
-  //     }
-  //   }
-  // }
+void RegAllocator::enableMoves(vector<liveness::TempNode> nodes){
+  for (auto it1 = nodes.begin(); it1 != nodes.end(); it1++){
+    for (auto it2 = activeMoves.begin(); it2 != activeMoves.end(); it2++){
+      if (it2->src == *it1 || it2->dst == *it1){ 
+        activeMoves.erase(it2);
+        worklistMoves.push_back(*it2);
+      }
+    }
+  }
 }
 
-void addWorklist(flowgraph::Node* node){}
+bool RegAllocator::isIn(liveness::TempNode node, vector<liveness::TempNode> list){
+  for (auto it = list.begin(); it != list.end(); it++)
+    if (*it == node) return true; 
+  return false;
+}
 
-bool OK(flowgraph::Node t, flowgraph::Node r){}
+void RegAllocator::addWorklist(liveness::TempNode node){
+  if (!isIn(node, precolored) and !isMoveRelated(node) && (degree[node] < K)){
+    auto it = find(freezeWorklist.begin(), freezeWorklist.end(), node);
+    freezeWorklist.erase(it);
+    simplifyWorklist.push_back(node);
+  }
+}
 
-bool RegAllocator::conservative(flowgraph::NodeList nodes){
-  // checkear 
+bool RegAllocator::forAllAdjOk(liveness::TempNode u, liveness::TempNode v){
+  vector<liveness::TempNode> adjs = adjacent(v);
+  for (auto it = adjs.begin(); it != adjs.end(); it++){
+    if (! ((degree[*it] < K) or isIn(*it, precolored) or isIn(*it, adjacentNodes[u]) ))
+      return false;
+  }
+  return true;
+}
+
+bool RegAllocator::conservative(vector<liveness::TempNode> nodes1, vector<liveness::TempNode> nodes2){
+  vector<liveness::TempNode> nodes = nodes1;
+  for (auto n : nodes2) nodes.push_back(n);
   int k = 0;
   for (auto it = nodes.begin(); it != nodes.end(); it++)
-    if (degree[it->get()->key] >= K) k++;
+    if (degree[*it] >= K) k++;
   return (k < K);
 }
 
-flowgraph::Node RegAllocator::getAlias(flowgraph::Node node){}
+liveness::TempNode RegAllocator::getAlias(liveness::TempNode node){
+  if (isIn(node, coalescedNodes))
+    return getAlias(alias[node]);
+  return node;
+}
 
-void combine(flowgraph::Node* u, flowgraph::Node* v){}
+void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v){
+  if (isIn(v, freezeWorklist)){
+    auto it = find(freezeWorklist.begin(), freezeWorklist.end(), v);
+    freezeWorklist.erase(it);
+  } else {
+    auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
+    spillWorklist.erase(it);
+  }
+  coalescedNodes.push_back(v);
+  alias[v] = u;
+  for (auto it = moveList[v].begin(); it != moveList[v].end(); it++)
+    moveList[u].push_back(*it);
+  
+  for (auto it = adjacent(v).begin(); it != adjacent(v).end(); it++){
+    addEdge(*it, v);
+    decrementDegree(*it);
+  }
+  if (degree[u] >= K and isIn(u, freezeWorklist)){
+    auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
+    freezeWorklist.erase(it);
+    spillWorklist.push_back(u);
+  }
 
-void RegAllocator::freezeMoves(flowgraph::Node u){}
+}
 
-void RegAllocator::build(){
-  // VER COMO SE LLAMA EN MODULO LIVEGRAPH
-  // nodes = g_nodes(interference_graph.graph) funcion g_nodes devuelve los nodos del grafo
-  // while(!nodes.empty()){
-  //    node = nodes->pop_front();
-  //    degree.insert({ node.get()->key, g_degree(node)}); funcion g_degree devuelve grado del nodo
-  //    adjacentNodes.insert({ *node.get(), G_adj(node)}); ver tipo de G_adj
-  // }
-  // FALTA INICIALIZAR COLOR, tal vez no es necesario
+void RegAllocator::freezeRelatedNodes(liveness::TempNode u){  // terminar
+//   forall m (=copy(x,y)) ∈ NodeMoves(u)
+//      if GetAlias(y)=GetAlias(u) then
+//        v ← GetAlias(x)
+//      else
+//        v ← GetAlias(y)
+//      activeMoves ← activeMoves \ {m}
+//      frozenMoves ← frozenMoves ∪ {m}
+//      if NodeMoves(v) = {} ∧ degree[v] < K then
+//        freezeWorklist ← freezeWorklist \ {v}
+//        simplifyWorklist ← simplifyWorklist ∪ {v}
+
+}
+
+void RegAllocator::build(frame::Frame f){
+  vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
+  while(!nodes.empty()){
+    liveness::TempNode node = nodes.back();
+    nodes.pop_back();
+    degree.insert( {node, live_graph._interference_graph.getDegree(node)} );
+    int i = live_graph._interference_graph.keyToId(node); 
+    set<int> adj = live_graph._interference_graph.getSuccessors(i);
+    for (auto n : adj){
+      liveness::TempNode t = live_graph._interference_graph.idToKey(n);
+      adjacentNodes[node].push_back(t);
+    } 
+  }
+  frame::RegToTempMap regToTemp = f.get_reg_to_temp_map();
+  for (auto it = regToTemp.begin(); it != regToTemp.end(); it++){
+    precolored.push_back(live_graph.temp_to_node[it->second]);
+  }
+  vector<liveness::Move> moves = live_graph.moves;
+  for (auto it = moves.begin(); it != moves.end(); it++){
+    moveList[(*it).src].push_back(*it);
+    if (! ((*it).src == (*it).dst) )
+      moveList[(*it).dst].push_back(*it);
+  }
 }
 
 void RegAllocator::makeWorklist(){
-  // classify nodes into sets
-  // VER COMO SE LLAMA EN MODULO GRAPH
-  // G_nodeList nodes = interference_graph.graph.G_nodes();
-  // for(auto it = nodes->begin(); it != nodes->end(); it++){ //ver si se puede recorrer así
-  //     int degree = degree[it->get()->key];
-  //     if (degree >= K) spillWorklist.push_back(it->get()); //spillWorklist : NodeList
-  //     else if (isMoveRelated(it->get())) freezeWorklist.push_back(it->get());
-  //     else simplifyWorklist.push_back(it->get);
-  // }
-  // worklistMoves = interference_graph.moves; // Live_graph { G_graph graph; Live_moveList moves; }
+  vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
+  for (auto it = nodes.begin(); it != nodes.end(); it++){
+    int deg = degree[*it];
+    if (deg >= K) spillWorklist.push_back(*it);
+    else if (isMoveRelated(*it)) freezeWorklist.push_back(*it);
+    else simplifyWorklist.push_back(*it);
+  }
+  worklistMoves = live_graph.moves;
 }
 
-void RegAllocator::simplify(){
-  auto n = simplifyWorklist.pop_front();
-  selectStack.push_front(n.get()); 
-  for (auto it = adjacentNodes[n.get()->key]->begin(); it != adjacentNodes[n.get()->key]->end(); it++)
-    decrementDegree(it->get());
+void RegAllocator::simplify(){ // remove non-move-related nodes of low (< K ) degree from the graph
+  auto n = simplifyWorklist.back();
+  simplifyWorklist.pop_back();
+  selectStack.push_back(n); 
+  vector<liveness::TempNode> adjs = adjacent(n);
+  for (auto it = adjs.begin(); it != adjs.end(); it++)
+    decrementDegree(*it);
 }
 
-void coalesce(){}
+void RegAllocator::coalesce(){
+  auto n = worklistMoves.back();
+  liveness::TempNode x = getAlias(n.src);
+  liveness::TempNode y = getAlias(n.dst);
+  liveness::TempNode u, v;
+  if (isIn(y, precolored)){
+    u = y;
+    v = x;
+  } else {
+    u = x;
+    v = y; 
+  }
+  worklistMoves.pop_back();
+  if (u == v){
+    coalescedMoves.push_back(n);
+    addWorklist(u);
+  } else if (isIn(v, precolored) or isIn(u, adjacentNodes[v])){
+    constrainedMoves.push_back(n);
+    addWorklist(u);
+    addWorklist(v);
+  } else if ((isIn(u, precolored) and forAllAdjOk(u, v)) or 
+            (!isIn(u, precolored) and conservative(adjacent(u), adjacent(v)))){
+    coalescedMoves.push_back(n);
+    combine(u, v);
+    addWorklist(u);
+  } else 
+    activeMoves.push_back(n);
+}
 
+// If neither simplify nor coalesce applies, we look for a move-related node of low degree. 
+// We freeze the moves in which this node is involved: that is, we give up hope of coalescing 
+// those moves. This causes the node (and perhaps other nodes related to the frozen moves) to 
+// be considered non-move-related, which should enable more simplification.
 void RegAllocator::freeze(){
-  auto u = freezeWorklist.pop_front(); // freezeWorklist : NodeList
-  freezeMoves(*u.get()); // cambié el orden
-  simplifyWorklist.push_back(std::move(u));
+ /* auto u = freezeWorklist.back(); 
+  freezeWorklist.pop_back();
+  simplifyWorklist.push_back(u);
+  freezeRelatedNodes(u); */
 }
 
-void RegAllocator::selectSpill(){
-  // heuristic
+void RegAllocator::selectSpill(){// heuristic
 }
 
 void RegAllocator::assignColors(){}
@@ -111,20 +247,21 @@ void RegAllocator::rewriteProgram(frame::Frame f, InstructionList instruction_li
 
 Result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_list){
   do {
-      // VER COMO SE LLAMA EN FLOWGRAPH !!!!!!!!!!!!!!!!!!!!!!!!
+      // g_nodes() : vector<flowgraph::Node>, g_adj : vector<flowgraph::Node>
       // graph::Graph graph = flowgraph::assemFlowGraph(instruction_list); 
-      // interference_graph = liveness(graph);
-      build();
+      flowgraph::FlowGraph graph = flowgraph::FlowGraph(instruction_list);
+      live_graph = liveness::Liveness(graph); // moves : vector<pair<node,node>>, graph : G_graph
+      build(f);
       makeWorklist();
       do {
           if (!simplifyWorklist.empty()) simplify();
-          //else if (!worklistMoves.empty()) coalesce();
+          else if (!worklistMoves.empty()) coalesce();
           else if (!freezeWorklist.empty()) freeze();
           else if (!spillWorklist.empty()) selectSpill();
-      } while (!simplifyWorklist.empty() //or !worklistMoves.empty()
+      } while (!simplifyWorklist.empty() or !worklistMoves.empty()
           or !freezeWorklist.empty() or !spillWorklist.empty());
       assignColors();
       if (!spilledNodes.empty())
-          rewriteProgram(f, std::move(instruction_list)); // spilledNodes no hace falta que se lo pase
+          rewriteProgram(f, move(instruction_list)); // spilledNodes no hace falta que se lo pase
   } while (!spilledNodes.empty());
 }

@@ -65,6 +65,15 @@ class Graph {
     std::set<int> getSuccessors(int t) {
         return graph[t];
     }
+
+    int keyToId(const T& t){ // ver que onda esto
+        return key_to_id[t]; 
+    }
+
+    T idToKey(int t){
+        return id_to_key[t];
+    }
+    
     void show_graph() {
         for ( int i = 0; i < graph.size(); ++i ) {
             std::cout << "Adjacent list for node" << i << std::endl;
@@ -73,6 +82,18 @@ class Graph {
             }
             std::cout << std::endl;
         }
+    }
+
+    int getDegree(const T& t){
+        return graph[key_to_id[t]].size();
+    }
+
+    std::vector<T> getNodes(){
+        std::vector<T> nodes;
+        for (int i = 0; i < graph.size(); i++){
+            nodes.push_back(id_to_key[i]);
+        }
+        return nodes;
     }
 };
 
