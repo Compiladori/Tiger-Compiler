@@ -59,8 +59,8 @@ class RegAllocator {
   void addEdge(liveness::TempNode u, liveness::TempNode v);
   vector<liveness::TempNode> adjacent(liveness::TempNode n); 
   unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjacentNodes;
+  vector<liveness::Move> nodeMoves(liveness::TempNode n);
   bool isMoveRelated(liveness::TempNode node);
-  // en vez de definir moveRelated escribo directo NodeMoves(n) != {} donde sea necesario
   void decrementDegree(liveness::TempNode m);
   void enableMoves(vector<liveness::TempNode> nodes);
   bool isIn(liveness::TempNode node, vector<liveness::TempNode> list);
@@ -70,7 +70,7 @@ class RegAllocator {
   bool conservative(vector<liveness::TempNode> nodes1, vector<liveness::TempNode> nodes2);
   liveness::TempNode getAlias(liveness::TempNode node); 
   void combine(liveness::TempNode u, liveness::TempNode v);
-  void freezeRelatedNodes(liveness::TempNode u);
+  void freezeMoves(liveness::TempNode u);
 
   void build(frame::Frame f);
   void makeWorklist();

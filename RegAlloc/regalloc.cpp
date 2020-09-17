@@ -4,14 +4,6 @@ using namespace regalloc;
 using namespace std;
 
 void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v){
-//   if ((u, v)  ∈ adjSet) ∧ (u  = v) then
-//    adjSet ← adjSet ∪ {(u, v), (v, u)}
-//    if u  ∈ precolored then
-//      adjList[u] ← adjList[u] ∪ {v}
-//      degree[u] ← degree[u] + 1
-//    if v  ∈ precolored then
-//      adjList[v] ← adjList[v] ∪ {u}
-//      degree[v] ← degree[v] + 1
   if (!isIn(u, adjacentNodes[v]) and !(u == v)){
     if (!isIn(u, precolored)){
       adjacentNodes[u].push_back(v);
@@ -35,6 +27,20 @@ vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n){
     if (it2 != except.end())  
       adjList.erase(it1);    
   }
+}
+
+vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n){
+  vector<liveness::Move> unionAW = activeMoves; // union activeMoves and worklistMoves
+  for (auto it = worklistMoves.begin(); it != worklistMoves.end(); it++)
+    unionAW.push_back(*it);
+  
+  vector<liveness::Move> moveListN = moveList[n], result;
+  for (auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++){
+    for (auto it2 = unionAW.begin(); it2 != unionAW.end(); it2++)
+      if (it1->dst == it2->dst and it1->src == it2->src)
+        result.push_back(*it1);
+  }
+  return result;
 }
 
 bool RegAllocator::isMoveRelated(liveness::TempNode node){
@@ -139,18 +145,26 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v){
 
 }
 
-void RegAllocator::freezeRelatedNodes(liveness::TempNode u){  // terminar
-//   forall m (=copy(x,y)) ∈ NodeMoves(u)
-//      if GetAlias(y)=GetAlias(u) then
-//        v ← GetAlias(x)
-//      else
-//        v ← GetAlias(y)
-//      activeMoves ← activeMoves \ {m}
-//      frozenMoves ← frozenMoves ∪ {m}
-//      if NodeMoves(v) = {} ∧ degree[v] < K then
-//        freezeWorklist ← freezeWorklist \ {v}
-//        simplifyWorklist ← simplifyWorklist ∪ {v}
-
+void RegAllocator::freezeMoves(liveness::TempNode u){  
+  vector<liveness::Move> moves = nodeMoves(u);
+  liveness::TempNode v;
+  for (auto it = moves.begin(); it != moves.end(); it++){
+    if (getAlias(it->dst) == getAlias(u))
+      v = getAlias(it->src);
+    else 
+      v = getAlias(it->dst);
+    auto idx = activeMoves.begin();
+    for (; idx != activeMoves.end(); idx++)
+      if (it->dst == idx->dst and it->src == idx->src)
+        break;
+    activeMoves.erase(idx);
+    frozenMoves.push_back(*it);
+    if (nodeMoves(v).empty() and degree[v] < K){
+      auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
+      freezeWorklist.erase(idx);
+      simplifyWorklist.push_back(v);
+    }
+  }
 }
 
 void RegAllocator::build(frame::Frame f){
@@ -232,10 +246,10 @@ void RegAllocator::coalesce(){
 // those moves. This causes the node (and perhaps other nodes related to the frozen moves) to 
 // be considered non-move-related, which should enable more simplification.
 void RegAllocator::freeze(){
- /* auto u = freezeWorklist.back(); 
+  auto u = freezeWorklist.back();
   freezeWorklist.pop_back();
   simplifyWorklist.push_back(u);
-  freezeRelatedNodes(u); */
+  freezeMoves(u);
 }
 
 void RegAllocator::selectSpill(){// heuristic
