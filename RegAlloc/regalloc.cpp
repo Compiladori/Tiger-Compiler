@@ -167,12 +167,21 @@ void RegAllocator::freezeMoves(liveness::TempNode u){
   }
 }
 
+float RegAllocator::spillHeuristic(liveness::TempNode node){
+  // heuristic: (uses + defs) / degree
+  int idx = live_graph._interference_graph.keyToId(node);
+  int uses_and_defs = live_graph.use[idx].size() + live_graph.def[idx].size(); // live_graph.use[idx] : std::vector<std::set<temp::Temp>>
+  float value = uses_and_defs * 1.0 / degree[node];
+  return value;
+}
+
 void RegAllocator::build(frame::Frame f){
   vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
   while(!nodes.empty()){
     liveness::TempNode node = nodes.back();
     nodes.pop_back();
     degree.insert( {node, live_graph._interference_graph.getDegree(node)} );
+    // para cambiar esto tengo que cambiar el tipo de getSuccessors
     int i = live_graph._interference_graph.keyToId(node); 
     set<int> adj = live_graph._interference_graph.getSuccessors(i);
     for (auto n : adj){
@@ -253,6 +262,18 @@ void RegAllocator::freeze(){
 }
 
 void RegAllocator::selectSpill(){// heuristic
+  auto idx = spillWorklist.begin();
+  float value, min_value = -1;
+  for (auto it = spillWorklist.begin(); it != spillWorklist.end(); it++){
+    value = spillHeuristic(*it);
+    if (value < min_value){
+      min_value = value;
+      idx = it;
+    }
+  }
+  spillWorklist.erase(idx);
+  simplifyWorklist.push_back(*idx);
+  freezeMoves(*idx);
 }
 
 void RegAllocator::assignColors(){}

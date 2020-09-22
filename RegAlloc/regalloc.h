@@ -29,7 +29,6 @@ int get_K(){
 }
 #define K get_K()
 
-
 class RegAllocator {
   liveness::Liveness live_graph;  // struct Live_graph { G_graph graph; Live_moveList moves; };
   vector<liveness::TempNode> freezeWorklist; // low-degree move-related nodes
@@ -71,6 +70,7 @@ class RegAllocator {
   liveness::TempNode getAlias(liveness::TempNode node); 
   void combine(liveness::TempNode u, liveness::TempNode v);
   void freezeMoves(liveness::TempNode u);
+  float spillHeuristic(liveness::TempNode node);
 
   void build(frame::Frame f);
   void makeWorklist();
