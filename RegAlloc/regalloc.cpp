@@ -27,6 +27,7 @@ vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n){
     if (it2 != except.end())  
       adjList.erase(it1);    
   }
+  return adjList;
 }
 
 vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n){
@@ -276,11 +277,40 @@ void RegAllocator::selectSpill(){// heuristic
   freezeMoves(*idx);
 }
 
-void RegAllocator::assignColors(){}
+void RegAllocator::assignColors(){
+  while(!selectStack.empty()){
+    liveness::TempNode n = selectStack.back();
+    selectStack.pop_back();
+    int ok_colors[K];
+    for (int i = 0; i < K; i++) ok_colors[i] = 1; // 1 -> color disponible, 0 -> no disponible
+    vector<liveness::TempNode> nodes = adjacentNodes[n];
+    vector<liveness::TempNode> precolored_colored = coloredNodes;
+    for (auto p : precolored) precolored_colored.push_back(p);
+    for (auto it = nodes.begin(); it != nodes.end(); it++){
+      if (isIn(getAlias(*it), precolored_colored)){
+        int color = nodeColors[getAlias(*it)]; 
+        ok_colors[color] = 0;
+      }
+    }
+    // ok_colors == {}
+    int avail_color, i;
+    for (i = 0; i < K; i++) 
+      if(ok_colors[i]){
+        avail_color = i;
+        break;
+      }
+    if (i == K) // ok_colors is empty
+      spilledNodes.push_back(n);
+    else {
+      coloredNodes.push_back(n);
+      nodeColors[n] = i;
+    }
+  }
+}
 
 void RegAllocator::rewriteProgram(frame::Frame f, InstructionList instruction_list){}
 
-Result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_list){
+result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_list){
   do {
       // g_nodes() : vector<flowgraph::Node>, g_adj : vector<flowgraph::Node>
       // graph::Graph graph = flowgraph::assemFlowGraph(instruction_list); 

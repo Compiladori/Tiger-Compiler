@@ -16,8 +16,8 @@ using namespace std;
 using InstructionList = util::GenericList<assem::Instruction>;
 class Result;
 
-struct Result {
-  map<temp::Temp, string> coloring;
+struct result {
+  temp::TempMap coloring;
   InstructionList instruction_list;
 };
 
@@ -54,7 +54,7 @@ class RegAllocator {
   // en vez de definir moveList uso moveNodes que devuelve una lista ??????????
   // when a move (u,v) has been coalesced, and v put in coalescedNodes, alias(v)=u
   unordered_map<liveness::TempNode, liveness::TempNode, liveness::TempNodeHasher> alias; 
-  unordered_map<liveness::TempNode, int> nodeColors; 
+  unordered_map<liveness::TempNode, int, liveness::TempNodeHasher> nodeColors; 
   void addEdge(liveness::TempNode u, liveness::TempNode v);
   vector<liveness::TempNode> adjacent(liveness::TempNode n); 
   unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjacentNodes;
@@ -82,10 +82,8 @@ class RegAllocator {
   void rewriteProgram(frame::Frame f, InstructionList instruction_list);
  public:
   RegAllocator() = default;
-  Result regAllocate(frame::Frame f, InstructionList instruction_list);
+  result regAllocate(frame::Frame f, InstructionList instruction_list);
 };
-
-
 
 
 };
