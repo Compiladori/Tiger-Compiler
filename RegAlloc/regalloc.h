@@ -29,7 +29,7 @@ bool isIn(T node, vector<T> list){
 }
 
 // check this!!!!!!!!!!!
-#define K 6 
+//#define K 6  // F_registers().size() ??
 
 class RegAllocator {
   liveness::Liveness live_graph;  // struct Live_graph { G_graph graph; Live_moveList moves; };
@@ -40,6 +40,7 @@ class RegAllocator {
   vector<liveness::TempNode> coalescedNodes; // registers that have been coalesced; when u<-v is coalesced,
   // v is added to this set and u put back on some work-list (or vice versa)
   vector<liveness::TempNode> precolored;
+  int K; // regs.size()
   vector<liveness::TempNode> coloredNodes; // nodes successfully colored
   vector<liveness::TempNode> selectStack; // stack containing temporaries removed from the graph
 
@@ -80,7 +81,7 @@ class RegAllocator {
   void coalesce();
   void freeze();
   void selectSpill();
-  void assignColors();
+  temp::TempMap assignColors(temp::TempMap initial);
   InstructionList rewriteProgram(frame::Frame f, InstructionList instruction_list);
  public:
   RegAllocator() = default;

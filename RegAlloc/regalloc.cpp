@@ -274,7 +274,8 @@ void RegAllocator::selectSpill() {    // heuristic
     freezeMoves(*idx);
 }
 
-void RegAllocator::assignColors() {
+temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
+    temp::TempMap coloring = initial;
     while ( !selectStack.empty() ) {
         liveness::TempNode n = selectStack.back();
         selectStack.pop_back();
@@ -290,19 +291,22 @@ void RegAllocator::assignColors() {
             }
         }
         // ok_colors == {}
-        int avail_color, i;
+        int i;
+        temp::Label avail_color;
         for ( i = 0; i < K; i++ )
             if ( ok_colors[i] ) {
-                avail_color = i;
+                avail_color = coloring[precolored[i]._info]; 
                 break;
             }
         if ( i == K )    // ok_colors is empty
             spilledNodes.push_back(n);
         else {
             coloredNodes.push_back(n);
+            coloring[n._info] = avail_color;
             nodeColors[n] = i;
         }
     }
+    return coloring;
 }
 
 InstructionList RegAllocator::rewriteProgram(frame::Frame f, InstructionList instruction_list) {
@@ -418,6 +422,8 @@ void RegAllocator::clearLists() {
 
 result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_list, temp::TempMap initial, temp::TempList regs) {
     InstructionList current_inst_list = move(instruction_list);
+    result res;
+    K = regs.size();
     do {
         // g_nodes() : vector<flowgraph::Node>, g_adj : vector<flowgraph::Node>
         // graph::Graph graph = flowgraph::assemFlowGraph(instruction_list);
@@ -436,13 +442,11 @@ result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_lis
             else if ( !spillWorklist.empty() )
                 selectSpill();
         } while ( !simplifyWorklist.empty() or !worklistMoves.empty() or !freezeWorklist.empty() or !spillWorklist.empty() );
-        assignColors();
+        res.coloring = assignColors(initial); // initial: map with registers
         if ( !spilledNodes.empty() ) {
             current_inst_list = rewriteProgram(f, move(current_inst_list));  
         }
     } while ( !spilledNodes.empty() );
-    result res;
-    res.instruction_list = move(current_inst_list);
-    // coloring
+    res.instruction_list = move(current_inst_list);    
     return res;
 }
