@@ -81,7 +81,7 @@ class RegAllocator {
   void freeze();
   void selectSpill();
   void assignColors();
-  void rewriteProgram(frame::Frame f, InstructionList instruction_list);
+  InstructionList rewriteProgram(frame::Frame f, InstructionList instruction_list);
  public:
   RegAllocator() = default;
   result regAllocate(frame::Frame f, InstructionList instruction_list, temp::TempMap initial, temp::TempList regs);
