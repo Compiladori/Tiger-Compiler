@@ -21,13 +21,15 @@ struct result {
   InstructionList instruction_list;
 };
 
-int get_K(){ 
-  temp::Label lab; 
-  vector<bool> v = vector<bool>();
-  frame::Frame f = frame::Frame(lab, v); 
-  return f.get_arg_regs().size() + f.get_caller_saved_regs().size() + f.get_callee_saved_regs().size();
+template<typename T>
+bool isIn(T node, vector<T> list){
+  for (auto it = list.begin(); it != list.end(); it++)
+    if (*it == node) return true; 
+  return false;
 }
-#define K get_K()
+
+// check this!!!!!!!!!!!
+#define K 6 
 
 class RegAllocator {
   liveness::Liveness live_graph;  // struct Live_graph { G_graph graph; Live_moveList moves; };
@@ -62,7 +64,6 @@ class RegAllocator {
   bool isMoveRelated(liveness::TempNode node);
   void decrementDegree(liveness::TempNode m);
   void enableMoves(vector<liveness::TempNode> nodes);
-  bool isIn(liveness::TempNode node, vector<liveness::TempNode> list);
   
   void addWorklist(liveness::TempNode node);
   bool forAllAdjOk(liveness::TempNode u, liveness::TempNode v);
@@ -71,8 +72,9 @@ class RegAllocator {
   void combine(liveness::TempNode u, liveness::TempNode v);
   void freezeMoves(liveness::TempNode u);
   float spillHeuristic(liveness::TempNode node);
+  void clearLists();
 
-  void build(frame::Frame f);
+  void build(temp::TempList regs);
   void makeWorklist();
   void simplify();
   void coalesce();
@@ -82,7 +84,7 @@ class RegAllocator {
   void rewriteProgram(frame::Frame f, InstructionList instruction_list);
  public:
   RegAllocator() = default;
-  result regAllocate(frame::Frame f, InstructionList instruction_list);
+  result regAllocate(frame::Frame f, InstructionList instruction_list, temp::TempMap initial, temp::TempList regs);
 };
 
 

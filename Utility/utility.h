@@ -56,6 +56,9 @@ class GenericList {
 
   auto erase(iterator i) { data.erase(i); };
 
+  auto insert(iterator i, std::unique_ptr<T> e) { data.insert(i, std::move(e)); };
+  auto insert(iterator i, T* e) { data.insert(i, std::unique_ptr<T>(e)); };
+
   void print() const {
     std::cout << "List ";
     for (auto& p : data) {
