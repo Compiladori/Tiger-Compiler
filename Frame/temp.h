@@ -21,7 +21,7 @@ struct Temp {
   // Define custom copy constructor and copy assignment just in case by default the static total_num is changed
   Temp(const Temp &t) : num(t.num) {} // Copy constructor
   Temp& operator=(const Temp &t) { num = t.num; return *this; } // Copy assignment
-
+  bool operator<(const Temp& t1) const  { return num < t1.num; }
   void print() const { std::cout << num << " "; }
 };
 

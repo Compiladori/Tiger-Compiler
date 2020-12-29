@@ -261,7 +261,7 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp){
         /* CONST(i) */
         temp::Temp new_temporary;
         std::string code = "movq $" + std::to_string(const_exp->i) + ", %'d0";
-        emit(make_unique<assem::Move>(code, temp::TempList {}, temp::TempList {new_temporary}));
+        emit(make_unique<assem::Oper>(code, temp::TempList {}, temp::TempList {new_temporary}, temp::LabelList {}));
         return new_temporary;
     }
     

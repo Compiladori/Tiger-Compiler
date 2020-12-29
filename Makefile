@@ -27,8 +27,12 @@ allD:
 	$(MAKE) -C Translation all
 	$(MAKE) -C Canon depend
 	$(MAKE) -C Canon all
+	$(MAKE) -C Liveness depend
+	$(MAKE) -C Liveness all
 	$(MAKE) -C Munch depend
 	$(MAKE) -C Munch all
+	$(MAKE) -C RegAlloc depend
+	$(MAKE) -C RegAlloc all
 	$(MAKE) -C Testing depend
 	$(MAKE) -C Testing all
 
@@ -53,6 +57,8 @@ allC:
 	$(MAKE) -C Canon all
 	$(MAKE) -C Munch depend
 	$(MAKE) -C Munch all
+	$(MAKE) -C RegAlloc depend
+	$(MAKE) -C RegAlloc all
 
 cleanD:
 		$(MAKE) -C AST clean
@@ -64,6 +70,7 @@ cleanD:
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
 		$(MAKE) -C Munch clean
+		$(MAKE) -C RegAlloc clean
 		$(MAKE) -C Testing clean
 
 cleanC:
@@ -76,5 +83,7 @@ cleanC:
 		$(MAKE) -C Translation clean
 		$(MAKE) -C Canon clean
 		$(MAKE) -C Munch clean
+		$(MAKE) -C Liveness clean
+		$(MAKE) -C RegAlloc clean
 
 include Makefile.common
