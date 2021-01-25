@@ -6,6 +6,9 @@
 #include "Semantic/semantic.h"
 #include "Utility/error.h"
 #include "Syntax/tigerbison.tab.h"
+#include "Munch/munch.h"
+#include "RegAlloc/regalloc.h"
+
 extern FILE* yyin;
 extern int yylineno;
 
@@ -39,6 +42,10 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << "traceSchedule!!!!" <<endl;
   cout << endl;
   cout << endl;
+  munch::Muncher MN(*frame.get());
+  // auto instr_list = MN.munchStatementList(move(*stm_list.get()));
+  // regalloc::RegAllocator RA(*frame.get(),instr_list)
+
 }
 
 int main(int argc, char** argv) {
