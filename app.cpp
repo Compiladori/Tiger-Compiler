@@ -6,6 +6,9 @@
 #include "Semantic/semantic.h"
 #include "Utility/error.h"
 #include "Syntax/tigerbison.tab.h"
+#include "Munch/munch.h"
+#include "RegAlloc/regalloc.h"
+
 extern FILE* yyin;
 extern int yylineno;
 
@@ -39,6 +42,10 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << "traceSchedule!!!!" <<endl;
   cout << endl;
   cout << endl;
+  munch::Muncher MN(*frame.get());
+  // auto instr_list = MN.munchStatementList(move(*stm_list.get()));
+  // regalloc::RegAllocator RA(*frame.get(),instr_list)
+
 }
 
 int main(int argc, char** argv) {
@@ -71,14 +78,6 @@ int main(int argc, char** argv) {
     auto frags = SC.translate(final_ast.get());
     // Canonical conversion
     cout << "FragList size:"<<frags -> size()<<endl;
-    for (const auto& frag : *frags) {
-      if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
-        proc_frag -> body -> print();
-        cout << endl;
-      } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
-        cout << "StringFrag "<< string_frag ->str<< endl;
-      }
-    }
     for (const auto& frag : *frags) {
       if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
         proc_frag -> body -> print();
