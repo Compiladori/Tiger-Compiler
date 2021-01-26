@@ -63,8 +63,8 @@ REGALLOC_SRC = regalloc.cpp
 REGALLOC_OBJ = regalloc.o 
 
 TESTING_HDR = catch2/catch.hpp
-TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp
-TESTING_OBJ = testMain.o testCanon.o testLiveness.o
+TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp testMunch.cpp
+TESTING_OBJ = testMain.o testCanon.o testLiveness.o testMunch.o
 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
