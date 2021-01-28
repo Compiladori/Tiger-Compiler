@@ -8,6 +8,7 @@
 #include "Syntax/tigerbison.tab.h"
 #include "Munch/munch.h"
 #include "RegAlloc/regalloc.h"
+// #include "FileHandler/file_handler.h"
 
 extern FILE* yyin;
 extern int yylineno;
@@ -43,8 +44,12 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << endl;
   cout << endl;
   munch::Muncher MN(*frame.get());
-  // auto instr_list = MN.munchStatementList(move(*stm_list.get()));
-  // regalloc::RegAllocator RA(*frame.get(),instr_list)
+  auto instr_list = MN.munchStatementList(move(*stm_list.get()));
+  // regalloc::RegAllocator RA;
+  // auto ra_result = RA.regAllocate(*frame.get(),instr_list);
+  // proc = F_procEntryExit3(frame, ra.instruction_list);
+  // file::Hanlder out;
+  // out.print_proc(proc, ra_result.coloring)
 
 }
 
