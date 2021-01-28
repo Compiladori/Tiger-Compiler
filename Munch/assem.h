@@ -14,7 +14,8 @@
 #include "../Frame/temp.h"
 
 namespace assem {
-
+struct Instruction;
+using InstructionList = util::GenericList<Instruction>;
 struct Instruction {
     virtual ~Instruction() = default;
     virtual temp::TempList get_src() const = 0;
@@ -22,7 +23,13 @@ struct Instruction {
     virtual void print(std::ostream& os, temp::TempMap& temp_map) const = 0;    // Instruction output
     virtual void get_assm() const = 0;
 };
-
+struct Procedure {
+    std::string prolog;
+    InstructionList body;
+    std::string epilog;
+    Procedure(std::string prolog, InstructionList body, std::string epilog) : prolog(prolog), body(std::move(body)), epilog(epilog) {}
+    ~Procedure() = default;
+};
 struct Oper : public Instruction {
     std::string assm;
     temp::TempList src, dst;
