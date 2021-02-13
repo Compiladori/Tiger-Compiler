@@ -66,6 +66,9 @@ TESTING_HDR = catch2/catch.hpp
 TESTING_SRC = testMain.cpp testCanon.cpp testLiveness.cpp testMunch.cpp
 TESTING_OBJ = testMain.o testCanon.o testLiveness.o testMunch.o
 
+FILE_HANDLER_HDR = file_handler.h
+FILE_HANDLER_SRC = file_handler.cpp
+FILE_HANDLER_OBJ = file_handler.o 
 
 AST_OBJ_DIR = $(patsubst %, AST/%, $(AST_OBJ))
 IRT_OBJ_DIR = $(patsubst %, IRT/%, $(IRT_OBJ))
@@ -80,17 +83,19 @@ MUNCH_OBJ_DIR = $(patsubst %, Munch/%, $(MUNCH_OBJ))
 LIVENESS_OBJ_DIR = $(patsubst %, Liveness/%, $(LIVENESS_OBJ))
 REGALLOC_OBJ_DIR = $(patsubst %, RegAlloc/%, $(REGALLOC_OBJ))
 TESTING_OBJ_DIR = $(patsubst %, Testing/%, $(TESTING_OBJ))
+FILE_HANDLER_OBJ_DIR = $(patsubst %, FileHandler/%, $(FILE_HANDLER_OBJ))
 
 PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
-                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)    \
+                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)  \
                 $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
                 $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
                 $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)     \
-                $(LIVENESS_OBJ_DIR) $(REGALLOC_OBJ_DIR)
+                $(LIVENESS_OBJ_DIR) $(REGALLOC_OBJ_DIR) \
+                $(FILE_HANDLER_OBJ_DIR)
 
 PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
-                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)    \
+                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)  \
                 $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
                 $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
                 $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)    \
-                $(REGALLOC_OBJ_DIR)
+                $(REGALLOC_OBJ_DIR) $(FILE_HANDLER_OBJ_DIR)

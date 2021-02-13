@@ -35,6 +35,8 @@ allD:
 	$(MAKE) -C RegAlloc all
 	$(MAKE) -C Testing depend
 	$(MAKE) -C Testing all
+	$(MAKE) -C FileHandler depend
+	$(MAKE) -C FileHandler all
 
 
 custom: allC
@@ -59,6 +61,9 @@ allC:
 	$(MAKE) -C Munch all
 	$(MAKE) -C RegAlloc depend
 	$(MAKE) -C RegAlloc all
+	$(MAKE) -C FileHandler depend
+	$(MAKE) -C FileHandler all
+	
 
 cleanD:
 		$(MAKE) -C AST clean
@@ -72,6 +77,7 @@ cleanD:
 		$(MAKE) -C Munch clean
 		$(MAKE) -C RegAlloc clean
 		$(MAKE) -C Testing clean
+		$(MAKE) -C FileHandler clean
 
 cleanC:
 		$(MAKE) -C AST clean
@@ -85,5 +91,6 @@ cleanC:
 		$(MAKE) -C Munch clean
 		$(MAKE) -C Liveness clean
 		$(MAKE) -C RegAlloc clean
+		$(MAKE) -C FileHandler clean
 
 include Makefile.common

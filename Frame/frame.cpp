@@ -78,6 +78,14 @@ RegToTempMap &Frame::get_reg_to_temp_map() {
     return Frame::register_temporaries;
 }
 
+TempToRegMap &Frame::get_temp_to_reg_map() {
+    RegToTempMap reg_to_temp = get_reg_to_temp_map();
+    TempToRegMap temp_to_reg;
+    for ( auto const &pack : reg_to_temp )   
+        temp_to_reg[pack.second] = pack.first;
+    return temp_to_reg;
+}
+
 unique_ptr<irt::Expression> frame::exp(shared_ptr<Access> acc, unique_ptr<irt::Expression> framePtr) {
     if ( auto in_reg = dynamic_cast<InReg *>(acc.get()) )
         return make_unique<irt::Temp>(in_reg->reg);

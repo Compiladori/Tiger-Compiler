@@ -43,6 +43,7 @@ using AccessList = std::vector<std::shared_ptr<Access>>;
 using Register = std::string;
 using RegList = std::vector<Register>;
 using RegToTempMap = std::map<Register, temp::Temp>;
+using TempToRegMap = std::map<temp::Temp,Register>;
 
 
 class Frame {
@@ -75,6 +76,7 @@ class Frame {
   RegList get_calldefs();
   static RegToTempMap register_temporaries;
   RegToTempMap& get_reg_to_temp_map();
+  TempToRegMap& get_temp_to_reg_map();
 };
 
 struct Access {
