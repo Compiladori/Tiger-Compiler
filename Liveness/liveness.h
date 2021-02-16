@@ -45,6 +45,7 @@ struct Liveness {
     std::unordered_map<temp::Temp, TempNode, TempNodeHasher> temp_to_node;
     std::vector<Move> moves;
     Liveness(flowgraph::FlowGraph &flow_graph);
+    Liveness() = default;
     void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);
     void InferenceGraph(flowgraph::FlowGraph &flow_graph);
     void initItfGraph(const flowgraph::NodeList &node_list);

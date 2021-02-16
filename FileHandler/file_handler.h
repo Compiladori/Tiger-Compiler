@@ -17,7 +17,7 @@ struct Handler {
     };
     ~Handler() {
         _file.close();
-    }
+    };
     void print_proc(assem::Procedure proc, temp::TempMap coloring) {
         _file << "#BEGIN function\n";
         _file << proc.prolog;
@@ -27,6 +27,9 @@ struct Handler {
         _file << proc.epilog;
         _file << "#END function\n\n";
     };
-};    // namespace file
-
+    void print_str(frame::StringFrag string_frag) {
+        _file << string_frag._label.name + ": .ascii " + "'\'" + string_frag.str + "'\'" + "\n";
+    };
+};
+}    // namespace file
 #endif

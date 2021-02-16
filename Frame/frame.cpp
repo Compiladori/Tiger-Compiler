@@ -78,7 +78,7 @@ RegToTempMap &Frame::get_reg_to_temp_map() {
     return Frame::register_temporaries;
 }
 
-TempToRegMap &Frame::get_temp_to_reg_map() {
+TempToRegMap Frame::get_temp_to_reg_map() {
     RegToTempMap reg_to_temp = get_reg_to_temp_map();
     TempToRegMap temp_to_reg;
     for ( auto const &pack : reg_to_temp )   

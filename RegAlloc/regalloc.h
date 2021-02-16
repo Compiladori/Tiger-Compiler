@@ -85,7 +85,6 @@ class RegAllocator {
     assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
 
    public:
-    RegAllocator() = default;
     result regAllocate(frame::Frame f, assem::InstructionList instruction_list, temp::TempMap initial, temp::TempList regs);
 };
 
