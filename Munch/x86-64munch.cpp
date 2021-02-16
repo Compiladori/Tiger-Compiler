@@ -101,11 +101,10 @@ void Muncher::munchStatement(irt::Statement* stm){
         }
 
         auto temp_dst_stm = dynamic_cast<irt::Temp*>(move_stm->left.get());
-        auto exp_src_stm = dynamic_cast<irt::Exp*>(move_stm->right.get());
-        if(temp_dst_stm and exp_src_stm){
+        if(temp_dst_stm){
             /* MOVE(TEMP(temporary), EXPRESSION(exp)) */
             std::string mov_code = "movq %'s0, (%'s1)";
-            emit(make_unique<assem::Move>(mov_code, temp::TempList {munchExpression(exp_src_stm->exp.get())}, temp::TempList {temp_dst_stm->temporary}));
+            emit(make_unique<assem::Move>(mov_code, temp::TempList {munchExpression(move_stm->right.get())}, temp::TempList {temp_dst_stm->temporary}));
             return;
         }
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include "../IRT/IRT.h"
+#include "../Munch/assem.h"
 #include "temp.h"
 
 /**
@@ -35,11 +36,14 @@ std::unique_ptr<irt::Expression> static_link_jump(std::unique_ptr<irt::Expressio
 std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
 std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> stm);
+std::unique_ptr<assem::Procedure> proc_entry_exit3(assem::InstructionList list);
+
 using FragList = util::GenericList<Frag>;
 using AccessList = std::vector<std::shared_ptr<Access>>;
 using Register = std::string;
 using RegList = std::vector<Register>;
 using RegToTempMap = std::map<Register, temp::Temp>;
+using TempToRegMap = std::map<temp::Temp,Register>;
 
 
 class Frame {
@@ -72,6 +76,7 @@ class Frame {
   RegList get_calldefs();
   static RegToTempMap register_temporaries;
   RegToTempMap& get_reg_to_temp_map();
+  TempToRegMap get_temp_to_reg_map();
 };
 
 struct Access {

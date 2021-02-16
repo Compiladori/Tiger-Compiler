@@ -295,7 +295,7 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
         temp::Label avail_color;
         for ( i = 0; i < K; i++ )
             if ( ok_colors[i] ) {
-                avail_color = coloring[precolored[i]._info]; 
+                avail_color = coloring[precolored[i]._info];
                 break;
             }
         if ( i == K )    // ok_colors is empty
@@ -309,7 +309,7 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
     return coloring;
 }
 
-InstructionList RegAllocator::rewriteProgram(frame::Frame f, InstructionList instruction_list) {
+assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::InstructionList instruction_list) {
     for ( auto it1 = spilledNodes.begin(); it1 != spilledNodes.end(); it1++ ) {
         temp::TempList defs, uses;
         bool isOper;
@@ -420,8 +420,8 @@ void RegAllocator::clearLists() {
     nodeColors.clear();
 }
 
-result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_list, temp::TempMap initial, temp::TempList regs) {
-    InstructionList current_inst_list = move(instruction_list);
+result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list, temp::TempMap initial, temp::TempList regs) {
+    assem::InstructionList current_inst_list = move(instruction_list);
     result res;
     K = regs.size();
     do {
@@ -442,11 +442,11 @@ result RegAllocator::regAllocate(frame::Frame f, InstructionList instruction_lis
             else if ( !spillWorklist.empty() )
                 selectSpill();
         } while ( !simplifyWorklist.empty() or !worklistMoves.empty() or !freezeWorklist.empty() or !spillWorklist.empty() );
-        res.coloring = assignColors(initial); // initial: map with registers
+        res.coloring = assignColors(initial);    // initial: map with registers
         if ( !spilledNodes.empty() ) {
-            current_inst_list = rewriteProgram(f, move(current_inst_list));  
+            current_inst_list = rewriteProgram(f, move(current_inst_list));
         }
     } while ( !spilledNodes.empty() );
-    res.instruction_list = move(current_inst_list);    
+    res.instruction_list = move(current_inst_list);
     return res;
 }

@@ -8,6 +8,7 @@
 #include "Syntax/tigerbison.tab.h"
 #include "Munch/munch.h"
 #include "RegAlloc/regalloc.h"
+#include "FileHandler/file_handler.h"
 
 extern FILE* yyin;
 extern int yylineno;
@@ -43,12 +44,18 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << endl;
   cout << endl;
   munch::Muncher MN(*frame.get());
-  // auto instr_list = MN.munchStatementList(move(*stm_list.get()));
-  // regalloc::RegAllocator RA(*frame.get(),instr_list)
+  auto instr_list = MN.munchStatementList(move(*stm_list.get()));
+  auto temp_map = frame -> get_temp_to_reg_map();
+  // regalloc::RegAllocator RA;
+  // auto ra_result = RA.regAllocate(*frame.get(),instr_list,temp_map);
+  // proc = F_procEntryExit3(frame, ra.instruction_list);
+  // file::Hanlder out;
+  // out.print_proc(proc, ra_result.coloring)
 
 }
 
 int main(int argc, char** argv) {
+  file::Handler out("out.file");
   FILE* myfile = fopen("test.file", "r");
   // make sure it's valid:
   if (!myfile) {
@@ -84,7 +91,7 @@ int main(int argc, char** argv) {
         cout << endl;
         doProc(proc_frag->_frame, move(proc_frag->body));
       } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
-        cout << "StringFrag "<< endl;
+        out.print_str(*string_frag);
       }
     }
   } catch (error::semantic_error& se) {
