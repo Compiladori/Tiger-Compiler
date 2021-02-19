@@ -420,10 +420,19 @@ void RegAllocator::clearLists() {
     nodeColors.clear();
 }
 
-result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list, temp::TempMap initial, temp::TempList regs) {
+result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list) {
     assem::InstructionList current_inst_list = move(instruction_list);
     result res;
+    temp::TempList regs;
+    frame::RegToTempMap reg_to_temp_map = f.get_reg_to_temp_map();
+    for (auto it = reg_to_temp_map.begin(); it != reg_to_temp_map.end(); it++)
+        regs.push_back(it->second);
     K = regs.size();
+    temp::TempMap initial; 
+    frame::TempToRegMap temp_to_reg_map = f.get_temp_to_reg_map();
+    for (auto it = regs.begin(); it != regs.end(); it++){
+        initial[*it] = temp::Label(temp_to_reg_map[*it]);
+    }
     do {
         // g_nodes() : vector<flowgraph::Node>, g_adj : vector<flowgraph::Node>
         // graph::Graph graph = flowgraph::assemFlowGraph(instruction_list);

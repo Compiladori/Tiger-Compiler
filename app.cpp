@@ -45,9 +45,9 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << endl;
   munch::Muncher MN(*frame.get());
   auto instr_list = MN.munchStatementList(move(*stm_list.get()));
-  auto temp_map = frame -> get_temp_to_reg_map();
-  // regalloc::RegAllocator RA;
-  // auto ra_result = RA.regAllocate(*frame.get(),instr_list,temp_map);
+  // auto temp_map = frame -> get_temp_to_reg_map();
+  regalloc::RegAllocator RA;
+  auto ra_result = RA.regAllocate(*frame.get(), instr_list);
   // proc = F_procEntryExit3(frame, ra.instruction_list);
   // file::Hanlder out;
   // out.print_proc(proc, ra_result.coloring)

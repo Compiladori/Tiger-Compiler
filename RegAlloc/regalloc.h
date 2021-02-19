@@ -28,9 +28,6 @@ bool isIn(T node, vector<T> list) {
     return false;
 }
 
-// check this!!!!!!!!!!!
-//#define K 6  // F_registers().size() ??
-
 class RegAllocator {
     liveness::Liveness live_graph;                  // struct Live_graph { G_graph graph; Live_moveList moves; };
     vector<liveness::TempNode> freezeWorklist;      // low-degree move-related nodes
@@ -85,7 +82,7 @@ class RegAllocator {
     assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
 
    public:
-    result regAllocate(frame::Frame f, assem::InstructionList instruction_list, temp::TempMap initial, temp::TempList regs);
+    result regAllocate(frame::Frame f, assem::InstructionList instruction_list);
 };
 
 };    // namespace regalloc
