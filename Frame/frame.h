@@ -76,7 +76,7 @@ class Frame {
   RegList get_calldefs();
   static RegToTempMap register_temporaries;
   RegToTempMap& get_reg_to_temp_map();
-  TempToRegMap get_temp_to_reg_map();
+  temp::TempMap get_temp_to_reg_map();
 };
 
 struct Access {

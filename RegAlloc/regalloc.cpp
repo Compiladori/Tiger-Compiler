@@ -429,7 +429,7 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
         regs.push_back(it->second);
     K = regs.size();
     temp::TempMap initial; 
-    frame::TempToRegMap temp_to_reg_map = f.get_temp_to_reg_map();
+    temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
     for (auto it = regs.begin(); it != regs.end(); it++){
         initial[*it] = temp::Label(temp_to_reg_map[*it]);
     }

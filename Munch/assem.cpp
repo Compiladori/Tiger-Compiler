@@ -5,7 +5,7 @@ using namespace assem;
 /**
  * Instructions
  * **/
-void Oper::print(std::ostream& os, temp::TempMap& temp_map) const {
+void Oper::print(std::ostream& os, temp::TempMap temp_map) const {
     std::string result;
     for ( auto it = assm.cbegin(); it != assm.cend(); ++it ) {
         if ( *it == '\'' ) {
@@ -36,11 +36,11 @@ void Oper::print(std::ostream& os, temp::TempMap& temp_map) const {
     os << result;
 }
 
-void Label::print(std::ostream& os, temp::TempMap& temp_map) const {
+void Label::print(std::ostream& os, temp::TempMap temp_map) const {
     os << assm;
 }
 
-void Move::print(std::ostream& os, temp::TempMap& temp_map) const {
+void Move::print(std::ostream& os, temp::TempMap temp_map) const {
     std::string result;
     for ( auto it = assm.cbegin(); it != assm.cend(); ++it ) {
         if ( *it == '\'' ) {

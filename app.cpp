@@ -19,7 +19,7 @@ extern ast::Expression* ast_raw_ptr;
 
 using namespace std;
 
-void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
+void doProc(std::ostream &out,shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << "Entered doProc!!!!" <<endl;
   cout << endl;
   cout << endl;
@@ -45,12 +45,17 @@ void doProc(shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
   cout << endl;
   munch::Muncher MN(*frame.get());
   auto instr_list = MN.munchStatementList(move(*stm_list.get()));
-  // auto temp_map = frame -> get_temp_to_reg_map();
-  regalloc::RegAllocator RA;
-  auto ra_result = RA.regAllocate(*frame.get(), instr_list);
+  for ( auto i = instr_list.begin(); instr_list.end() != i; i++ ) {
+    (*i)->print(out, frame -> get_temp_to_reg_map());
+    out << endl;
+  }
+  cout<<endl;
+  cout << "Muncher!!!!" <<endl;
+  cout << endl;
+  cout << endl;
+  // regalloc::RegAllocator RA;
+  // auto ra_result = RA.regAllocate(*frame.get(), move(instr_list));
   // proc = F_procEntryExit3(frame, ra.instruction_list);
-  // file::Hanlder out;
-  // out.print_proc(proc, ra_result.coloring)
 
 }
 
@@ -89,7 +94,7 @@ int main(int argc, char** argv) {
       if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
         proc_frag -> body -> print();
         cout << endl;
-        doProc(proc_frag->_frame, move(proc_frag->body));
+        doProc(out._file,proc_frag->_frame, move(proc_frag->body));
       } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
         out.print_str(*string_frag);
       }
