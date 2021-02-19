@@ -9,8 +9,8 @@ SH   = bash
 LDFLAGS = -std=c++17
 .PHONY: allD allC cleanD cleanC
 
-default: allD # executes Testing main
-	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
+test: allC # executes Testing main
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
 allD:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
@@ -39,8 +39,8 @@ allD:
 	$(MAKE) -C FileHandler all
 
 
-custom: allC
-	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
+default: allD
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
 allC:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
@@ -55,6 +55,8 @@ allC:
 	$(MAKE) -C Semantic all
 	$(MAKE) -C Translation depend
 	$(MAKE) -C Translation all
+	$(MAKE) -C Liveness depend
+	$(MAKE) -C Liveness all
 	$(MAKE) -C Canon depend
 	$(MAKE) -C Canon all
 	$(MAKE) -C Munch depend
@@ -64,7 +66,7 @@ allC:
 	$(MAKE) -C FileHandler depend
 	$(MAKE) -C FileHandler all
 	
-
+clean: cleanD cleanC 
 cleanD:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
