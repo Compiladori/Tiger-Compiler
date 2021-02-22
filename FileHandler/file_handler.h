@@ -18,13 +18,13 @@ struct Handler {
     ~Handler() {
         _file.close();
     };
-    void print_proc(assem::Procedure proc, temp::TempMap coloring) {
+    void print_proc(std::unique_ptr<assem::Procedure> proc, temp::TempMap coloring) {
         _file << "#BEGIN function\n";
-        _file << proc.prolog;
-        for ( auto i = proc.body.begin(); proc.body.end() != i; i++ ) {
+        _file << proc -> prolog;
+        for ( auto i = proc -> body.begin(); proc -> body.end() != i; i++ ) {
             (*i)->print(_file, coloring);    // add Temp_layerMap
         }
-        _file << proc.epilog;
+        _file << proc -> epilog;
         _file << "#END function\n\n";
     };
     void print_str(frame::StringFrag string_frag) {

@@ -1,4 +1,5 @@
 #include "flowgraph.h"
+#include "../Utility/error.h"
 
 #include <algorithm>    // std::set_union, std::sort
 #include <iostream>     // std::cout
@@ -23,7 +24,7 @@ void FlowGraph::addJumps(Node *t) {
                 _flow_graph.addDirectedEdge(t, neighbour->second);
             }
         } else {    //can't find label
-            exit(-1);
+            throw error::internal_error("can't find label " + p.name, __FILE__);
         }
     }
 }

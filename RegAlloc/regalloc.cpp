@@ -21,10 +21,15 @@ vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n) {
     vector<liveness::TempNode> except = selectStack;
     for ( auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++ )
         except.push_back(*it);
-    for ( auto it1 = adjList.begin(); it1 != adjList.end(); it1++ ) {
+    for ( auto it1 = adjList.begin(); it1 != adjList.end(); ) {
         auto it2 = find(except.begin(), except.end(), *it1);
-        if ( it2 != except.end() )
-            adjList.erase(it1);
+        if ( it2 != except.end() ){
+            it1 = adjList.erase(it1);
+
+        } else {
+            it1++;
+        }
+
     }
     return adjList;
 }
@@ -62,7 +67,9 @@ void RegAllocator::decrementDegree(liveness::TempNode m) {
         adj.push_back(m);
         enableMoves(adj);
         auto it = find(spillWorklist.begin(), spillWorklist.end(), m);
+        if( it != spillWorklist.end() ){
         spillWorklist.erase(it);
+        }
 
         if ( isMoveRelated(m) )
             freezeWorklist.push_back(m);
@@ -85,7 +92,9 @@ void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
 void RegAllocator::addWorklist(liveness::TempNode node) {
     if ( !isIn(node, precolored) and !isMoveRelated(node) && (degree[node] < K) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), node);
+        if( it != freezeWorklist.end() ){
         freezeWorklist.erase(it);
+        }
         simplifyWorklist.push_back(node);
     }
 }
@@ -117,10 +126,14 @@ liveness::TempNode RegAllocator::getAlias(liveness::TempNode node) {
 void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     if ( isIn(v, freezeWorklist) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), v);
+        if( it != freezeWorklist.end()){
         freezeWorklist.erase(it);
+        }
     } else {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
+        if( it != spillWorklist.end()){
         spillWorklist.erase(it);
+        }
     }
     coalescedNodes.push_back(v);
     alias[v] = u;
@@ -133,7 +146,9 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     }
     if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
+        if( it != freezeWorklist.end() ) {
         freezeWorklist.erase(it);
+        }
         spillWorklist.push_back(u);
     }
 }
@@ -269,9 +284,10 @@ void RegAllocator::selectSpill() {    // heuristic
             idx = it;
         }
     }
+    auto tmp = *idx;
     spillWorklist.erase(idx);
-    simplifyWorklist.push_back(*idx);
-    freezeMoves(*idx);
+    simplifyWorklist.push_back(tmp);
+    freezeMoves(tmp);
 }
 
 temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
