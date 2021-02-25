@@ -238,53 +238,55 @@ RelationOperation NegateRelOp(RelationOperation r) {
   exit(-1);
 }
 
-unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_ptr<StatementList> res, temp::Label label) {
+unique_ptr<StatementList> Canonizator::getNext(unique_ptr<Block> block, unique_ptr<StatementList> res) {
   if (!block->stmLists or !block->stmLists->size()) {
     res->push_back(make_unique<Label>(block->label));
     return move(res);
   }
   if (!block->stmLists->front()->size()) {
     block->stmLists->pop_front();
-    return getNext(move(block), move(res), label);
+    return getNext(move(block), move(res));
   }
+  auto label = dynamic_cast<irt::Label*>(block->stmLists->front()->front().get());
+  if (basic_blocks_table.count(label -> label)){
+    return trace(move(block), move(res), label->label);
+  }
+  block->stmLists->pop_front();
+  return getNext(move(block), move(res));
+}
+
+unique_ptr<StatementList> Canonizator::trace(unique_ptr<Block> block, unique_ptr<StatementList> res, temp::Label label) {
   if (basic_blocks_table.count(label)) {
     auto stm_ptr = basic_blocks_table[label];
     basic_blocks_table.erase(label);
     for (auto const& stm : *stm_ptr) {
       res->push_back(stm_ptr->pop_front());
     }
-    block->stmLists->pop_front();
     if (auto last_stm = dynamic_cast<irt::Jump*>(res->back().get())) {
-      if (last_stm->label_list.size() == 1)
+      if (last_stm->label_list.size() == 1 && basic_blocks_table.count(last_stm->label_list[0]) ){
         res->pop_back();
+        return trace(move(block), move(res), last_stm->label_list[0]);
+      }else {
+        return getNext(move(block), move(res));
+      }
     } else if (auto last_stm = dynamic_cast<irt::Cjump*>(res->back().get())) {
       if (basic_blocks_table.count(last_stm->false_label)) {
-        return getNext(move(block), move(res), last_stm->false_label);
+        return trace(move(block), move(res), last_stm->false_label);
       }
       if (basic_blocks_table.count(last_stm->true_label)) {
         res->pop_back();
         res->push_back(make_unique<Cjump>(NegateRelOp(last_stm->rel_op), move(last_stm->left), move(last_stm->right), last_stm->false_label, last_stm->true_label));
-        return getNext(move(block), move(res), last_stm->true_label);
+        return trace(move(block), move(res), last_stm->true_label);
       }
       res->pop_back();
       auto new_label = temp::Label();
       res->push_back(make_unique<irt::Cjump>(last_stm->rel_op, move(last_stm->left), move(last_stm->right), last_stm->true_label, new_label));
       res->push_back(make_unique<irt::Label>(new_label));
+      res->push_back(make_unique<irt::Jump>(make_unique<irt::Name>(last_stm->false_label),temp::LabelList(1, last_stm->false_label)));
     }
-    return getNext(move(block), move(res), label);
-  } else {
-    for (const auto& p : *block->stmLists) {
-      if (!block->stmLists->front()->size())
-        block->stmLists->pop_front();
-      else {
-        if (auto lbl_stm = dynamic_cast<irt::Label*>(block->stmLists->front()->front().get()))
-          return getNext(move(block), move(res), lbl_stm->label);
-        else
-          //should be a label
-          exit(-1);
-      }
-    }
+    return trace(move(block), move(res), label);
   }
+  return getNext(move(block), move(res));
 }
 
 unique_ptr<StatementList> Canonizator::traceSchedule(unique_ptr<Block> block) {
@@ -301,5 +303,5 @@ unique_ptr<StatementList> Canonizator::traceSchedule(unique_ptr<Block> block) {
     }
   }
   auto label = dynamic_cast<irt::Label*>(block->stmLists->front()->front().get());
-  return getNext(move(block), make_unique<StatementList>(), label->label);
+  return getNext(move(block), make_unique<StatementList>());
 }

@@ -35,7 +35,8 @@ class Canonizator {
     std::unique_ptr<irt::StatementList> linear(std::unique_ptr<irt::Statement> stm, std::unique_ptr<irt::StatementList> right);
     std::unique_ptr<StatementListList> createBlocks(std::unique_ptr<irt::StatementList> stmList, temp::Label label,std::unique_ptr<StatementListList> res);
     std::unique_ptr<StatementListList> next(std::unique_ptr<irt::StatementList> prevStm, std::unique_ptr<StatementListList> stm, temp::Label done);
-    std::unique_ptr<irt::StatementList> getNext(std::unique_ptr<Block> block,std::unique_ptr<irt::StatementList> res,temp::Label lbl);
+    std::unique_ptr<irt::StatementList> getNext(std::unique_ptr<Block> block,std::unique_ptr<irt::StatementList> res);
+    std::unique_ptr<irt::StatementList> trace(std::unique_ptr<Block> block,std::unique_ptr<irt::StatementList> res,temp::Label lbl);
 public:
     // Canonizator() = default;
     std::unique_ptr<irt::StatementList> linearize(std::unique_ptr<irt::Statement> stm);
