@@ -33,11 +33,11 @@ void Oper::print(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os << result;
+    os << result << "\n";
 }
 
 void Label::print(std::ostream& os, temp::TempMap temp_map) const {
-    os << assm;
+    os << assm << "\n";
 }
 
 void Move::print(std::ostream& os, temp::TempMap temp_map) const {
@@ -63,5 +63,5 @@ void Move::print(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os << result;
+    os << result << "\n";
 }

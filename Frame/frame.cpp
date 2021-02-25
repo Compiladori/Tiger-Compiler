@@ -128,7 +128,7 @@ unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, uniq
 }
 unique_ptr<assem::Procedure> frame::proc_entry_exit3(assem::InstructionList list) {
     if ( auto head = dynamic_cast<assem::Label *>(list.front().get()) ) {
-        string prolog = head->assm + " pushl\t%%ebp\n movl\t%%esp, %%ebp\n subl $64, %%esp\n";
+        string prolog = head->assm + "\npushl\t%ebp \nmovl\t%esp, %ebp \nsubl $64, %esp\n";
         list.pop_front();
         return make_unique<assem::Procedure>(prolog, move(list), "\tleave\n\tret\n");
     }
