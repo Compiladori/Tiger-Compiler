@@ -12,12 +12,12 @@ void Oper::print(std::ostream& os, temp::TempMap temp_map) const {
             switch ( *(++it) ) {
                 case 's': {
                     int n = std::atoi(&*(++it));
-                    std::string s = temp_map[src[n]].name;
+                    std::string s = temp_map.at(src[n]).name;
                     result.append(s);
                 } break;
                 case 'd': {
                     int n = std::atoi(&*(++it));
-                    std::string s = temp_map[dst[n]].name;
+                    std::string s = temp_map.at(dst[n]).name;
                     result.append(s);
                 } break;
                 case 'j': {
@@ -47,12 +47,12 @@ void Move::print(std::ostream& os, temp::TempMap temp_map) const {
             switch ( *(++it) ) {
                 case 's': {
                     int n = std::atoi(&*(++it));
-                    std::string s = temp_map[src[n]].name;
+                    std::string s = temp_map.at(src[n]).name;
                     result.append(s);
                 } break;
                 case 'd': {
                     int n = std::atoi(&*(++it));
-                    std::string s = temp_map[dst[n]].name;
+                    std::string s = temp_map.at(dst[n]).name;
                     result.append(s);
                 } break;
                 case '\'': {

@@ -98,10 +98,12 @@ void Muncher::munchStatement(irt::Statement* stm) {
             emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(mem_src_stm->exp.get())}, temp::TempList{munchExpression(mem_dst_stm->exp.get())}, temp::LabelList{}));
             return;
             }
+            mov_code = "movq %'s0, (%'d0)";
             emit(make_unique<assem::Move>(mov_code, temp::TempList{munchExpression(move_stm->right.get())}, temp::TempList{munchExpression(mem_dst_stm->exp.get())}));
             return;
         }
         auto temp_dst_stm = dynamic_cast<irt::Temp*>(move_stm->left.get());
+        mov_code = "movq %'s0, (%'d0)";
         if ( temp_dst_stm ) {
             /* MOVE(TEMP(temporary), EXPRESSION(exp)) */
             emit(make_unique<assem::Move>(mov_code, temp::TempList{munchExpression(move_stm->right.get())}, temp::TempList{temp_dst_stm->temporary}));
