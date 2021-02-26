@@ -36,7 +36,7 @@ class RegAllocator {
     vector<liveness::TempNode> spilledNodes;        // nodes marked for spilling during this round; initially empty
     vector<liveness::TempNode> coalescedNodes;      // registers that have been coalesced; when u<-v is coalesced,
     // v is added to this set and u put back on some work-list (or vice versa)
-    vector<liveness::TempNode> precolored;
+    temp::TempList regs;
     int K;                                      // regs.size()
     vector<liveness::TempNode> coloredNodes;    // nodes successfully colored
     vector<liveness::TempNode> selectStack;     // stack containing temporaries removed from the graph
