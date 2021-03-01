@@ -28,7 +28,7 @@ struct Handler {
         _file << "#END function\n\n";
     };
     void print_str(frame::StringFrag string_frag) {
-        _file << string_frag._label.name + ": .ascii " + "'\'" + string_frag.str + "'\'" + "\n";
+        _file << string_frag._label.name + ": .ascii " + string_frag.str + "\n";
     };
 
     void print_text_header() {

@@ -102,7 +102,7 @@ struct Frag {
 struct StringFrag : public Frag {
   temp::Label _label;
   std::string str;
-  StringFrag(temp::Label label, std::string str) : _label(label) {}
+  StringFrag(temp::Label label, std::string str) : _label(label), str(str) {}
   void print() const {}
 };
 
