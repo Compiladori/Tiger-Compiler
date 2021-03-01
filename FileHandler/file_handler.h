@@ -30,6 +30,16 @@ struct Handler {
     void print_str(frame::StringFrag string_frag) {
         _file << string_frag._label.name + ": .ascii " + "'\'" + string_frag.str + "'\'" + "\n";
     };
+
+    void print_text_header() {
+        _file << ".text\n";
+        _file << ".global tigermain\n";
+        _file << ".type tigermain, @function\n";
+    }
+    void print_data_header() {
+        _file << ".section .rodata\n";
+    }
+
 };
 }    // namespace file
 #endif

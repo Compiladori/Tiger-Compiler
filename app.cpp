@@ -63,7 +63,7 @@ void doProc(file::Handler& out,shared_ptr<frame::Frame> frame, unique_ptr<irt::S
 }
 
 int main(int argc, char** argv) {
-  file::Handler out("out.file");
+  file::Handler out("out.s");
   FILE* myfile = fopen("test.file", "r");
   // make sure it's valid:
   if (!myfile) {
@@ -93,12 +93,21 @@ int main(int argc, char** argv) {
     auto frags = SC.translate(final_ast.get());
     // Canonical conversion
     cout << "FragList size:"<<frags -> size()<<endl;
+    bool head_text = true ,head_data = true;
     for (const auto& frag : *frags) {
       if (auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get())) {
         proc_frag -> body -> print();
         cout << endl;
+        if(head_text){
+          out.print_text_header();
+          head_text = false;
+        }
         doProc(out,proc_frag->_frame, move(proc_frag->body));
       } else if (auto string_frag = dynamic_cast<frame::StringFrag*>(frag.get())) {
+        if(head_data){
+          out.print_data_header();
+          head_data = false;
+        }
         out.print_str(*string_frag);
       }
     }
