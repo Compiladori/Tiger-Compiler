@@ -5,7 +5,7 @@ using namespace assem;
 /**
  * Instructions
  * **/
-void Oper::print(std::ostream& os, temp::TempMap temp_map) const {
+void Oper::output(std::ostream& os, temp::TempMap temp_map) const {
     std::string result;
     for ( auto it = assm.cbegin(); it != assm.cend(); ++it ) {
         if ( *it == '\'' ) {
@@ -33,14 +33,14 @@ void Oper::print(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os << result << "\n";
+    os <<"    " << result << "\n";
 }
 
-void Label::print(std::ostream& os, temp::TempMap temp_map) const {
+void Label::output(std::ostream& os, temp::TempMap temp_map) const {
     os << assm << "\n";
 }
 
-void Move::print(std::ostream& os, temp::TempMap temp_map) const {
+void Move::output(std::ostream& os, temp::TempMap temp_map) const {
     std::string result;
     for ( auto it = assm.cbegin(); it != assm.cend(); ++it ) {
         if ( *it == '\'' ) {
@@ -63,5 +63,9 @@ void Move::print(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os << result << "\n";
+    os <<"    " << result << "\n";
 }
+
+void Oper::print() const { std::cout << "Oper( "; temp::print_templist(src);  temp::print_templist(dst);  temp::print_labellist(jumps); std::cout << " )"; }
+void Label::print() const { std::cout << "Label( "+ label.name + " )"; }
+void Move::print() const { std::cout << "Move( "; temp::print_templist(src);  temp::print_templist(dst); std::cout << " )"; }

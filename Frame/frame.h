@@ -36,7 +36,8 @@ std::unique_ptr<irt::Expression> static_link_jump(std::unique_ptr<irt::Expressio
 std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
 std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> stm);
-std::unique_ptr<assem::Procedure> proc_entry_exit3(assem::InstructionList list);
+assem::InstructionList proc_entry_exit2(std::shared_ptr<Frame> frame,assem::InstructionList list);
+std::unique_ptr<assem::Procedure> proc_entry_exit3(std::shared_ptr<Frame> frame,assem::InstructionList list);
 
 using FragList = util::GenericList<Frag>;
 using AccessList = std::vector<std::shared_ptr<Access>>;
@@ -47,12 +48,12 @@ using TempToRegMap = std::map<temp::Temp,Register>;
 
 
 class Frame {
-  temp::Label _name;
   AccessList _formals;
   AccessList _locals;
   int _offset;
 
  public:
+  temp::Label _name;
   static int wordSize;
   static temp::Temp fp;
   static temp::Temp eax;

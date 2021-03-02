@@ -431,6 +431,7 @@ void RegAllocator::clearLists() {
 }
 
 result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list) {
+    instruction_list.print();
     assem::InstructionList current_inst_list = move(instruction_list);
     result res;
     frame::RegToTempMap reg_to_temp_map = f.get_reg_to_temp_map();

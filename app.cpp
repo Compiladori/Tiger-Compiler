@@ -49,13 +49,14 @@ void doProc(file::Handler& out,shared_ptr<frame::Frame> frame, unique_ptr<irt::S
   cout << "Muncher!!!!" <<endl;
   cout << endl;
   cout << endl;
+  instr_list = frame::proc_entry_exit2(frame,move(instr_list));
   regalloc::RegAllocator RA;
   auto ra_result = RA.regAllocate(*frame.get(), move(instr_list));
   cout << "Regallocate!!!!" <<endl;
   cout << endl;
   cout << endl;
   auto coloring = ra_result.coloring;
-  auto proc = frame::proc_entry_exit3(move(ra_result.instruction_list));
+  auto proc = frame::proc_entry_exit3(frame,move(ra_result.instruction_list));
   out.print_proc(move(proc), coloring);
   cout << "Print!!!!" <<endl;
   cout << endl;

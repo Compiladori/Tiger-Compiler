@@ -24,8 +24,8 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 unique_ptr<frame::FragList> SemanticChecker::translate(ast::Expression* exp) {
-  auto t = temp::Label("mainLevel");
-  shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("mainLevel"), vector<bool>());
+  auto t = temp::Label("tigermain");
+  shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("tigermain"), vector<bool>());
   clear(outermost);
   AssociatedExpType result = transExpression(outermost, exp);
   translator -> proc_entry_exit(outermost,move(result.tr_exp));

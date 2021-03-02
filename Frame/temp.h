@@ -54,6 +54,11 @@ static void print_labellist(LabelList const &input) {
     i.print();
   }
 }
+static void print_templist(TempList const &input) {
+  for (auto const &i : input) {
+    i.print();
+  }
+}
 /**
  * Map of temporaries
  * 
