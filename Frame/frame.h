@@ -70,7 +70,7 @@ class Frame {
   temp::Label name() { return _name; }
   AccessList &formals() { return _formals; }
   std::shared_ptr<Access> alloc_local(bool escape);
-
+  RegList get_rets();
   RegList get_arg_regs();
   RegList get_caller_saved_regs();
   RegList get_callee_saved_regs();

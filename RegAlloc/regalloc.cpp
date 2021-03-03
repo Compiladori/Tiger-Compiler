@@ -434,9 +434,10 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     instruction_list.print();
     assem::InstructionList current_inst_list = move(instruction_list);
     result res;
-    frame::RegToTempMap reg_to_temp_map = f.get_reg_to_temp_map();
-    for (auto it = reg_to_temp_map.begin(); it != reg_to_temp_map.end(); it++)
-        regs.push_back(it->second);
+    auto reg_map = f.get_reg_to_temp_map();
+    auto reg_list = f.get_rets();
+    for (auto it = reg_list.begin(); it != reg_list.end(); it++)
+        regs.push_back(reg_map[*it]);
     K = regs.size();
     temp::TempMap initial; 
     temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
