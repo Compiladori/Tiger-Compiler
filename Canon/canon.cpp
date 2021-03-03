@@ -137,8 +137,8 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
 pair<unique_ptr<Statement>, unique_ptr<Expression>> Canonizator::doExp(unique_ptr<Expression> exp) {
   if (auto binop = dynamic_cast<BinOp*>(exp.get())) {
     auto expList = make_unique<ExpressionList>();
-    expList->push_back(move(binop->left));
     expList->push_back(move(binop->right));
+    expList->push_back(move(binop->left));
     auto result = reorder(move(expList));
     binop->right = result.second->pop_front();
     binop->left = result.second->pop_front();
