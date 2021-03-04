@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <memory>
+#include <vector>
 #include "../AST/AST.h"
 #include "../Translation/translation.h"
 #include "environmentTable.h"
@@ -63,6 +64,8 @@ class SemanticChecker {
   std::stack<std::stack<ast::Symbol>> type_insertions, value_insertions;
   std::stack<temp::Label> break_insertions;
   std::unique_ptr<trans::Translator> translator;
+  std::vector<std::string> lib_fun;
+  bool isFromLib(std::string item) {return std::find(lib_fun.begin(), lib_fun.end(), item) != lib_fun.end();}
   auto getTypeEntry(const ast::Symbol &s) { return TypeEnv.getEntry(s); }
   auto getValueEntry(const ast::Symbol &s) { return ValueEnv.getEntry(s); }
   auto getBreakEntry() { return break_insertions.top(); }

@@ -54,6 +54,8 @@ void SemanticChecker::load_initial_values(shared_ptr<trans::Level> outermost) {
   insertValueEntry("concat", make_unique<FunEntry>(type_vector{TString, TString}, TString, outermost, make_shared<temp::Label>("concat")), true);
   insertValueEntry("not", make_unique<FunEntry>(type_vector{TInt}, TInt, outermost, make_shared<temp::Label>("not")), true);
   insertValueEntry("exit", make_unique<FunEntry>(type_vector{TInt}, TUnit, outermost, make_shared<temp::Label>("exit")), true);
+
+  lib_fun = {"print","flush","getchar","ord","chr","size","substring","concat","not","exit"};
 }
 void SemanticChecker::beginScope() {
   // Create a new scope without any initial insertions
@@ -198,8 +200,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
           throw error::semantic_error("Argument number " + to_string(index) + " has an unexpected type", exp->pos);
         }
       }
-
-      return AssociatedExpType(translator->callExp(false, fun_entry->funlvl, lvl, *fun_entry->label, move(explist)), fun_entry->result);
+      return AssociatedExpType(translator->callExp(isFromLib((*call_exp ->func).name), fun_entry->funlvl, lvl, *fun_entry->label, move(explist)), fun_entry->result);
     }
     // Error, the function wasn't declared in this scope
     throw error::semantic_error("Function \"" + call_exp->func->name + "\" wasn't declared in this scope", exp->pos);
