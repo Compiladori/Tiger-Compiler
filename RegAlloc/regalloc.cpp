@@ -136,20 +136,22 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
         }
     }
     coalescedNodes.push_back(v);
-    alias[v] = u;
-    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ )
-        moveList[u].push_back(*it);
+    if (! isIn(v, selectStack)) {
+        alias[v] = u;
+        for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ )
+            moveList[u].push_back(*it);
 
-    for ( auto it = adjacent(v).begin(); it != adjacent(v).end(); it++ ) {
-        addEdge(*it, v);
-        decrementDegree(*it);
-    }
-    if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
-        auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
-        if( it != freezeWorklist.end() ) {
-        freezeWorklist.erase(it);
+        for ( auto it = adjacent(v).begin(); it != adjacent(v).end(); it++ ) {
+            addEdge(*it, v);
+            decrementDegree(*it);
         }
-        spillWorklist.push_back(u);
+        if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
+            auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
+            if( it != freezeWorklist.end() ) {
+            freezeWorklist.erase(it);
+            }
+            spillWorklist.push_back(u);
+        }
     }
 }
 
@@ -469,4 +471,4 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     } while ( !spilledNodes.empty() );
     res.instruction_list = move(current_inst_list);
     return res;
-}
+}   
