@@ -61,7 +61,7 @@ unique_ptr<Statement> Canonizator::sequence(unique_ptr<Statement> stm1, unique_p
 unique_ptr<ExpressionList> Canonizator::getCallRList(unique_ptr<Expression> fun, unique_ptr<ExpressionList> args) {
   auto expList = make_unique<ExpressionList>();
   expList->push_back(move(fun));
-  for (int i = 0; i < args->size(); ++i)
+  for (int i = 0; i <= args->size(); ++i)
     expList->push_back(args->pop_front());
   return expList;
 }
