@@ -320,6 +320,12 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
             nodeColors[n] = i;
         }
     }
+    for (auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++){
+        if (isIn(getAlias(*it), spilledNodes))
+            spilledNodes.push_back(*it);
+        else 
+            coloring[(*it)._info] = coloring[getAlias(*it)._info];
+    }
     return coloring;
 }
 
