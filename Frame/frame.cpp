@@ -170,10 +170,10 @@ unique_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     string prolog = "# PROCEDURE " + (frame -> _name).name + "\n";
     int stack_pointer_offset = 100;
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
-    list.push_front(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+    list.push_front(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
     list = append_callee_saved_regs(frame,move(list));
     list.push_front(make_unique<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
-    list.push_front(make_unique<assem::Oper>("pushq %'s0", temp::TempList{reg_map["rsp"]},temp::TempList{reg_map["rsp"],reg_map["rbp"]}, temp::LabelList{}));
+    list.push_front(make_unique<assem::Oper>("pushq %'s0", temp::TempList{reg_map["rsp"]},temp::TempList{}, temp::LabelList{}));
     list.push_front(make_unique<assem::Label>((frame -> _name).name + ":",frame -> _name));
     return make_unique<assem::Procedure>(prolog, move(list), "# END\n");
 }

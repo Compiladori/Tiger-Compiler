@@ -293,6 +293,8 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
     while ( !selectStack.empty() ) {
         liveness::TempNode n = selectStack.back();
         selectStack.pop_back();
+        auto got = coloring.find(n._info); 
+        if(got != coloring.end()) continue;
         int ok_colors[K];
         for ( int i = 0; i < K; i++ ) ok_colors[i] = 1;    // 1 -> color disponible, 0 -> no disponible
         vector<liveness::TempNode> nodes = adjacentNodes[n];
