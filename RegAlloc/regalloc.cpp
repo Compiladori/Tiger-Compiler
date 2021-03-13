@@ -323,8 +323,11 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
     for (auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++){
         if (isIn(getAlias(*it), spilledNodes))
             spilledNodes.push_back(*it);
-        else 
-            coloring[(*it)._info] = coloring[getAlias(*it)._info];
+        else {
+            auto alias_color = coloring.find(getAlias(*it)._info);
+            if (alias_color != coloring.end())
+                coloring[(*it)._info] = alias_color->second;
+        }
     }
     return coloring;
 }
