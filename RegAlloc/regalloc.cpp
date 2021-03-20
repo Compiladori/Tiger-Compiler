@@ -49,13 +49,19 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
 }
 
 bool RegAllocator::isMoveRelated(liveness::TempNode node) {
-    for ( auto it = worklistMoves.begin(); it != worklistMoves.end(); it++ )
-        if ( it->src == node || it->dst == node )
-            return true;
-
+    vector <liveness::Move> moveListN = moveList[node]; 
+    vector<liveness::Move> unionWA = worklistMoves;
     for ( auto it = activeMoves.begin(); it != activeMoves.end(); it++ )
-        if ( it->src == node || it->dst == node )
-            return true;
+        unionWA.push_back(*it);
+
+    for ( auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++ ) {
+        for ( auto it2 = unionWA.begin(); it2 != unionWA.end(); it2++ ) {
+            if ( it1->src == it2->src and it1->dst == it2->dst ) {
+                // it1 == it2 en la interseccion de moveList y la union worklistMoves y activeMoves
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -470,7 +476,7 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
                 simplify();
             else if ( !worklistMoves.empty() )
                 coalesce();
-            else if ( !freezeWorklist.empty() )
+            else if ( !freezeWorklist.empty() ) 
                 freeze();
             else if ( !spillWorklist.empty() )
                 selectSpill();
