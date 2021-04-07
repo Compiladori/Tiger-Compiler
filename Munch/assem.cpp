@@ -66,6 +66,6 @@ void Move::output(std::ostream& os, temp::TempMap temp_map) const {
     os <<"    " << result << "\n";
 }
 
-void Oper::print() const { std::cout << "Oper( "; temp::print_templist(src);  temp::print_templist(dst);  temp::print_labellist(jumps); std::cout << " )"; }
+void Oper::print() const { std::cout << "Oper( " + assm + " ) ( "; temp::print_templist(src);  temp::print_templist(dst);  temp::print_labellist(jumps); std::cout << " )"; }
 void Label::print() const { std::cout << "Label( "+ label.name + " )"; }
 void Move::print() const { std::cout << "Move( "; temp::print_templist(src);  temp::print_templist(dst); std::cout << " )"; }

@@ -463,12 +463,12 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     for (auto it = regs.begin(); it != regs.end(); it++){
         initial[*it] = temp::Label(temp_to_reg_map[*it]);
     }
+    clearLists();
     do {
-        // g_nodes() : vector<flowgraph::Node>, g_adj : vector<flowgraph::Node>
-        // graph::Graph graph = flowgraph::assemFlowGraph(instruction_list);
-        clearLists();
         flowgraph::FlowGraph graph = flowgraph::FlowGraph(current_inst_list);
+        graph._flow_graph.show_graph();
         live_graph = liveness::Liveness(graph);    // moves : vector<pair<node,node>>, graph : G_graph
+        live_graph._interference_graph.show_graph();
         build(regs);
         makeWorklist();
         do {

@@ -66,6 +66,7 @@ class GenericList {
       p->print();
       std::cout << "), ";
     }
+  std::cout << std::endl;
   }
 };
 

@@ -76,9 +76,12 @@ class Graph {
     
     void show_graph() {
         for ( int i = 0; i < graph.size(); ++i ) {
-            std::cout << "Adjacent list for node" << i << std::endl;
+            std::cout << "node" << i << std::endl;
+            std::cout << "info: "; id_to_key[i].print();
+            std::cout << std::endl;
             for ( auto node = graph[i].begin(); node != graph[i].end(); ++node ) {
-                std::cout << *node << ", ";
+                id_to_key[*node].print();
+                std::cout << ", ";
             }
             std::cout << std::endl;
         }

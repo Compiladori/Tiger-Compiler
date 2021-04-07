@@ -26,6 +26,7 @@ struct TempNode {
     TempNode(temp::Temp info) : _info(info), key(total_num++) {}
     TempNode& operator=(const TempNode &node) {_info = node._info; key = node.key; return *this;}
     bool operator==(const TempNode &s) const { return _info == s._info; }
+    void print() { _info.print(); }
     TempNode() = default;
 };
 
