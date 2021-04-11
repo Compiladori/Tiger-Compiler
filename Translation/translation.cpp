@@ -8,7 +8,7 @@ using namespace std;
  * **/
 
 unique_ptr<TranslatedExp> Translator::simpleVar(shared_ptr<trans::Access> a, shared_ptr<trans::Level> l) {
-  unique_ptr<Temp> fp = make_unique<Temp>(frame::Frame::fp);
+  unique_ptr<Temp> fp = make_unique<Temp>(frame::Frame::fp_temp());
   if (a->_level.get() == l.get()) {
     return make_unique<Ex>(frame::exp(a->_access, move(fp)));
   }
@@ -65,7 +65,7 @@ unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, shared_ptr<trans::
     seq->push_back((*exp)->unEx());
   }
   if (!isLibFunc) {
-    unique_ptr<Expression> staticLink = frame::static_link_exp_base(make_unique<irt::Temp>(frame::Frame::fp));
+    unique_ptr<Expression> staticLink = frame::static_link_exp_base(make_unique<irt::Temp>(frame::Frame::fp_temp()));
     if (funlvl->_parent != currentlvl) {
       while (currentlvl) {
         staticLink = make_unique<Mem>(move(staticLink));
@@ -243,7 +243,7 @@ unique_ptr<TranslatedExp> Translator::arrayExp(unique_ptr<TranslatedExp> init, u
 
 void Translator::proc_entry_exit(shared_ptr<Level> lvl, unique_ptr<TranslatedExp> body) {
   unique_ptr<irt::Statement> stm = make_unique<Move>(
-      make_unique<Temp>(frame::Frame::rv),
+      make_unique<Temp>(frame::Frame::rv_temp()),
       body->unEx());
   unique_ptr<irt::Statement> procstm = frame::proc_entry_exit1(lvl->_frame, move(stm));
   auto frag = make_unique<frame::ProcFrag>(lvl->_frame, move(procstm));

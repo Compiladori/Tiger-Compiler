@@ -55,29 +55,21 @@ class Frame {
  public:
   temp::Label _name;
   static int wordSize;
-  static temp::Temp fp;
-  static temp::Temp eax;
-  static temp::Temp ecx;
-  static temp::Temp edx;
-  static temp::Temp ebx;
-  static temp::Temp esi;
-  static temp::Temp edi;
-  static temp::Temp sp;
-  static temp::Temp zero;
-  static temp::Temp ra;
-  static temp::Temp rv;
   Frame(temp::Label f, std::vector<bool> list);
   temp::Label name() { return _name; }
   AccessList &formals() { return _formals; }
   std::shared_ptr<Access> alloc_local(bool escape);
   RegList get_rets();
-  RegList get_arg_regs();
-  RegList get_caller_saved_regs();
-  RegList get_callee_saved_regs();
-  RegList get_calldefs();
+  static RegList get_arg_regs();
+  static RegList get_caller_saved_regs();
+  static RegList get_callee_saved_regs();
+  static RegList get_calldefs();
   static RegToTempMap register_temporaries;
-  RegToTempMap& get_reg_to_temp_map();
-  temp::TempMap get_temp_to_reg_map();
+  static RegToTempMap& get_reg_to_temp_map();
+  static temp::TempMap get_temp_to_reg_map();
+  static temp::Temp ra_temp();
+  static temp::Temp rv_temp();
+  static temp::Temp fp_temp();
 };
 
 struct Access {

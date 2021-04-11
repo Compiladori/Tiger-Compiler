@@ -13,17 +13,6 @@ using namespace frame;
 using namespace std;
 
 int Frame::wordSize = 8;
-temp::Temp Frame::fp = temp::Temp();
-temp::Temp Frame::eax = temp::Temp();
-temp::Temp Frame::ecx = temp::Temp();
-temp::Temp Frame::edx = temp::Temp();
-temp::Temp Frame::ebx = temp::Temp();
-temp::Temp Frame::esi = temp::Temp();
-temp::Temp Frame::edi = temp::Temp();
-temp::Temp Frame::sp = temp::Temp();
-temp::Temp Frame::zero = temp::Temp();
-temp::Temp Frame::ra = temp::Temp();
-temp::Temp Frame::rv = temp::Temp();
 
 Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
@@ -51,7 +40,15 @@ shared_ptr<Access> Frame::alloc_local(bool escape) {
     _locals.push_back(l);
     return l;
 }
-
+  temp::Temp Frame::ra_temp() {
+      return Frame::get_reg_to_temp_map()["rax"];
+  }
+  temp::Temp Frame::rv_temp() {
+      return Frame::get_reg_to_temp_map()["rax"];
+  }
+  temp::Temp Frame::fp_temp() {
+      return Frame::get_reg_to_temp_map()["rbp"];
+  }
 RegToTempMap Frame::register_temporaries;
 RegList Frame::get_rets() {return RegList{"rax","rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11","r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"};}
 RegList Frame::get_arg_regs() { return RegList{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}; }
