@@ -40,9 +40,8 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
         def.push_back((*i)->get_def());
     }
 
-    bool done = false;
-    while ( !done ) {
-        done = true;
+    bool flag = true;
+    while ( flag ) {
         for ( int i = 0; i < node_list.size(); ++i ) {
             _in = in[i];
             _out = out[i];
@@ -56,10 +55,9 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
                 temp_in = getUnion(temp_in, in[p]);
             }
             out[i] = temp_in;
-            if ( in[i] != _in || out[i] != _out ) done = false;
+            if ( in[i] != _in || out[i] != _out ) flag = false;
         }
     }
-
     return;
 }
 

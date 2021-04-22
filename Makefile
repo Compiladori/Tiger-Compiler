@@ -9,7 +9,7 @@ SH   = bash
 LDFLAGS = -std=c++17
 .PHONY: allD allC cleanD cleanC
 
-test: allC # executes Testing main
+test: allD # executes Testing main
 	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
 allD:
 	$(MAKE) -C AST depend
@@ -39,7 +39,7 @@ allD:
 	$(MAKE) -C FileHandler all
 
 
-default: allD
+default: allC
 	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
 allC:
 	$(MAKE) -C AST depend
