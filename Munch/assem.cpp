@@ -77,7 +77,7 @@ void Oper::print() const {
 }
 void Label::print() const { std::cout << "Label( " + label.name + " )"; }
 void Move::print() const {
-    std::cout << "Move( ";
+    std::cout << "Move( " + assm + " ) ( ";
     temp::print_templist(src);
     temp::print_templist(dst);
     std::cout << " )";
