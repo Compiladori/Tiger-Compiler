@@ -38,9 +38,9 @@ class RegAllocator {
     // v is added to this set and u put back on some work-list (or vice versa)
     temp::TempList regs;
     int K;                                      // regs.size()
+    vector<temp::Label> avail_colors;
     vector<liveness::TempNode> coloredNodes;    // nodes successfully colored
     vector<liveness::TempNode> selectStack;     // stack containing temporaries removed from the graph
-
     vector<liveness::Move> coalescedMoves;      // moves that have been coalesced
     vector<liveness::Move> constrainedMoves;    // moves whose source and target interfere
     vector<liveness::Move> frozenMoves;         // moves that will no longer be considered for coalescing

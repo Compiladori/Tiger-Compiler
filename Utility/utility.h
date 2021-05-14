@@ -60,12 +60,12 @@ class GenericList {
   auto insert(iterator i, T* e) { data.insert(i, std::unique_ptr<T>(e)); };
 
   void print() const {
-    std::cout << "List ";
+    std::cout << "List [" << std::endl;
     for (auto& p : data) {
-      std::cout << "(";
       p->print();
-      std::cout << "), ";
+      std::cout << std::endl;
     }
+      std::cout << "], ";
   std::cout << std::endl;
   }
 };

@@ -33,7 +33,7 @@ void Oper::output(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os <<"    " << result << "\n";
+    os << "    " << result << "\n";
 }
 
 void Label::output(std::ostream& os, temp::TempMap temp_map) const {
@@ -63,9 +63,22 @@ void Move::output(std::ostream& os, temp::TempMap temp_map) const {
             result.append(1, *it);
         }
     }
-    os <<"    " << result << "\n";
+    os << "    " << result << "\n";
 }
 
-void Oper::print() const { std::cout << "Oper( " + assm + " ) ( "; temp::print_templist(src);  temp::print_templist(dst);  temp::print_labellist(jumps); std::cout << " )"; }
-void Label::print() const { std::cout << "Label( "+ label.name + " )"; }
-void Move::print() const { std::cout << "Move( "; temp::print_templist(src);  temp::print_templist(dst); std::cout << " )"; }
+void Oper::print() const {
+    std::cout << "Oper( " + assm + " ) ( ";
+    temp::print_templist(src);
+    std::cout << " ) ( ";
+    temp::print_templist(dst);
+    std::cout << " ) ( ";
+    temp::print_labellist(jumps);
+    std::cout << " )";
+}
+void Label::print() const { std::cout << "Label( " + label.name + " )"; }
+void Move::print() const {
+    std::cout << "Move( ";
+    temp::print_templist(src);
+    temp::print_templist(dst);
+    std::cout << " )";
+}

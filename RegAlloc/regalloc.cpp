@@ -5,7 +5,7 @@ using namespace std;
 
 void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v) {
     if ( !isIn(u, adjacentNodes[v]) and !(u == v) ) {
-        if ( !isIn(u._info, regs) ) { // nunca va a estar en regs 
+        if ( !isIn(u._info, regs) ) {    // nunca va a estar en regs
             adjacentNodes[u].push_back(v);
             degree[u] = degree[u] + 1;
         }
@@ -23,13 +23,12 @@ vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n) {
         except.push_back(*it);
     for ( auto it1 = adjList.begin(); it1 != adjList.end(); ) {
         auto it2 = find(except.begin(), except.end(), *it1);
-        if ( it2 != except.end() ){
+        if ( it2 != except.end() ) {
             it1 = adjList.erase(it1);
 
         } else {
             it1++;
         }
-
     }
     return adjList;
 }
@@ -49,7 +48,7 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
 }
 
 bool RegAllocator::isMoveRelated(liveness::TempNode node) {
-    vector <liveness::Move> moveListN = moveList[node]; 
+    vector<liveness::Move> moveListN = moveList[node];
     vector<liveness::Move> unionWA = worklistMoves;
     for ( auto it = activeMoves.begin(); it != activeMoves.end(); it++ )
         unionWA.push_back(*it);
@@ -68,13 +67,13 @@ bool RegAllocator::isMoveRelated(liveness::TempNode node) {
 void RegAllocator::decrementDegree(liveness::TempNode m) {
     auto d = degree[m];
     degree[m] = d - 1;
-    if ( d == K && !isIn(m._info, regs) )   {
+    if ( d == K && !isIn(m._info, regs) ) {
         vector<liveness::TempNode> adj = adjacent(m);
         adj.push_back(m);
         enableMoves(adj);
         auto it = find(spillWorklist.begin(), spillWorklist.end(), m);
-        if( it != spillWorklist.end() ){
-        spillWorklist.erase(it);
+        if ( it != spillWorklist.end() ) {
+            spillWorklist.erase(it);
         }
 
         if ( isMoveRelated(m) )
@@ -98,8 +97,8 @@ void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
 void RegAllocator::addWorklist(liveness::TempNode node) {
     if ( !isIn(node._info, regs) and !isMoveRelated(node) && (degree[node] < K) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), node);
-        if( it != freezeWorklist.end() ){
-        freezeWorklist.erase(it);
+        if ( it != freezeWorklist.end() ) {
+            freezeWorklist.erase(it);
         }
         simplifyWorklist.push_back(node);
     }
@@ -125,39 +124,37 @@ bool RegAllocator::conservative(vector<liveness::TempNode> nodes1, vector<livene
 
 liveness::TempNode RegAllocator::getAlias(liveness::TempNode node) {
     if ( isIn(node, coalescedNodes) )
-        return getAlias(alias[node]);
+        return getAlias(alias.at(node));
     return node;
 }
 
 void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     if ( isIn(v, freezeWorklist) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), v);
-        if( it != freezeWorklist.end()){
-        freezeWorklist.erase(it);
+        if ( it != freezeWorklist.end() ) {
+            freezeWorklist.erase(it);
         }
     } else {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
-        if( it != spillWorklist.end()){
-        spillWorklist.erase(it);
+        if ( it != spillWorklist.end() ) {
+            spillWorklist.erase(it);
         }
     }
     coalescedNodes.push_back(v);
-    if (! isIn(v, selectStack)) {
-        alias[v] = u;
-        for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ )
-            moveList[u].push_back(*it);
+    alias[v] = u;
+    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ )
+        moveList[u].push_back(*it);
 
-        for ( auto it = adjacent(v).begin(); it != adjacent(v).end(); it++ ) {
-            addEdge(*it, v);
-            decrementDegree(*it);
-        }
-        if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
-            auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
-            if( it != freezeWorklist.end() ) {
+    for ( auto it = adjacent(v).begin(); it != adjacent(v).end(); it++ ) {
+        addEdge(*it, v);
+        decrementDegree(*it);
+    }
+    if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
+        auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
+        if ( it != freezeWorklist.end() ) {
             freezeWorklist.erase(it);
-            }
-            spillWorklist.push_back(u);
         }
+        spillWorklist.push_back(u);
     }
 }
 
@@ -242,13 +239,13 @@ void RegAllocator::coalesce() {
     auto n = worklistMoves.back();
     liveness::TempNode x = getAlias(n.src);
     liveness::TempNode y = getAlias(n.dst);
-    liveness::TempNode u = x, v = y; //liveness::TempNode u, v;
+    liveness::TempNode u = x, v = y;    //liveness::TempNode u, v;
     if ( isIn(y._info, regs) ) {
         u = y;
         v = x;
-    } //else {
-       // u = x;
-       // v = y;
+    }    //else {
+         // u = x;
+         // v = y;
     //}
     worklistMoves.pop_back();
     if ( u == v ) {
@@ -297,41 +294,32 @@ void RegAllocator::selectSpill() {    // heuristic
 temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
     temp::TempMap coloring = initial;
     while ( !selectStack.empty() ) {
+        auto ok_colors = avail_colors;    // todos los colores disponibles
         liveness::TempNode n = selectStack.back();
         selectStack.pop_back();
-        auto got = coloring.find(n._info); 
-        if(got != coloring.end()) continue;
-        int ok_colors[K];
-        for ( int i = 0; i < K; i++ ) ok_colors[i] = 1;    // 1 -> color disponible, 0 -> no disponible
+        if ( coloring.find(n._info) != coloring.end() ) continue;
         vector<liveness::TempNode> nodes = adjacentNodes[n];
         for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
-            if ( isIn(getAlias(*it), coloredNodes) or isIn(getAlias(*it)._info, regs) ) {
-                int color = nodeColors[getAlias(*it)];
-                ok_colors[color] = 0;
+            auto alias_node = getAlias(*it);
+            auto alias_temp = alias_node._info;
+            if ( isIn(alias_node, coloredNodes) or isIn(alias_temp, regs) ) {
+                auto color = coloring.at(alias_temp);
+                ok_colors.erase(find(ok_colors.begin(), ok_colors.end(), color));
             }
         }
-        // ok_colors == {}
-        int i;
-        temp::Label avail_color;
-        for ( i = 0; i < K; i++ )
-            if ( ok_colors[i] ) {
-                avail_color = coloring[regs[i]];
-                break;
-            }
-        if ( i == K )    // ok_colors is empty
-            spilledNodes.push_back(n);
-        else {
+        if ( !ok_colors.empty() ) {
+            coloring[n._info] = ok_colors.front();
             coloredNodes.push_back(n);
-            coloring[n._info] = avail_color;
-            nodeColors[n] = i;
+        } else {
+            spilledNodes.push_back(n);
         }
     }
-    for (auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++){
-        if (isIn(getAlias(*it), spilledNodes))
+    for ( auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++ ) {
+        if ( isIn(getAlias(*it), spilledNodes) )
             spilledNodes.push_back(*it);
         else {
             auto alias_color = coloring.find(getAlias(*it)._info);
-            if (alias_color != coloring.end())
+            if ( alias_color != coloring.end() )
                 coloring[(*it)._info] = alias_color->second;
         }
     }
@@ -453,15 +441,18 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     instruction_list.print();
     assem::InstructionList current_inst_list = move(instruction_list);
     result res;
+    // aca tenemos que definir los colores que se van a usar y un precoloreo inicial
     auto reg_map = f.get_reg_to_temp_map();
     auto reg_list = f.get_rets();
-    for (auto it = reg_list.begin(); it != reg_list.end(); it++)
+    for ( auto it = reg_list.begin(); it != reg_list.end(); it++ )
         regs.push_back(reg_map[*it]);
     K = regs.size();
-    temp::TempMap initial; 
+    temp::TempMap initial;
     temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
-    for (auto it = regs.begin(); it != regs.end(); it++){
-        initial[*it] = temp::Label(temp_to_reg_map[*it]);
+    for ( auto it = regs.begin(); it != regs.end(); it++ ) {
+        auto lbl = temp::Label(temp_to_reg_map[*it]);
+        initial[*it] = lbl;
+        avail_colors.push_back(lbl);
     }
     clearLists();
     do {
@@ -476,7 +467,7 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
                 simplify();
             else if ( !worklistMoves.empty() )
                 coalesce();
-            else if ( !freezeWorklist.empty() ) 
+            else if ( !freezeWorklist.empty() )
                 freeze();
             else if ( !spillWorklist.empty() )
                 selectSpill();
@@ -488,4 +479,4 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     } while ( !spilledNodes.empty() );
     res.instruction_list = move(current_inst_list);
     return res;
-}   
+}
