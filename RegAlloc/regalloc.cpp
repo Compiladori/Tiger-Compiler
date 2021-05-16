@@ -129,11 +129,9 @@ liveness::TempNode RegAllocator::getAlias(liveness::TempNode node) {
 }
 
 void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
-    if ( isIn(v, freezeWorklist) ) {
-        auto it = find(freezeWorklist.begin(), freezeWorklist.end(), v);
-        if ( it != freezeWorklist.end() ) {
-            freezeWorklist.erase(it);
-        }
+    auto it = find(freezeWorklist.begin(), freezeWorklist.end(), v);
+    if ( it != freezeWorklist.end() ) {
+        freezeWorklist.erase(it);
     } else {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
         if ( it != spillWorklist.end() ) {
@@ -142,18 +140,17 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     }
     coalescedNodes.push_back(v);
     alias[v] = u;
-    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ )
+    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ ){
         moveList[u].push_back(*it);
-
-    for ( auto it = adjacent(v).begin(); it != adjacent(v).end(); it++ ) {
-        addEdge(*it, v);
+    }
+    auto adjacentNodes = adjacent(v);
+    for ( auto it = adjacentNodes.begin(); it != adjacentNodes.end(); it++ ) {
+        addEdge(*it, u);
         decrementDegree(*it);
     }
-    if ( degree[u] >= K and isIn(u, freezeWorklist) ) {
-        auto it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
-        if ( it != freezeWorklist.end() ) {
-            freezeWorklist.erase(it);
-        }
+    it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
+    if ( degree[u] >= K and it != freezeWorklist.end() ) {
+        freezeWorklist.erase(it);
         spillWorklist.push_back(u);
     }
 }
@@ -237,17 +234,14 @@ void RegAllocator::simplify() {    // remove non-move-related nodes of low (< K 
 
 void RegAllocator::coalesce() {
     auto n = worklistMoves.back();
+    worklistMoves.pop_back();
     liveness::TempNode x = getAlias(n.src);
     liveness::TempNode y = getAlias(n.dst);
     liveness::TempNode u = x, v = y;    //liveness::TempNode u, v;
     if ( isIn(y._info, regs) ) {
         u = y;
         v = x;
-    }    //else {
-         // u = x;
-         // v = y;
-    //}
-    worklistMoves.pop_back();
+    }
     if ( u == v ) {
         coalescedMoves.push_back(n);
         addWorklist(u);
