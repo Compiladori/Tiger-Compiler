@@ -109,10 +109,10 @@ unique_ptr<Statement> Canonizator::doStm(unique_ptr<Statement> stm) {
       return sequence(move(result.first), move(stm));
     } else if (auto mem = dynamic_cast<Mem*>(move_stm->left.get())) {
       auto expList = make_unique<ExpressionList>();
-      expList->push_back(move(move_stm->left));
+      expList->push_back(move(mem -> exp ));
       expList->push_back(move(move_stm->right));
       auto result = reorder(move(expList));
-      move_stm->left = result.second->pop_front();
+      mem -> exp = result.second->pop_front();
       move_stm->right = result.second->pop_front();
       return sequence(move(result.first), move(stm));
     } else if (auto eseq = dynamic_cast<Eseq*>(move_stm->left.get())) {

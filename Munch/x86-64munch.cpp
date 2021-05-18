@@ -93,13 +93,13 @@ void Muncher::munchStatement(irt::Statement* stm) {
         auto mem_dst_stm = dynamic_cast<irt::Mem*>(move_stm->left.get());
         if ( mem_dst_stm ) {
             auto mem_src_stm = dynamic_cast<irt::Mem*>(move_stm->right.get());
-            if( mem_src_stm ){
-            /* MOVE((MEM e1), (MEM e2)) */
-            emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(mem_src_stm->exp.get())}, temp::TempList{munchExpression(mem_dst_stm->exp.get())}, temp::LabelList{}));
-            return;
+            if ( mem_src_stm ) {
+                /* MOVE((MEM e1), (MEM e2)) */
+                emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(mem_src_stm->exp.get())}, temp::TempList{munchExpression(mem_dst_stm->exp.get())}, temp::LabelList{}));
+                return;
             }
             mov_code = "movq %'s0, (%'s1)";
-            emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(move_stm->right.get()),munchExpression(mem_dst_stm->exp.get())}, temp::TempList{}, temp::LabelList{}));
+            emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(move_stm->right.get()), munchExpression(mem_dst_stm->exp.get())}, temp::TempList{}, temp::LabelList{}));
             return;
         }
         auto temp_dst_stm = dynamic_cast<irt::Temp*>(move_stm->left.get());
@@ -250,16 +250,23 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp) {
                 // Adding the stack pointer as an extra last argument
                 call_exp->args->push_back(make_unique<irt::Temp>(rsp));
             }
+            auto calldefs = munch_frame.get_calldefs();
+            for ( auto& reg : munch_frame.get_calldefs() ) {
+                emit(make_unique<assem::Oper>("pushq %'s0 ", temp::TempList{reg_to_temp[reg]}, temp::TempList{rsp}, temp::LabelList{}));
+            }
 
             std::string call_code = "call " + fun_name_exp->name.name;
             temp::TempList srcArgsTemps = munchArgs(call_exp->args.get());
+            calldefsTemps.push_back(rax);
             emit(make_unique<assem::Oper>(call_code, srcArgsTemps, calldefsTemps, temp::LabelList{}));
 
             if ( stack_pointer_offset > 0 ) {
                 std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'d0";
                 emit(make_unique<assem::Oper>(offset_code, temp::TempList{rsp}, temp::TempList{rsp}, temp::LabelList{}));
             }
-
+            for ( auto reg = calldefs.rbegin(); reg < calldefs.rend(); reg++ ) {
+                emit(make_unique<assem::Oper>("popq %'d0 ", temp::TempList{rsp}, temp::TempList{reg_to_temp[*reg]}, temp::LabelList{}));
+            }
             return rax;
         } else {
             throw error::internal_error("Unexpected non Name expression of FUN while munching a CALL statement", __FILE__);
