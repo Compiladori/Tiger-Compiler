@@ -52,7 +52,7 @@ shared_ptr<Access> Frame::alloc_local(bool escape) {
 RegToTempMap Frame::register_temporaries;
 RegList Frame::get_rets() {return RegList{"rax","rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11","r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"};}
 RegList Frame::get_arg_regs() { return RegList{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}; }
-RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11"}; }
+RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11", "rcx" ,"rsi", "rip", "rdx", "rdi", "r8", "r9"}; }
 RegList Frame::get_callee_saved_regs() { return RegList{"r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
 RegList Frame::get_calldefs() { return Frame::get_caller_saved_regs(); }
 RegToTempMap &Frame::get_reg_to_temp_map() {

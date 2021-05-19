@@ -11,6 +11,8 @@
 #include "../Liveness/flowgraph.h"
 #include "../Liveness/liveness.h"
 #include "../Munch/assem.h"
+#include "../Utility/error.h"
+
 namespace regalloc {
 
 using namespace std;
@@ -59,6 +61,7 @@ class RegAllocator {
     vector<liveness::TempNode> adjacent(liveness::TempNode n);
     unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjacentNodes;
     vector<liveness::Move> nodeMoves(liveness::TempNode n);
+    temp::TempMap coloring;
     bool isMoveRelated(liveness::TempNode node);
     void decrementDegree(liveness::TempNode m);
     void enableMoves(vector<liveness::TempNode> nodes);
@@ -78,7 +81,7 @@ class RegAllocator {
     void coalesce();
     void freeze();
     void selectSpill();
-    temp::TempMap assignColors(temp::TempMap initial);
+    temp::TempMap assignColors();
     assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
 
    public:

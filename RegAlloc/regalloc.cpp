@@ -212,6 +212,8 @@ void RegAllocator::build(temp::TempList regs) {
 void RegAllocator::makeWorklist() {
     vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
     for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
+        if(coloring.find((*it)._info) != coloring.end()) continue;
+        std::cout << "makeworklist with: " << (*it)._info.num << std::endl; 
         int deg = degree[*it];
         if ( deg >= K )
             spillWorklist.push_back(*it);
@@ -285,13 +287,12 @@ void RegAllocator::selectSpill() {    // heuristic
     freezeMoves(tmp);
 }
 
-temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
-    temp::TempMap coloring = initial;
+temp::TempMap RegAllocator::assignColors() {
     while ( !selectStack.empty() ) {
         auto ok_colors = avail_colors;    // todos los colores disponibles
         liveness::TempNode n = selectStack.back();
         selectStack.pop_back();
-        if ( coloring.find(n._info) != coloring.end() ) continue;
+        // if ( coloring.find(n._info) != coloring.end() ) continue;
         vector<liveness::TempNode> nodes = adjacentNodes[n];
         for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
             auto alias_node = getAlias(*it);
@@ -302,19 +303,26 @@ temp::TempMap RegAllocator::assignColors(temp::TempMap initial) {
             }
         }
         if ( !ok_colors.empty() ) {
-            coloring[n._info] = ok_colors.front();
+            auto color = ok_colors.front();
+            coloring[n._info] = color;
+            std::cout << "assigning color: " + color.name + " to :"<< n._info.num << std::endl; 
             coloredNodes.push_back(n);
         } else {
             spilledNodes.push_back(n);
         }
     }
+    std::cout << "coalesced Coloring" << std::endl;
     for ( auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++ ) {
         if ( isIn(getAlias(*it), spilledNodes) )
             spilledNodes.push_back(*it);
         else {
             auto alias_color = coloring.find(getAlias(*it)._info);
-            if ( alias_color != coloring.end() )
+            if ( alias_color != coloring.end() ){
+            std::cout << "assigning color: " + alias_color->second.name + " to :"<< (*it)._info.num << std::endl; 
                 coloring[(*it)._info] = alias_color->second;
+            }else {
+                throw error::internal_error("coalesced node not finded in coloring", __FILE__);
+            }
         }
     }
     return coloring;
@@ -441,13 +449,14 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     for ( auto it = reg_list.begin(); it != reg_list.end(); it++ )
         regs.push_back(reg_map[*it]);
     K = regs.size();
-    temp::TempMap initial;
+    temp::TempMap initial_coloring;
     temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
     for ( auto it = regs.begin(); it != regs.end(); it++ ) {
         auto lbl = temp::Label(temp_to_reg_map[*it]);
-        initial[*it] = lbl;
+        initial_coloring[*it] = lbl;
         avail_colors.push_back(lbl);
     }
+    coloring = initial_coloring;
     clearLists();
     do {
         flowgraph::FlowGraph graph = flowgraph::FlowGraph(current_inst_list);
@@ -466,7 +475,7 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
             else if ( !spillWorklist.empty() )
                 selectSpill();
         } while ( !simplifyWorklist.empty() or !worklistMoves.empty() or !freezeWorklist.empty() or !spillWorklist.empty() );
-        res.coloring = assignColors(initial);    // initial: map with registers
+        res.coloring = assignColors();
         if ( !spilledNodes.empty() ) {
             current_inst_list = rewriteProgram(f, move(current_inst_list));
         }
