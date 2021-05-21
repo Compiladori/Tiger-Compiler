@@ -78,7 +78,7 @@ void Muncher::munchStatement(irt::Statement* stm) {
     if ( auto cjump_stm = dynamic_cast<irt::Cjump*>(stm) ) {
         /* CJUMP(relation_op, left, right, true_label, false_label) */
         std::string comp_code = "cmpq %'s0, %'s1";
-        emit(make_unique<assem::Oper>(comp_code, temp::TempList{munchExpression(cjump_stm->left.get()), munchExpression(cjump_stm->right.get())}, temp::TempList{}, temp::LabelList{}));
+        emit(make_unique<assem::Oper>(comp_code, temp::TempList{munchExpression(cjump_stm->right.get()), munchExpression(cjump_stm->left.get())}, temp::TempList{}, temp::LabelList{}));
 
         std::string jump_code = relation_operation_code[cjump_stm->rel_op] + " 'j0";
         emit(make_unique<assem::Oper>(jump_code, temp::TempList{}, temp::TempList{}, temp::LabelList{cjump_stm->true_label, cjump_stm->false_label}));
