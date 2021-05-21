@@ -1,24 +1,32 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
-void print(char* p )
-{
+void print(char *p) {
     printf(p);
 }
 
-int size(char *s)
-{
+int size(char *s) {
     int c = 0;
-    while(*s) {
+    while ( *s ) {
         c++;
         s++;
     }
     return c;
 }
+int *allocRecord(int size) {
+    int i;
+    int *p, *a;
+    p = a = (int *)malloc(size);
+    for ( i = 0; i < size; i += sizeof(int) ) *p++ = 0;
+    return a;
+}
 
+void printi(int k) {
+    printf("%d", k);
+}
 
-int main()
-{
+int main() {
+    printf("\n");
     return tigermain(0 /* static link */);
 }
