@@ -140,7 +140,7 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     }
     coalescedNodes.push_back(v);
     alias[v] = u;
-    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ ){
+    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ ) {
         moveList[u].push_back(*it);
     }
     auto adjacentNodes = adjacent(v);
@@ -212,8 +212,8 @@ void RegAllocator::build(temp::TempList regs) {
 void RegAllocator::makeWorklist() {
     vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
     for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
-        if(coloring.find((*it)._info) != coloring.end()) continue;
-        std::cout << "makeworklist with: " << (*it)._info.num << std::endl; 
+        if ( coloring.find((*it)._info) != coloring.end() ) continue;
+        std::cout << "makeworklist with: " << (*it)._info.num << std::endl;
         int deg = degree[*it];
         if ( deg >= K )
             spillWorklist.push_back(*it);
@@ -299,13 +299,16 @@ temp::TempMap RegAllocator::assignColors() {
             auto alias_temp = alias_node._info;
             if ( isIn(alias_node, coloredNodes) or isIn(alias_temp, regs) ) {
                 auto color = coloring.at(alias_temp);
-                ok_colors.erase(find(ok_colors.begin(), ok_colors.end(), color));
+                auto toErease = find(ok_colors.begin(), ok_colors.end(), color);
+                if ( toErease != ok_colors.end() ) {
+                    ok_colors.erase(toErease);
+                }
             }
         }
         if ( !ok_colors.empty() ) {
             auto color = ok_colors.front();
             coloring[n._info] = color;
-            std::cout << "assigning color: " + color.name + " to :"<< n._info.num << std::endl; 
+            std::cout << "assigning color: " + color.name + " to :" << n._info.num << std::endl;
             coloredNodes.push_back(n);
         } else {
             spilledNodes.push_back(n);
@@ -317,10 +320,10 @@ temp::TempMap RegAllocator::assignColors() {
             spilledNodes.push_back(*it);
         else {
             auto alias_color = coloring.find(getAlias(*it)._info);
-            if ( alias_color != coloring.end() ){
-            std::cout << "assigning color: " + alias_color->second.name + " to :"<< (*it)._info.num << std::endl; 
+            if ( alias_color != coloring.end() ) {
+                std::cout << "assigning color: " + alias_color->second.name + " to :" << (*it)._info.num << std::endl;
                 coloring[(*it)._info] = alias_color->second;
-            }else {
+            } else {
                 throw error::internal_error("coalesced node not finded in coloring", __FILE__);
             }
         }
