@@ -12,7 +12,7 @@
 using namespace frame;
 using namespace std;
 
-int Frame::wordSize = 8;
+int Frame::wordSize = 4;
 
 Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
@@ -40,19 +40,19 @@ shared_ptr<Access> Frame::alloc_local(bool escape) {
     _locals.push_back(l);
     return l;
 }
-  temp::Temp Frame::ra_temp() {
-      return Frame::get_reg_to_temp_map()["rax"];
-  }
-  temp::Temp Frame::rv_temp() {
-      return Frame::get_reg_to_temp_map()["rax"];
-  }
-  temp::Temp Frame::fp_temp() {
-      return Frame::get_reg_to_temp_map()["rbp"];
-  }
+temp::Temp Frame::ra_temp() {
+    return Frame::get_reg_to_temp_map()["rax"];
+}
+temp::Temp Frame::rv_temp() {
+    return Frame::get_reg_to_temp_map()["rax"];
+}
+temp::Temp Frame::fp_temp() {
+    return Frame::get_reg_to_temp_map()["rbp"];
+}
 RegToTempMap Frame::register_temporaries;
-RegList Frame::get_rets() {return RegList{"rax","rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11","r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"};}
+RegList Frame::get_rets() { return RegList{"rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
 RegList Frame::get_arg_regs() { return RegList{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}; }
-RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11", "rcx" ,"rsi", "rip", "rdx", "rdi", "r8", "r9"}; }
+RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11", "rcx", "rsi", "rip", "rdx", "rdi", "r8", "r9"}; }
 RegList Frame::get_callee_saved_regs() { return RegList{"r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
 RegList Frame::get_calldefs() { return Frame::get_caller_saved_regs(); }
 RegToTempMap &Frame::get_reg_to_temp_map() {
@@ -79,7 +79,7 @@ RegToTempMap &Frame::get_reg_to_temp_map() {
 temp::TempMap Frame::get_temp_to_reg_map() {
     RegToTempMap reg_to_temp = get_reg_to_temp_map();
     temp::TempMap temp_to_reg;
-    for ( auto const &pack : reg_to_temp )   
+    for ( auto const &pack : reg_to_temp )
         temp_to_reg[pack.second] = temp::Label(pack.first);
     return temp_to_reg;
 }
@@ -124,30 +124,30 @@ unique_ptr<irt::Expression> frame::external_call(string s, unique_ptr<irt::Expre
 unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, unique_ptr<irt::Statement> stm) {
     return move(stm);
 }
-assem::InstructionList restore_callee_saved_regs(std::shared_ptr<Frame> frame,assem::InstructionList list) {
-    auto  regs = frame -> get_callee_saved_regs();
-    auto reg_map = frame -> get_reg_to_temp_map();
+assem::InstructionList restore_callee_saved_regs(std::shared_ptr<Frame> frame, assem::InstructionList list) {
+    auto regs = frame->get_callee_saved_regs();
+    auto reg_map = frame->get_reg_to_temp_map();
     std::string code = "popq  %'s0";
     for ( auto &reg_name : regs ) {
-        list.push_back(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]},temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+        list.push_back(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     }
     return move(list);
 }
-assem::InstructionList append_callee_saved_regs(std::shared_ptr<Frame> frame,assem::InstructionList list) {
-    auto  regs = frame -> get_callee_saved_regs();
-    auto reg_map = frame -> get_reg_to_temp_map();
+assem::InstructionList append_callee_saved_regs(std::shared_ptr<Frame> frame, assem::InstructionList list) {
+    auto regs = frame->get_callee_saved_regs();
+    auto reg_map = frame->get_reg_to_temp_map();
     std::string code = "pushq  %'s0";
     for ( auto &reg_name : regs ) {
-        list.push_front(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]},temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+        list.push_front(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     }
     return move(list);
 }
 
 // This function appends a “sink” instruction to the function body to tell the
 // register allocator that certain registers are live at procedure exit
-assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame,assem::InstructionList list) {
-    RegList  regs = frame -> get_callee_saved_regs();
-    auto reg_map = frame -> get_reg_to_temp_map();
+assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, assem::InstructionList list) {
+    RegList regs = frame->get_callee_saved_regs();
+    auto reg_map = frame->get_reg_to_temp_map();
     temp::TempList return_sink;
     for ( auto &reg_name : regs ) {
         return_sink.push_back(Frame::register_temporaries[reg_name]);
@@ -155,21 +155,21 @@ assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame,asse
     int stack_pointer_offset = 100;
     std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_back(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    list = restore_callee_saved_regs(frame,move(list));
-    list.push_back(make_unique<assem::Oper>("leave", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"],reg_map["rbp"]}, temp::LabelList{}));
-    list.push_back(make_unique<assem::Oper>("ret", return_sink,temp::TempList{},  temp::LabelList{}));
+    list = restore_callee_saved_regs(frame, move(list));
+    list.push_back(make_unique<assem::Oper>("leave", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"], reg_map["rbp"]}, temp::LabelList{}));
+    list.push_back(make_unique<assem::Oper>("ret", return_sink, temp::TempList{}, temp::LabelList{}));
     return list;
 }
 
-unique_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> frame,assem::InstructionList list) {
-    RegList  regs = frame -> get_callee_saved_regs();
-    auto reg_map = frame -> get_reg_to_temp_map();
-    string prolog = "# PROCEDURE " + (frame -> _name).name + "\n";
+unique_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list) {
+    RegList regs = frame->get_callee_saved_regs();
+    auto reg_map = frame->get_reg_to_temp_map();
+    string prolog = "# PROCEDURE " + (frame->_name).name + "\n";
     int stack_pointer_offset = 100;
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_front(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
     list.push_front(make_unique<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
-    list = append_callee_saved_regs(frame,move(list));
-    list.push_front(make_unique<assem::Label>((frame -> _name).name + ":",frame -> _name));
+    list = append_callee_saved_regs(frame, move(list));
+    list.push_front(make_unique<assem::Label>((frame->_name).name + ":", frame->_name));
     return make_unique<assem::Procedure>(prolog, move(list), "# END\n");
 }
