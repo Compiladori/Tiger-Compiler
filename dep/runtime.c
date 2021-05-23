@@ -14,11 +14,11 @@ int size(char *s) {
     }
     return c;
 }
-int *allocRecord(int size) {
+long long *allocRecord(int size) {
     int i;
     int *p, *a;
-    p = a = (int *)malloc(size);
-    for ( i = 0; i < size; i += sizeof(int) ) *p++ = 0;
+    p = a = (long long *)malloc(size);
+    for ( i = 0; i < size; i += sizeof(long long) ) *p++ = 0;
     return a;
 }
 
@@ -26,9 +26,9 @@ void printi(int k) {
     printf("%d", k);
 }
 
-int *initArray(int size, int init) {
-    int i;
-    int *a = (int *)malloc(size * sizeof(int));
+long long *initArray(int size, int init) {
+    long long i;
+    long long *a = (long long *)malloc(size * sizeof(long long));
     for ( i = 0; i < size; i++ ) a[i] = init;
     return a;
 }
