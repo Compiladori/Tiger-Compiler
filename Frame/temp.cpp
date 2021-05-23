@@ -6,4 +6,4 @@ using namespace temp;
 int Temp::total_num = 20;
 
 /** Label **/
-int Label::labels = 10;
+int Label::labels = 0;

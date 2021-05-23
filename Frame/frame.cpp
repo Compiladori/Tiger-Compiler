@@ -2,41 +2,41 @@
 
 /*
   Frame of x86_64 architecture with AMD64 ABI calling convention
-  *------------* <-%rbp
-  *  saved rbp *<- %rbp -8
-  *            *<- %rbp -16
-  *            *<- %rbp -24
-  *            *<- %rbp -32
+  *      arg n       * <-%rbp + (n + 5) * 8
+  *      arg 7       * <-%rbp + 16
+  * return  adddress * <-%rbp + 8
+  *   ------------   * <-%rbp
+  *     saved rbp    *<- %rbp -8
+  *     local 1      *<- %rbp -16
+  *     ----         *<- %rbp -24
+  *     local n      *<- %rbp - 8 * n
 */
 
 using namespace frame;
 using namespace std;
 
-int Frame::wordSize = 4;
+int Frame::wordSize = 8;
 
 Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
-    _offset = -16;
+    _offset = -wordSize;
     for ( bool i : list ) {
-        if ( i ) {
-            unique_ptr<InFrame> arg = make_unique<InFrame>(_offset);
-            _offset -= 8;
-            _formals.push_back(move(arg));
-        } else {
-            unique_ptr<InReg> arg = make_unique<InReg>();
-            _formals.push_back(move(arg));
-        }
+        _formals.push_back(alloc_helper(i));
     }
 }
 
-shared_ptr<Access> Frame::alloc_local(bool escape) {
+shared_ptr<Access> Frame::alloc_helper(bool escape) {
     if ( escape ) {
         shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
-        _offset -= 8;
-        _locals.push_back(l);
+        _offset -= Frame::wordSize;
         return l;
     }
     shared_ptr<InReg> l = make_shared<InReg>();
+    return l;
+}
+
+shared_ptr<Access> Frame::alloc_local(bool escape) {
+    auto l = alloc_helper(escape);
     _locals.push_back(l);
     return l;
 }
@@ -116,14 +116,46 @@ unique_ptr<irt::Expression> frame::exp_with_static_link(shared_ptr<Access> acc, 
             make_unique<irt::BinOp>(
                 irt::Plus,
                 move(staticLink),
-                make_unique<irt::Const>(in_frame->offset - 8)));
+                make_unique<irt::Const>(in_frame->offset - Frame::wordSize)));
 }
 unique_ptr<irt::Expression> frame::external_call(string s, unique_ptr<irt::ExpressionList> args) {
     return make_unique<irt::Call>(make_unique<irt::Name>(temp::Label(s)), move(args));
 }
-unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, unique_ptr<irt::Statement> stm) {
-    return move(stm);
+
+unique_ptr<irt::Statement> process_formal(std::shared_ptr<Access> formal, int arg_indx) {
+    auto arg_temps = Frame::get_arg_regs();
+    int arg_temps_length = arg_temps.size();
+    auto temp_map = Frame::get_reg_to_temp_map();
+    unique_ptr<irt::Expression> src, move_args;
+    if ( arg_indx < arg_temps_length ) {
+        src = make_unique<irt::Temp>(temp_map[arg_temps[arg_indx]]);
+    } else {
+        src = make_unique<irt::Mem>(
+            make_unique<irt::BinOp>(irt::Plus,
+                                    make_unique<irt::Const>((arg_indx - arg_temps_length + 2) * Frame::wordSize),
+                                    make_unique<irt::Temp>(frame::Frame::fp_temp())));
+    }
+
+    return make_unique<irt::Move>(exp(formal, make_unique<irt::Temp>(frame::Frame::fp_temp())), move(src));
 }
+unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, unique_ptr<irt::Statement> stm) {
+    auto formals = frame->formals();
+    int arg_indx = 0;
+    unique_ptr<irt::Seq> move_args;
+    if ( !formals.size() ) {
+        return move(stm);
+    }
+    for ( auto formal : formals ) {
+        arg_indx++;
+        if ( move_args ) {
+            move_args = make_unique<irt::Seq>(process_formal(formal, arg_indx), move(move_args));
+        } else {
+            move_args = make_unique<irt::Seq>(process_formal(formal, arg_indx), move(stm));
+        }
+    }
+    return move(move_args);
+}
+
 assem::InstructionList restore_callee_saved_regs(std::shared_ptr<Frame> frame, assem::InstructionList list) {
     auto regs = frame->get_callee_saved_regs();
     auto reg_map = frame->get_reg_to_temp_map();
@@ -156,7 +188,6 @@ assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, ass
     std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_back(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     list = restore_callee_saved_regs(frame, move(list));
-    list.push_back(make_unique<assem::Oper>("leave", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"], reg_map["rbp"]}, temp::LabelList{}));
     list.push_back(make_unique<assem::Oper>("ret", return_sink, temp::TempList{}, temp::LabelList{}));
     return list;
 }
