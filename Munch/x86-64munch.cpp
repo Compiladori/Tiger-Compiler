@@ -246,9 +246,6 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp) {
                 // Not aligned, add an extra argument to fix it
                 // TODO : maybe duplicate the last argument?
                 // call_exp->args->push_back(make_unique<irt::Temp>(munchExpression(call_exp->args->back().get())));
-
-                // Adding the stack pointer as an extra last argument
-                call_exp->args->push_back(make_unique<irt::Temp>(rsp));
             }
             auto calldefs = munch_frame.get_calldefs();
             for ( auto& reg : munch_frame.get_calldefs() ) {

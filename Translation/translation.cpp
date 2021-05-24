@@ -64,8 +64,11 @@ unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, shared_ptr<trans::
     for ( auto exp = list->rbegin(); exp != list->rend(); exp++ ) {
         seq->push_back((*exp)->unEx());
     }
+    //     fun trepar 0 = TEMP fp
+    //   | trepar n = MEM(BINOP(PLUS, CONST fpPrevLev, trepar(n-1)))
+
     if ( !isLibFunc ) {
-        unique_ptr<Expression> staticLink = frame::static_link_exp_base(make_unique<irt::Temp>(frame::Frame::fp_temp()));
+        unique_ptr<Expression> staticLink = make_unique<irt::Temp>(frame::Frame::fp_temp());
         if ( funlvl->_parent != currentlvl ) {
             while ( currentlvl ) {
                 staticLink = make_unique<Mem>(move(staticLink));
@@ -297,4 +300,10 @@ RelationOperation Translator::translateCondOp(ast::Operation op) {
         case ast::Ge:
             return irt::Ge;
     }
+}
+
+Level::Level(std::shared_ptr<Level> level, temp::Label f, std::vector<bool> list) {
+    _parent = level;
+    list.push_back(true);
+    _frame = std::make_shared<frame::Frame>(f, list);
 }

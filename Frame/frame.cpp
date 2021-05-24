@@ -6,7 +6,7 @@
   *      arg 7       * <-%rbp + 16
   * return  adddress * <-%rbp + 8
   *   ------------   * <-%rbp
-  *     saved rbp    *<- %rbp -8
+  *   static link    *<- %rbp -8
   *     local 1      *<- %rbp -16
   *     ----         *<- %rbp -24
   *     local n      *<- %rbp - 8 * n
@@ -19,7 +19,7 @@ int Frame::wordSize = 8;
 
 Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
-    _offset = -wordSize;
+    _offset = 0;
     for ( bool i : list ) {
         _formals.push_back(alloc_helper(i));
     }
@@ -27,8 +27,8 @@ Frame::Frame(temp::Label name, vector<bool> list) {
 
 shared_ptr<Access> Frame::alloc_helper(bool escape) {
     if ( escape ) {
-        shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
         _offset -= Frame::wordSize;
+        shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
         return l;
     }
     shared_ptr<InReg> l = make_shared<InReg>();
@@ -97,11 +97,11 @@ unique_ptr<irt::Expression> frame::exp(shared_ptr<Access> acc, unique_ptr<irt::E
 }
 
 unique_ptr<irt::Expression> frame::static_link_exp_base(unique_ptr<irt::Expression> framePtr) {
-    // static link at fp + 8
+    // static link at fp - 8
     return make_unique<irt::BinOp>(
         irt::Plus,
         move(framePtr),
-        make_unique<irt::Const>(2 * Frame::wordSize));
+        make_unique<irt::Const>(-Frame::wordSize));
 }
 
 unique_ptr<irt::Expression> frame::static_link_jump(unique_ptr<irt::Expression> staticLink) {
@@ -116,7 +116,7 @@ unique_ptr<irt::Expression> frame::exp_with_static_link(shared_ptr<Access> acc, 
             make_unique<irt::BinOp>(
                 irt::Plus,
                 move(staticLink),
-                make_unique<irt::Const>(in_frame->offset - Frame::wordSize)));
+                make_unique<irt::Const>(in_frame->offset)));
 }
 unique_ptr<irt::Expression> frame::external_call(string s, unique_ptr<irt::ExpressionList> args) {
     return make_unique<irt::Call>(make_unique<irt::Name>(temp::Label(s)), move(args));
@@ -146,12 +146,12 @@ unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, uniq
         return move(stm);
     }
     for ( auto formal : formals ) {
-        arg_indx++;
         if ( move_args ) {
             move_args = make_unique<irt::Seq>(process_formal(formal, arg_indx), move(move_args));
         } else {
             move_args = make_unique<irt::Seq>(process_formal(formal, arg_indx), move(stm));
         }
+        arg_indx++;
     }
     return move(move_args);
 }
