@@ -21,11 +21,11 @@ Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
     _offset = 0;
     for ( bool i : list ) {
-        _formals.push_back(alloc_helper(i));
+        _formals.push_back(alloc_local(i));
     }
 }
 
-shared_ptr<Access> Frame::alloc_helper(bool escape) {
+shared_ptr<Access> Frame::alloc_local(bool escape) {
     if ( escape ) {
         _offset -= Frame::wordSize;
         shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
@@ -35,11 +35,6 @@ shared_ptr<Access> Frame::alloc_helper(bool escape) {
     return l;
 }
 
-shared_ptr<Access> Frame::alloc_local(bool escape) {
-    auto l = alloc_helper(escape);
-    _locals.push_back(l);
-    return l;
-}
 temp::Temp Frame::ra_temp() {
     return Frame::get_reg_to_temp_map()["rax"];
 }

@@ -261,7 +261,12 @@ shared_ptr<Access> Level::alloc_local(shared_ptr<Level> lvl, bool escape) {
 
 shared_ptr<AccessList> Level::formals(shared_ptr<Level> lvl) {
     shared_ptr<AccessList> trans_list = make_shared<AccessList>();
+    bool first = true;
     for ( auto& access : lvl->_frame->formals() ) {
+        if ( first ) {
+            first = false;
+            continue;    // we ignore the first formal because is the static link
+        }
         shared_ptr<Access> trans_access = make_shared<Access>(lvl, access);
         trans_list->push_back(trans_access);
     }
@@ -304,6 +309,6 @@ RelationOperation Translator::translateCondOp(ast::Operation op) {
 
 Level::Level(std::shared_ptr<Level> level, temp::Label f, std::vector<bool> list) {
     _parent = level;
-    list.push_back(true);
+    list.insert(list.begin(), true);
     _frame = std::make_shared<frame::Frame>(f, list);
 }
