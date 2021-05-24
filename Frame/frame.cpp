@@ -99,9 +99,6 @@ unique_ptr<irt::Expression> frame::static_link_exp_base(unique_ptr<irt::Expressi
         make_unique<irt::Const>(-Frame::wordSize));
 }
 
-unique_ptr<irt::Expression> frame::static_link_jump(unique_ptr<irt::Expression> staticLink) {
-    return make_unique<irt::Mem>(move(staticLink));
-}
 unique_ptr<irt::Expression> frame::exp_with_static_link(shared_ptr<Access> acc, unique_ptr<irt::Expression> staticLink) {
     if ( auto in_reg = dynamic_cast<InReg *>(acc.get()) )
         return make_unique<irt::Temp>(in_reg->reg);

@@ -7,17 +7,16 @@ using namespace std;
  * Main translating class
  * **/
 
-unique_ptr<TranslatedExp> Translator::simpleVar(shared_ptr<trans::Access> a, shared_ptr<trans::Level> l) {
-    unique_ptr<Temp> fp = make_unique<Temp>(frame::Frame::fp_temp());
-    if ( a->_level.get() == l.get() ) {
-        return make_unique<Ex>(frame::exp(a->_access, move(fp)));
+unique_ptr<TranslatedExp> Translator::simpleVar(shared_ptr<trans::Access> access_ptr, shared_ptr<trans::Level> currentlvl) {
+    unique_ptr<Expression> staticLinkExp = make_unique<Temp>(frame::Frame::fp_temp());
+    if ( access_ptr->_level == currentlvl ) {
+        return make_unique<Ex>(frame::exp(access_ptr->_access, move(staticLinkExp)));
     }
-    unique_ptr<Expression> staticLinkExp = frame::static_link_exp_base(move(fp));
-    while ( a->_level.get() != l.get() ) {
-        staticLinkExp = frame::static_link_jump(move(staticLinkExp));
-        l = l->_parent;
+    while ( access_ptr->_level != currentlvl ) {
+        staticLinkExp = make_unique<irt::Mem>(frame::static_link_exp_base(move(staticLinkExp)));
+        currentlvl = currentlvl->_parent;
     }
-    return make_unique<Ex>(frame::exp_with_static_link(a->_access, move(staticLinkExp)));
+    return make_unique<Ex>(frame::exp_with_static_link(access_ptr->_access, move(staticLinkExp)));
 }
 unique_ptr<TranslatedExp> Translator::fieldVar(unique_ptr<TranslatedExp> var, int fieldIndex) {
     return make_unique<Ex>(
@@ -69,13 +68,9 @@ unique_ptr<TranslatedExp> Translator::callExp(bool isLibFunc, shared_ptr<trans::
 
     if ( !isLibFunc ) {
         unique_ptr<Expression> staticLink = make_unique<irt::Temp>(frame::Frame::fp_temp());
-        if ( funlvl->_parent != currentlvl ) {
-            while ( currentlvl ) {
-                staticLink = make_unique<Mem>(move(staticLink));
-                if ( currentlvl->_parent == funlvl->_parent )
-                    break;
-                currentlvl = currentlvl->_parent;
-            }
+        while ( funlvl->_parent != currentlvl ) {
+            staticLink = make_unique<irt::Mem>(frame::static_link_exp_base(move(staticLink)));
+            currentlvl = currentlvl->_parent;
         }
         seq->push_front(move(staticLink));
     }
