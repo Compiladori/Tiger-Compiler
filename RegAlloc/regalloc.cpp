@@ -84,15 +84,34 @@ void RegAllocator::decrementDegree(liveness::TempNode m) {
 }
 
 void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
+    bool flag;
     for ( auto it1 = nodes.begin(); it1 != nodes.end(); it1++ ) {
-        for ( auto it2 = activeMoves.begin(); it2 != activeMoves.end(); it2++ ) {
-            if ( it2->src == *it1 || it2->dst == *it1 ) {
-                activeMoves.erase(it2);
-                worklistMoves.push_back(*it2);
+        for ( auto it2 = activeMoves.begin(); it2 != activeMoves.end(); ) {
+            flag = true;
+            if ( moveList.count(*it1) ) {
+                auto move_list = moveList.at(*it1);
+                for ( auto it3 = move_list.begin(); it3 != move_list.end(); it3++ ) {
+                    if ( (*it3) == (*it2) ) {
+                        it2 = activeMoves.erase(it2);
+                        worklistMoves.push_back(*it2);
+                        flag = false;
+                    }
+                }
+            }
+            if ( flag ) {
+                it2++;
             }
         }
     }
 }
+
+// function NodeMoves (n) moveList[n] ∩ (activeMoves ∪ worklistMoves) include moveList[n] ∩ activeMoves
+// procedure EnableMoves(nodes)
+// forall n ∈ nodes
+//     forall m ∈ NodeMoves (n)
+//     if m ∈ activeMoves then
+//         activeMoves ← activeMoves \ {m}
+//         worklistMoves ← worklistMoves ∪ {m}
 
 void RegAllocator::addWorklist(liveness::TempNode node) {
     if ( !isIn(node._info, regs) and !isMoveRelated(node) && (degree[node] < K) ) {
@@ -352,8 +371,7 @@ assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::Instr
                 temp::TempList dest, source;
                 dest.push_back(t);
                 int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
-                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq " + to_string(offset) + "(%rbp), %'d0\n",
-                                                                       source, dest);
+                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq " + to_string(offset) + "(%rbp), %'d0\n", source, dest);
                 assem::Instruction* modified_inst = it2->get();
                 if ( isOper ) {    // ver si puedo hacer esto más corto
                     assem::Oper* modified_inst = dynamic_cast<assem::Oper*>(it2->get());
@@ -387,8 +405,7 @@ assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::Instr
                 temp::TempList dest, source;
                 source.push_back(t);
                 int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
-                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq %'s0 " + to_string(offset) + "(%rbp)\n",
-                                                                       source, dest);
+                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq %'s0 " + to_string(offset) + "(%rbp)\n", source, dest);
                 assem::Instruction* modified_inst = it2->get();
                 if ( isOper ) {
                     assem::Oper* modified_inst = dynamic_cast<assem::Oper*>(it2->get());
