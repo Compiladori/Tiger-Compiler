@@ -15,13 +15,13 @@
 
 namespace assem {
 struct Instruction;
-using InstructionList = util::GenericList<Instruction>;
+using InstructionList = std::deque<std::shared_ptr<Instruction>>;
 struct Instruction {
     virtual ~Instruction() = default;
     virtual temp::TempList get_src() const = 0;
     virtual temp::TempList get_dst() const = 0;
     virtual void output(std::ostream& os, temp::TempMap temp_map) const = 0;    // Instruction output
-    virtual void print() const = 0;    // Instruction output
+    virtual void print() const = 0;                                             // Instruction output
     virtual void get_assm() const = 0;
 };
 struct Procedure {

@@ -24,7 +24,11 @@ struct TempNode {
     temp::Temp _info;
     TempNode(const TempNode &node) : _info(node._info), key(node.key) {}
     TempNode(temp::Temp info) : _info(info), key(total_num++) {}
-    TempNode& operator=(const TempNode &node) {_info = node._info; key = node.key; return *this;}
+    TempNode &operator=(const TempNode &node) {
+        _info = node._info;
+        key = node.key;
+        return *this;
+    }
     bool operator==(const TempNode &s) const { return _info == s._info; }
     void print() { _info.print(); }
     TempNode() = default;
@@ -40,6 +44,7 @@ struct Move {
     TempNode dst;
     TempNode src;
     Move(TempNode dst, TempNode src) : dst(dst), src(src) {}
+    bool operator==(const Move &s) const { return src == s.src and dst == s.dst; }
 };
 
 struct Liveness {

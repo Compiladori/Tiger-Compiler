@@ -37,7 +37,7 @@ std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> ac
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
 std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame, std::unique_ptr<irt::Statement> stm);
 assem::InstructionList proc_entry_exit2(std::shared_ptr<Frame> frame, assem::InstructionList list);
-std::unique_ptr<assem::Procedure> proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list);
+std::shared_ptr<assem::Procedure> proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list);
 
 using FragList = util::GenericList<Frag>;
 using AccessList = std::vector<std::shared_ptr<Access>>;

@@ -18,12 +18,12 @@ struct Handler {
     ~Handler() {
         _file.close();
     };
-    void print_proc(std::unique_ptr<assem::Procedure> proc, temp::TempMap coloring) {
-        _file << proc -> prolog + "\n";
-        for ( auto i = proc -> body.begin(); proc -> body.end() != i; i++ ) {
+    void print_proc(std::shared_ptr<assem::Procedure> proc, temp::TempMap coloring) {
+        _file << proc->prolog + "\n";
+        for ( auto i = proc->body.begin(); proc->body.end() != i; i++ ) {
             (*i)->output(_file, coloring);    // add Temp_layerMap
         }
-        _file << "\n" + proc -> epilog;
+        _file << "\n" + proc->epilog;
     };
     void print_str(frame::StringFrag string_frag) {
         _file << string_frag._label.name + ":\n.string " + string_frag.str + "\n";
@@ -37,7 +37,6 @@ struct Handler {
     void print_data_header() {
         _file << ".section .rodata\n";
     }
-
 };
 }    // namespace file
 #endif

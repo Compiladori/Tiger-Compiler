@@ -83,7 +83,7 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
         defs = (*i)->get_def();
         // si es move agrega una para cada live out que no coincida con el que lo definio
         // sino para cada elemento de los defs agrega una arista con cada out
-        if ( dynamic_cast<assem::Move*>((*i)->_info) ) {
+        if ( dynamic_cast<assem::Move*>((*i)->_info.get()) ) {
             srcs = (*i)->get_use();
             auto dst = temp_to_node[getFirstElement(defs)];
             auto src = temp_to_node[getFirstElement(srcs)];

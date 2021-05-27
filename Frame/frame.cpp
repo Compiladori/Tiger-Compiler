@@ -21,18 +21,17 @@ Frame::Frame(temp::Label name, vector<bool> list) {
     _name = name;
     _offset = 0;
     for ( bool i : list ) {
-        _formals.push_back(alloc_local(i));
+        auto local = alloc_local(i);
+        _formals.push_back(local);
     }
 }
 
 shared_ptr<Access> Frame::alloc_local(bool escape) {
     if ( escape ) {
         _offset -= Frame::wordSize;
-        shared_ptr<InFrame> l = make_shared<InFrame>(_offset);
-        return l;
+        return make_shared<InFrame>(_offset);
     }
-    shared_ptr<InReg> l = make_shared<InReg>();
-    return l;
+    return make_shared<InReg>();
 }
 
 temp::Temp Frame::ra_temp() {
@@ -153,7 +152,7 @@ assem::InstructionList restore_callee_saved_regs(std::shared_ptr<Frame> frame, a
     auto reg_map = frame->get_reg_to_temp_map();
     std::string code = "popq  %'s0";
     for ( auto &reg_name : regs ) {
-        list.push_back(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+        list.push_back(make_shared<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     }
     return move(list);
 }
@@ -162,7 +161,7 @@ assem::InstructionList append_callee_saved_regs(std::shared_ptr<Frame> frame, as
     auto reg_map = frame->get_reg_to_temp_map();
     std::string code = "pushq  %'s0";
     for ( auto &reg_name : regs ) {
-        list.push_front(make_unique<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+        list.push_front(make_shared<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     }
     return move(list);
 }
@@ -178,21 +177,21 @@ assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, ass
     }
     int stack_pointer_offset = 100;
     std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
-    list.push_back(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    list = restore_callee_saved_regs(frame, move(list));
-    list.push_back(make_unique<assem::Oper>("ret", return_sink, temp::TempList{}, temp::LabelList{}));
+    list.push_back(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+    list = restore_callee_saved_regs(frame, list);
+    list.push_back(make_shared<assem::Oper>("ret", return_sink, temp::TempList{}, temp::LabelList{}));
     return list;
 }
 
-unique_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list) {
+shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list) {
     RegList regs = frame->get_callee_saved_regs();
     auto reg_map = frame->get_reg_to_temp_map();
     string prolog = "# PROCEDURE " + (frame->_name).name + "\n";
     int stack_pointer_offset = 100;
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
-    list.push_front(make_unique<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
-    list.push_front(make_unique<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
-    list = append_callee_saved_regs(frame, move(list));
-    list.push_front(make_unique<assem::Label>((frame->_name).name + ":", frame->_name));
-    return make_unique<assem::Procedure>(prolog, move(list), "# END\n");
+    list.push_front(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
+    list.push_front(make_shared<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
+    list = append_callee_saved_regs(frame, list);
+    list.push_front(make_shared<assem::Label>((frame->_name).name + ":", frame->_name));
+    return make_shared<assem::Procedure>(prolog, list, "# END\n");
 }

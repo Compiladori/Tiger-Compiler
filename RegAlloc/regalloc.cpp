@@ -7,11 +7,11 @@ void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v) {
     if ( !isIn(u, adjacentNodes[v]) and !(u == v) ) {
         if ( !isIn(u._info, regs) ) {    // nunca va a estar en regs
             adjacentNodes[u].push_back(v);
-            degree[u] = degree[u] + 1;
+            degree[u] = degree.at(u) + 1;
         }
         if ( !isIn(v._info, regs) ) {
             adjacentNodes[v].push_back(u);
-            degree[v] = degree[v] + 1;
+            degree[v] = degree.at(v) + 1;
         }
     }
 }
@@ -38,7 +38,7 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
     for ( auto it = worklistMoves.begin(); it != worklistMoves.end(); it++ )
         unionAW.push_back(*it);
 
-    vector<liveness::Move> moveListN = moveList[n], result;
+    vector<liveness::Move> moveListN = moveList.at(n), result;
     for ( auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++ ) {
         for ( auto it2 = unionAW.begin(); it2 != unionAW.end(); it2++ )
             if ( it1->dst == it2->dst and it1->src == it2->src )
@@ -48,11 +48,13 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
 }
 
 bool RegAllocator::isMoveRelated(liveness::TempNode node) {
-    vector<liveness::Move> moveListN = moveList[node];
     vector<liveness::Move> unionWA = worklistMoves;
     for ( auto it = activeMoves.begin(); it != activeMoves.end(); it++ )
         unionWA.push_back(*it);
-
+    if ( !moveList.count(node) ) {
+        return false;
+    }
+    vector<liveness::Move> moveListN = moveList.at(node);
     for ( auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++ ) {
         for ( auto it2 = unionWA.begin(); it2 != unionWA.end(); it2++ ) {
             if ( it1->src == it2->src and it1->dst == it2->dst ) {
@@ -65,7 +67,7 @@ bool RegAllocator::isMoveRelated(liveness::TempNode node) {
 }
 
 void RegAllocator::decrementDegree(liveness::TempNode m) {
-    auto d = degree[m];
+    auto d = degree.at(m);
     degree[m] = d - 1;
     if ( d == K && !isIn(m._info, regs) ) {
         vector<liveness::TempNode> adj = adjacent(m);
@@ -85,27 +87,27 @@ void RegAllocator::decrementDegree(liveness::TempNode m) {
 
 void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
     bool flag;
-    for ( auto it1 = nodes.begin(); it1 != nodes.end(); it1++ ) {
-        for ( auto it2 = activeMoves.begin(); it2 != activeMoves.end(); ) {
+    for ( auto node_it = nodes.begin(); node_it != nodes.end(); node_it++ ) {
+        for ( auto act_mov_it = activeMoves.begin(); act_mov_it != activeMoves.end(); ) {
             flag = true;
-            if ( moveList.count(*it1) ) {
-                auto move_list = moveList.at(*it1);
+            if ( moveList.count(*node_it) ) {
+                auto move_list = moveList.at(*node_it);
                 for ( auto it3 = move_list.begin(); it3 != move_list.end(); it3++ ) {
-                    if ( (*it3) == (*it2) ) {
-                        it2 = activeMoves.erase(it2);
-                        worklistMoves.push_back(*it2);
+                    if ( (*it3) == (*act_mov_it) ) {
+                        worklistMoves.push_back(*act_mov_it);
+                        act_mov_it = activeMoves.erase(act_mov_it);
                         flag = false;
                     }
                 }
             }
             if ( flag ) {
-                it2++;
+                act_mov_it++;
             }
         }
     }
 }
 
-// function NodeMoves (n) moveList[n] ∩ (activeMoves ∪ worklistMoves) include moveList[n] ∩ activeMoves
+// function NodeMoves (n) moveList[n] ∩ (activeMoves ∪ worklistMoves)  include moveList[n] ∩ activeMoves
 // procedure EnableMoves(nodes)
 // forall n ∈ nodes
 //     forall m ∈ NodeMoves (n)
@@ -114,7 +116,7 @@ void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
 //         worklistMoves ← worklistMoves ∪ {m}
 
 void RegAllocator::addWorklist(liveness::TempNode node) {
-    if ( !isIn(node._info, regs) and !isMoveRelated(node) && (degree[node] < K) ) {
+    if ( !isIn(node._info, regs) and !isMoveRelated(node) && (degree.at(node) < K) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), node);
         if ( it != freezeWorklist.end() ) {
             freezeWorklist.erase(it);
@@ -126,7 +128,7 @@ void RegAllocator::addWorklist(liveness::TempNode node) {
 bool RegAllocator::forAllAdjOk(liveness::TempNode u, liveness::TempNode v) {
     vector<liveness::TempNode> adjs = adjacent(v);
     for ( auto it = adjs.begin(); it != adjs.end(); it++ ) {
-        if ( !((degree[*it] < K) or isIn((*it)._info, regs) or isIn(*it, adjacentNodes[u])) )
+        if ( !((degree.at(*it) < K) or isIn((*it)._info, regs) or isIn(*it, adjacentNodes[u])) )
             return false;
     }
     return true;
@@ -137,7 +139,7 @@ bool RegAllocator::conservative(vector<liveness::TempNode> nodes1, vector<livene
     for ( auto n : nodes2 ) nodes.push_back(n);
     int k = 0;
     for ( auto it = nodes.begin(); it != nodes.end(); it++ )
-        if ( degree[*it] >= K ) k++;
+        if ( degree.at(*it) >= K ) k++;
     return (k < K);
 }
 
@@ -159,8 +161,8 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
     }
     coalescedNodes.push_back(v);
     alias[v] = u;
-    for ( auto it = moveList[v].begin(); it != moveList[v].end(); it++ ) {
-        moveList[u].push_back(*it);
+    for ( auto it = moveList.at(v).begin(); it != moveList.at(v).end(); it++ ) {
+        moveList.at(u).push_back(*it);
     }
     auto adjacentNodes = adjacent(v);
     for ( auto it = adjacentNodes.begin(); it != adjacentNodes.end(); it++ ) {
@@ -168,7 +170,7 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
         decrementDegree(*it);
     }
     it = find(freezeWorklist.begin(), freezeWorklist.end(), u);
-    if ( degree[u] >= K and it != freezeWorklist.end() ) {
+    if ( degree.at(u) >= K and it != freezeWorklist.end() ) {
         freezeWorklist.erase(it);
         spillWorklist.push_back(u);
     }
@@ -188,7 +190,7 @@ void RegAllocator::freezeMoves(liveness::TempNode u) {
                 break;
         activeMoves.erase(idx);
         frozenMoves.push_back(*it);
-        if ( nodeMoves(v).empty() and degree[v] < K ) {
+        if ( nodeMoves(v).empty() and degree.at(v) < K ) {
             auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
             freezeWorklist.erase(idx);
             simplifyWorklist.push_back(v);
@@ -200,17 +202,17 @@ float RegAllocator::spillHeuristic(liveness::TempNode node) {
     // heuristic: (uses + defs) / degree
     int idx = live_graph._interference_graph.keyToId(node);
     int uses_and_defs = live_graph.use[idx].size() + live_graph.def[idx].size();    // live_graph.use[idx] : std::vector<std::set<temp::Temp>>
-    float value = uses_and_defs * 1.0 / degree[node];
+    float value = uses_and_defs * 1.0 / degree.at(node);
     return value;
 }
 
-void RegAllocator::build(temp::TempList regs) {
+void RegAllocator::build() {
     vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
     // degree and adjacentNodes
     while ( !nodes.empty() ) {
         liveness::TempNode node = nodes.back();
         nodes.pop_back();
-        degree.insert({node, live_graph._interference_graph.getDegree(node)});
+        degree[node] = live_graph._interference_graph.getDegree(node);
         // para cambiar esto tengo que cambiar el tipo de getSuccessors
         int i = live_graph._interference_graph.keyToId(node);
         set<int> adj = live_graph._interference_graph.getSuccessors(i);
@@ -220,6 +222,7 @@ void RegAllocator::build(temp::TempList regs) {
         }
     }
     // moveList
+    moveList.clear();
     vector<liveness::Move> moves = live_graph.moves;
     for ( auto it = moves.begin(); it != moves.end(); it++ ) {
         moveList[(*it).src].push_back(*it);
@@ -233,7 +236,7 @@ void RegAllocator::makeWorklist() {
     for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
         if ( coloring.find((*it)._info) != coloring.end() ) continue;
         std::cout << "makeworklist with: " << (*it)._info.num << std::endl;
-        int deg = degree[*it];
+        int deg = degree.at(*it);
         if ( deg >= K )
             spillWorklist.push_back(*it);
         else if ( isMoveRelated(*it) )
@@ -349,102 +352,88 @@ temp::TempMap RegAllocator::assignColors() {
     }
     return coloring;
 }
-
+// procedure RewriteProgram()
+// Allocate memory locations for each v ∈ spilledNodes,
+// Create a new temporary vi for each definition and each use,
+// In the program (instructions), insert a store after each
+// definition of a vi , a fetch before each use of a vi .
+// Put all the vi into a set newTemps.
+// spilledNodes ← {}
+// initial ← coloredNodes ∪ coalescedNodes ∪ newTemps
+// coloredNodes ← {}
+// coalescedNodes ← {}
 assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::InstructionList instruction_list) {
     for ( auto it1 = spilledNodes.begin(); it1 != spilledNodes.end(); it1++ ) {
-        temp::TempList defs, uses;
-        bool isOper;
+        std::cout << "Spilling temp: " << it1->_info.num << std::endl;
+        assem::InstructionList new_instruction_list;
         shared_ptr<frame::Access> mem = f.alloc_local(true);
+        int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
         for ( auto it2 = instruction_list.begin(); it2 != instruction_list.end(); it2++ ) {
+            bool flag_dst = false;
             if ( auto i = dynamic_cast<assem::Oper*>(it2->get()) ) {
-                uses = i->src;
-                defs = i->dst;
-                isOper = true;
-            }
-            if ( auto i = dynamic_cast<assem::Move*>(it2->get()) ) {
-                uses = i->src;
-                defs = i->dst;
-                isOper = false;
-            }
-            if ( isIn(it1->_info, uses) ) {    // insert a fetch before each use
                 temp::Temp t = temp::Temp();
-                temp::TempList dest, source;
-                dest.push_back(t);
-                int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
-                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq " + to_string(offset) + "(%rbp), %'d0\n", source, dest);
-                assem::Instruction* modified_inst = it2->get();
-                if ( isOper ) {    // ver si puedo hacer esto más corto
-                    assem::Oper* modified_inst = dynamic_cast<assem::Oper*>(it2->get());
-                    temp::TempList new_src;
-                    for ( auto it = modified_inst->src.begin(); it != modified_inst->src.end(); it++ ) {
-                        if ( *it == it1->_info )
-                            new_src.push_back(t);    // it1 is spillNode
-                        else
-                            new_src.push_back(t);
-                    }
-                    modified_inst->src = new_src;
-                } else {
-                    assem::Move* modified_inst = dynamic_cast<assem::Move*>(it2->get());
-                    temp::TempList new_src;
-                    for ( auto it = modified_inst->src.begin(); it != modified_inst->src.end(); it++ ) {
-                        if ( *it == it1->_info )
-                            new_src.push_back(t);    // it1 is spillNode
-                        else
-                            new_src.push_back(t);
-                    }
-                    modified_inst->src = new_src;
+                temp::TempList new_src;
+                for ( auto it = i->src.begin(); it != i->src.end(); it++ ) {
+                    if ( *it == it1->_info ) {
+                        new_src.push_back(t);
+                        new_instruction_list.push_back(make_shared<assem::Oper>("movq " + to_string(offset) + "(%'s0), %'d0 #spilled", temp::TempList{frame::Frame::fp_temp()}, temp::TempList{t}, temp::LabelList{}));
+                    } else
+                        new_src.push_back(*it);
                 }
-                instruction_list.insert(it2, move(mov));
-                // borro para agregar con los temps de src actualizados (cambiando el spill por el temp)
-                instruction_list.erase(it2 + 1);
-                // el que inserto lo salteo, ya que es el que acabo de procesar
-                instruction_list.insert(++it2, modified_inst);
-            }
-            if ( isIn(it1->_info, defs) ) {    // insert store after each definition
+                i->src = new_src;
+                temp::TempList new_dst;
+                for ( auto it = i->dst.begin(); it != i->dst.end(); it++ ) {
+                    if ( *it == it1->_info ) {
+                        new_dst.push_back(t);
+                        flag_dst = true;
+                    } else
+                        new_dst.push_back(*it);
+                }
+                i->dst = new_dst;
+                new_instruction_list.push_back(*it2);
+                if ( flag_dst ) {
+                    new_instruction_list.push_back(make_shared<assem::Oper>("movq %'s1, " + to_string(offset) + "(%'s0) #spilled", temp::TempList{frame::Frame::fp_temp(), t}, temp::TempList{}, temp::LabelList{}));
+                }
+            } else if ( auto i = dynamic_cast<assem::Move*>(it2->get()) ) {
                 temp::Temp t = temp::Temp();
-                temp::TempList dest, source;
-                source.push_back(t);
-                int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
-                unique_ptr<assem::Move> mov = make_unique<assem::Move>("movq %'s0 " + to_string(offset) + "(%rbp)\n", source, dest);
-                assem::Instruction* modified_inst = it2->get();
-                if ( isOper ) {
-                    assem::Oper* modified_inst = dynamic_cast<assem::Oper*>(it2->get());
-                    temp::TempList new_src;
-                    for ( auto it = modified_inst->src.begin(); it != modified_inst->src.end(); it++ ) {
-                        if ( *it == it1->_info )
-                            new_src.push_back(t);    // it1 is spillNode
-                        else
-                            new_src.push_back(t);
-                    }
-                    modified_inst->src = new_src;
-                } else {
-                    assem::Move* modified_inst = dynamic_cast<assem::Move*>(it2->get());
-                    temp::TempList new_dst;
-                    for ( auto it = modified_inst->dst.begin(); it != modified_inst->dst.end(); it++ ) {
-                        if ( *it == it1->_info )
-                            new_dst.push_back(t);
-                        else
-                            new_dst.push_back(t);
-                    }
-                    modified_inst->dst = new_dst;
+                temp::TempList new_src;
+                for ( auto it = i->src.begin(); it != i->src.end(); it++ ) {
+                    if ( *it == it1->_info ) {
+                        new_src.push_back(t);
+                        new_instruction_list.push_back(make_shared<assem::Oper>("movq " + to_string(offset) + "(%'s0), %'d0 #spilled", temp::TempList{frame::Frame::fp_temp()}, temp::TempList{t}, temp::LabelList{}));
+                    } else
+                        new_src.push_back(*it);
                 }
-                // borro el que estoy procesando, agrego el modificado
-                instruction_list.erase(it2);
-                instruction_list.insert(it2, modified_inst);
-                instruction_list.insert(++it2, move(mov));
+                i->src = new_src;
+                temp::TempList new_dst;
+                for ( auto it = i->dst.begin(); it != i->dst.end(); it++ ) {
+                    if ( *it == it1->_info ) {
+                        new_dst.push_back(t);
+                        flag_dst = true;
+                    } else
+                        new_dst.push_back(*it);
+                }
+                i->dst = new_dst;
+                new_instruction_list.push_back(*it2);
+                if ( flag_dst ) {
+                    new_instruction_list.push_back(make_shared<assem::Oper>("movq %'s1, " + to_string(offset) + "(%'s0) #spilled", temp::TempList{frame::Frame::fp_temp(), t}, temp::TempList{}, temp::LabelList{}));
+                }
+            } else {
+                new_instruction_list.push_back(*it2);
             }
-            uses.clear();
-            defs.clear();
         }
+        instruction_list = new_instruction_list;
     }
-    return move(instruction_list);
+    spilledNodes.clear();
+    // coloredNodes.clear();
+    // coalescedNodes.clear();
+    return instruction_list;
 }
 
 void RegAllocator::clearLists() {
     freezeWorklist.clear();
     simplifyWorklist.clear();
     spillWorklist.clear();
-    spilledNodes.clear();
     coalescedNodes.clear();
     coloredNodes.clear();
     selectStack.clear();
@@ -459,9 +448,35 @@ void RegAllocator::clearLists() {
     nodeColors.clear();
 }
 
+result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_list) {
+    // clearLists();
+    result res;
+    flowgraph::FlowGraph graph = flowgraph::FlowGraph(instruction_list);
+    graph._flow_graph.show_graph();
+    live_graph = liveness::Liveness(graph);    // moves : vector<pair<node,node>>, graph : G_graph
+    live_graph._interference_graph.show_graph();
+    build();
+    makeWorklist();
+    do {
+        if ( !simplifyWorklist.empty() )
+            simplify();
+        else if ( !worklistMoves.empty() )
+            coalesce();
+        else if ( !freezeWorklist.empty() )
+            freeze();
+        else if ( !spillWorklist.empty() )
+            selectSpill();
+    } while ( !simplifyWorklist.empty() or !worklistMoves.empty() or !freezeWorklist.empty() or !spillWorklist.empty() );
+    assignColors();
+    if ( !spilledNodes.empty() ) {
+        instruction_list = rewriteProgram(f, instruction_list);
+        return main(f, instruction_list);
+    }
+    res.instruction_list = instruction_list;
+    res.coloring = coloring;
+    return res;
+}
 result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list) {
-    instruction_list.print();
-    assem::InstructionList current_inst_list = move(instruction_list);
     result res;
     // aca tenemos que definir los colores que se van a usar y un precoloreo inicial
     auto reg_map = f.get_reg_to_temp_map();
@@ -479,27 +494,7 @@ result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruct
     coloring = initial_coloring;
     clearLists();
     do {
-        flowgraph::FlowGraph graph = flowgraph::FlowGraph(current_inst_list);
-        graph._flow_graph.show_graph();
-        live_graph = liveness::Liveness(graph);    // moves : vector<pair<node,node>>, graph : G_graph
-        live_graph._interference_graph.show_graph();
-        build(regs);
-        makeWorklist();
-        do {
-            if ( !simplifyWorklist.empty() )
-                simplify();
-            else if ( !worklistMoves.empty() )
-                coalesce();
-            else if ( !freezeWorklist.empty() )
-                freeze();
-            else if ( !spillWorklist.empty() )
-                selectSpill();
-        } while ( !simplifyWorklist.empty() or !worklistMoves.empty() or !freezeWorklist.empty() or !spillWorklist.empty() );
-        res.coloring = assignColors();
-        if ( !spilledNodes.empty() ) {
-            current_inst_list = rewriteProgram(f, move(current_inst_list));
-        }
+        res = main(f, instruction_list);
     } while ( !spilledNodes.empty() );
-    res.instruction_list = move(current_inst_list);
     return res;
 }

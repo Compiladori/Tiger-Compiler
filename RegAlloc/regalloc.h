@@ -21,6 +21,7 @@ class Result;
 struct result {
     temp::TempMap coloring;
     assem::InstructionList instruction_list;
+    bool renew;
 };
 
 template <typename T>
@@ -39,7 +40,7 @@ class RegAllocator {
     vector<liveness::TempNode> coalescedNodes;      // registers that have been coalesced; when u<-v is coalesced,
     // v is added to this set and u put back on some work-list (or vice versa)
     temp::TempList regs;
-    int K;                                      // regs.size()
+    int K;    // regs.size()
     vector<temp::Label> avail_colors;
     vector<liveness::TempNode> coloredNodes;    // nodes successfully colored
     vector<liveness::TempNode> selectStack;     // stack containing temporaries removed from the graph
@@ -75,7 +76,7 @@ class RegAllocator {
     float spillHeuristic(liveness::TempNode node);
     void clearLists();
 
-    void build(temp::TempList regs);
+    void build();
     void makeWorklist();
     void simplify();
     void coalesce();
@@ -83,6 +84,7 @@ class RegAllocator {
     void selectSpill();
     temp::TempMap assignColors();
     assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
+    result main(frame::Frame f, assem::InstructionList instruction_list);
 
    public:
     result regAllocate(frame::Frame f, assem::InstructionList instruction_list);
