@@ -95,7 +95,7 @@ void Muncher::munchStatement(irt::Statement* stm) {
             auto mem_src_stm = dynamic_cast<irt::Mem*>(move_stm->right.get());
             if ( mem_src_stm ) {
                 /* MOVE((MEM e1), (MEM e2)) */
-                emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(mem_src_stm->exp.get())}, temp::TempList{munchExpression(mem_dst_stm->exp.get())}, temp::LabelList{}));
+                emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(mem_src_stm->exp.get()), munchExpression(mem_dst_stm->exp.get())}, temp::TempList{}, temp::LabelList{}));
                 return;
             }
             mov_code = "movq %'s0, (%'s1)";
