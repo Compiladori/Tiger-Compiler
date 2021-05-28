@@ -22,7 +22,7 @@ struct Temp {
   Temp(const Temp &t) : num(t.num) {} // Copy constructor
   Temp& operator=(const Temp &t) { num = t.num; return *this; } // Copy assignment
   bool operator<(const Temp& t1) const  { return num < t1.num; }
-  void print() const { std::cout << num << " "; }
+  void print() const { std::cout << num; }
 };
 
 struct TempHasher {

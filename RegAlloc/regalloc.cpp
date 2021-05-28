@@ -212,7 +212,10 @@ void RegAllocator::build() {
     while ( !nodes.empty() ) {
         liveness::TempNode node = nodes.back();
         nodes.pop_back();
-        degree[node] = live_graph._interference_graph.getDegree(node);
+
+        auto deg = live_graph._interference_graph.getDegree(node);
+        degree[node] = deg;
+
         // para cambiar esto tengo que cambiar el tipo de getSuccessors
         int i = live_graph._interference_graph.keyToId(node);
         set<int> adj = live_graph._interference_graph.getSuccessors(i);
@@ -233,9 +236,9 @@ void RegAllocator::build() {
 
 void RegAllocator::makeWorklist() {
     vector<liveness::TempNode> nodes = live_graph._interference_graph.getNodes();
+    
     for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
         if ( coloring.find((*it)._info) != coloring.end() ) continue;
-        std::cout << "makeworklist with: " << (*it)._info.num << std::endl;
         int deg = degree.at(*it);
         if ( deg >= K )
             spillWorklist.push_back(*it);
@@ -425,8 +428,8 @@ assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::Instr
         instruction_list = new_instruction_list;
     }
     spilledNodes.clear();
-    // coloredNodes.clear();
-    // coalescedNodes.clear();
+    coloredNodes.clear();
+    coalescedNodes.clear();
     return instruction_list;
 }
 
@@ -446,10 +449,27 @@ void RegAllocator::clearLists() {
     moveList.clear();
     alias.clear();
     nodeColors.clear();
+
+    adjacentNodes.clear();
 }
 
 result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_list) {
-    // clearLists();
+    avail_colors.clear();
+    regs.clear();
+    temp::TempMap initial_coloring;
+    temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
+    auto reg_map = f.get_reg_to_temp_map();
+    auto reg_list = f.get_rets();
+    for ( auto it = reg_list.begin(); it != reg_list.end(); it++ )
+        regs.push_back(reg_map[*it]);
+    K = regs.size();
+    for ( auto it = regs.begin(); it != regs.end(); it++ ) {
+        auto lbl = temp::Label(temp_to_reg_map[*it]);
+        initial_coloring[*it] = lbl;
+        avail_colors.push_back(lbl);
+    }
+    coloring = initial_coloring;
+    clearLists();
     result res;
     flowgraph::FlowGraph graph = flowgraph::FlowGraph(instruction_list);
     graph._flow_graph.show_graph();

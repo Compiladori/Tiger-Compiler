@@ -19,7 +19,6 @@ extern void yyerror(const char* s);
 extern ast::Expression* ast_raw_ptr;
 
 using namespace std;
-regalloc::RegAllocator RA;
 
 void doProc(file::Handler& out, shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
     cout << "Entered doProc!!!!" << endl;
@@ -55,6 +54,7 @@ void doProc(file::Handler& out, shared_ptr<frame::Frame> frame, unique_ptr<irt::
     for ( auto& inst : instr_list ) {
         shrd_list.push_back(move(inst));
     }
+    regalloc::RegAllocator RA;
     auto ra_result = RA.regAllocate(*frame, shrd_list);
     cout << "Regallocate!!!!" << endl;
     cout << endl;
