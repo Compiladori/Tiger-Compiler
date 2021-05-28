@@ -192,6 +192,9 @@ void RegAllocator::freezeMoves(liveness::TempNode u) {
         frozenMoves.push_back(*it);
         if ( nodeMoves(v).empty() and degree.at(v) < K ) {
             auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
+            if(idx != freezeWorklist.end()){
+                freezeWorklist.erase(idx);
+            }
             freezeWorklist.erase(idx);
             simplifyWorklist.push_back(v);
         }
