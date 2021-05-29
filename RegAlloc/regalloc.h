@@ -39,7 +39,8 @@ class RegAllocator {
     vector<liveness::TempNode> spilledNodes;        // nodes marked for spilling during this round; initially empty
     vector<liveness::TempNode> coalescedNodes;      // registers that have been coalesced; when u<-v is coalesced,
     // v is added to this set and u put back on some work-list (or vice versa)
-    temp::TempList regs;
+    temp::TempList precolored;
+    vector<liveness::TempNode> initial;
     int K;    // regs.size()
     vector<temp::Label> avail_colors;
     vector<liveness::TempNode> coloredNodes;    // nodes successfully colored
@@ -60,7 +61,7 @@ class RegAllocator {
     unordered_map<liveness::TempNode, int, liveness::TempNodeHasher> nodeColors;
     void addEdge(liveness::TempNode u, liveness::TempNode v);
     vector<liveness::TempNode> adjacent(liveness::TempNode n);
-    unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjacentNodes;
+    unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjList;
     vector<liveness::Move> nodeMoves(liveness::TempNode n);
     temp::TempMap coloring;
     bool isMoveRelated(liveness::TempNode node);
@@ -76,7 +77,7 @@ class RegAllocator {
     float spillHeuristic(liveness::TempNode node);
     void clearLists();
 
-    void build();
+    void build(assem::InstructionList instruction_list);
     void makeWorklist();
     void simplify();
     void coalesce();

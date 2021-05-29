@@ -87,7 +87,12 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
             srcs = (*i)->get_use();
             auto dst = temp_to_node[getFirstElement(defs)];
             auto src = temp_to_node[getFirstElement(srcs)];
-            moves.push_back(Move(dst, src));
+            auto move = Move(dst, src);
+            workListmoves.push_back(move);
+            auto usedefs = getUnion(defs, srcs);
+            for ( auto tmp : usedefs ) {
+                moveList[temp_to_node.at(tmp)].push_back(move);
+            }
             auto liveouts = out[flowgraph_node_index];
             for ( auto t = liveouts.begin(); t != liveouts.end(); ++t ) {
                 auto t_node = temp_to_node[*t];

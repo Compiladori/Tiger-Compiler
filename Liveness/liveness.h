@@ -51,7 +51,8 @@ struct Liveness {
     std::vector<std::set<temp::Temp>> in, out, def, use;
     graph::Graph<TempNode, TempNodeHasher> _interference_graph;
     std::unordered_map<temp::Temp, TempNode, TempNodeHasher> temp_to_node;
-    std::vector<Move> moves;
+    std::vector<Move> workListmoves;
+    std::unordered_map<TempNode, std::vector<Move>, TempNodeHasher> moveList;
     Liveness(flowgraph::FlowGraph &flow_graph);
     Liveness() = default;
     void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);

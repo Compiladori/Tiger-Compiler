@@ -66,18 +66,31 @@ class Graph {
         return graph[t];
     }
 
-    int keyToId(const T& t){ // ver que onda esto
-        return key_to_id[t]; 
+    std::unordered_map<T, std::vector<T>, H> getAdjacentList() {
+        std::unordered_map<T, std::vector<T>, H> hash;
+        int indx = 0;
+        for ( auto node : graph ) {
+            for ( auto keys : node ) {
+                hash[id_to_key[indx]].push_back(id_to_key[keys]);
+            }
+            indx++;
+        }
+        return hash;
     }
 
-    T idToKey(int t){
+    int keyToId(const T& t) {    // ver que onda esto
+        return key_to_id[t];
+    }
+
+    T idToKey(int t) {
         return id_to_key[t];
     }
-    
+
     void show_graph() {
         for ( int i = 0; i < graph.size(); ++i ) {
             std::cout << "node" << i << std::endl;
-            std::cout << "info: "; id_to_key[i].print();
+            std::cout << "info: ";
+            id_to_key[i].print();
             std::cout << std::endl;
             for ( auto node = graph[i].begin(); node != graph[i].end(); ++node ) {
                 id_to_key[*node].print();
@@ -87,13 +100,13 @@ class Graph {
         }
     }
 
-    int getDegree(const T& t){
+    int getDegree(const T& t) {
         return graph[key_to_id[t]].size();
     }
 
-    std::vector<T> getNodes(){
+    std::vector<T> getNodes() {
         std::vector<T> nodes;
-        for (int i = 0; i < graph.size(); i++){
+        for ( int i = 0; i < graph.size(); i++ ) {
             nodes.push_back(id_to_key[i]);
         }
         return nodes;
