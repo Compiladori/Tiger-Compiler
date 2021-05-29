@@ -18,6 +18,9 @@ void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v) {
 // function Adjacent(n) adjList[n] \ (selectStack ∪ coalescedNodes)
 // we use adjlist for precolored also but avoid cuestioning
 vector<liveness::TempNode> RegAllocator::adjacent(liveness::TempNode n) {
+    if ( isIn(n._info, precolored) ) {
+        return vector<liveness::TempNode>();
+    }
     auto adjacentNodes = adjList.at(n);
     vector<liveness::TempNode> except = selectStack;
     for ( auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++ )
@@ -116,6 +119,11 @@ void RegAllocator::enableMoves(vector<liveness::TempNode> nodes) {
 //         activeMoves ← activeMoves \ {m}
 //         worklistMoves ← worklistMoves ∪ {m}
 
+// procedure AddWorkList(u)
+// if (u ̸∈ precolored ∧ not(MoveRelated(u)) ∧ degree[u] < K) then
+//  freezeWorklist ← freezeWorklist \ {u}
+//  simplifyWorklist ← simplifyWorklist ∪ {u}
+
 void RegAllocator::addWorklist(liveness::TempNode node) {
     if ( !isIn(node._info, precolored) and !isMoveRelated(node) && (degree.at(node) < K) ) {
         auto it = find(freezeWorklist.begin(), freezeWorklist.end(), node);
@@ -129,7 +137,7 @@ void RegAllocator::addWorklist(liveness::TempNode node) {
 bool RegAllocator::forAllAdjOk(liveness::TempNode u, liveness::TempNode v) {
     vector<liveness::TempNode> adjs = adjacent(v);
     for ( auto it = adjs.begin(); it != adjs.end(); it++ ) {
-        if ( !((degree.at(*it) < K) or isIn((*it)._info, precolored) or isIn(*it, adjList[u])) )
+        if ( !((degree.at(*it) < K) or isIn((*it)._info, precolored) or isIn(*it, adjList.at(u))) )
             return false;
     }
     return true;
@@ -193,7 +201,7 @@ void RegAllocator::freezeMoves(liveness::TempNode u) {
         frozenMoves.push_back(*it);
         if ( nodeMoves(v).empty() and degree.at(v) < K ) {
             auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
-            if(idx != freezeWorklist.end()){
+            if ( idx != freezeWorklist.end() ) {
                 freezeWorklist.erase(idx);
             }
             freezeWorklist.erase(idx);
@@ -302,6 +310,10 @@ void RegAllocator::coalesce() {
     } else
         activeMoves.push_back(n);
 }
+
+// u ∈ precolored ∧ (∀t ∈ Adjacent(v), OK(t, u))
+// ∨ u ̸∈ precolored ∧
+// Conservative(Adjacent(u) ∪ Adjacent(v))
 
 // If neither simplify nor coalesce applies, we look for a move-related node of low degree.
 // We freeze the moves in which this node is involved: that is, we give up hope of coalescing
@@ -445,7 +457,7 @@ assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::Instr
         }
         instruction_list = new_instruction_list;
     }
-    spilledNodes.clear();
+    // spilledNodes.clear();
     // coloredNodes.clear();
     // coalescedNodes.clear();
     return instruction_list;
@@ -487,7 +499,7 @@ result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_lis
         avail_colors.push_back(lbl);
     }
     coloring = initial_coloring;
-    // clearLists();
+    clearLists();
     result res;
     build(instruction_list);
     makeWorklist();
@@ -512,21 +524,6 @@ result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_lis
 }
 result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list) {
     result res;
-    // aca tenemos que definir los colores que se van a usar y un precoloreo inicial
-    auto reg_map = f.get_reg_to_temp_map();
-    auto reg_list = f.get_rets();
-    for ( auto it = reg_list.begin(); it != reg_list.end(); it++ )
-        precolored.push_back(reg_map[*it]);
-    K = precolored.size();
-    temp::TempMap initial_coloring;
-    temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
-    for ( auto it = precolored.begin(); it != precolored.end(); it++ ) {
-        auto lbl = temp::Label(temp_to_reg_map[*it]);
-        initial_coloring[*it] = lbl;
-        avail_colors.push_back(lbl);
-    }
-    coloring = initial_coloring;
-    clearLists();
     do {
         res = main(f, instruction_list);
     } while ( !spilledNodes.empty() );

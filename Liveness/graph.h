@@ -70,6 +70,7 @@ class Graph {
         std::unordered_map<T, std::vector<T>, H> hash;
         int indx = 0;
         for ( auto node : graph ) {
+            hash[id_to_key[indx]] = std::vector<T>();
             for ( auto keys : node ) {
                 hash[id_to_key[indx]].push_back(id_to_key[keys]);
             }
