@@ -90,9 +90,9 @@ void Muncher::munchStatement(irt::Statement* stm) {
         // Careful, the IRT is built using Intel syntax (move dst, src)
         // Swap the order position of the two move_stm expressions to reflect the AT&T syntax (move src, dst)
         std::string mov_code = "movq %'s0, (%'s1)";
-        if ( dynamic_cast<irt::Mem*>(move_stm->left.get()) ) {
+        if ( auto mem_dst_stm = dynamic_cast<irt::Mem*>(move_stm->left.get()) ) {
             mov_code = "movq %'s0, (%'s1)";
-            emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(move_stm->right.get()), munchExpression(move_stm->left.get())}, temp::TempList{}, temp::LabelList{}));
+            emit(make_unique<assem::Oper>(mov_code, temp::TempList{munchExpression(move_stm->right.get()), munchExpression(mem_dst_stm->exp.get())}, temp::TempList{}, temp::LabelList{}));
             return;
         }
         auto temp_dst_stm = dynamic_cast<irt::Temp*>(move_stm->left.get());
