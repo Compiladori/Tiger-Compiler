@@ -67,7 +67,6 @@ struct Move : public Instruction {
     virtual void print() const override;
     virtual void get_assm() const { std::cout << assm << std::endl; };
 };
-
 };    // namespace assem
 
 #endif

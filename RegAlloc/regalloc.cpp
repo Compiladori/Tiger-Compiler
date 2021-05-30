@@ -73,13 +73,15 @@ bool RegAllocator::isMoveRelated(liveness::TempNode node) {
 void RegAllocator::decrementDegree(liveness::TempNode m) {
     auto d = degree.at(m);
     degree[m] = d - 1;
-    if ( d == K && !isIn(m._info, precolored) ) {
+    if ( d == K ) {
         vector<liveness::TempNode> adj = adjacent(m);
         adj.push_back(m);
         enableMoves(adj);
         auto it = find(spillWorklist.begin(), spillWorklist.end(), m);
         if ( it != spillWorklist.end() ) {
             spillWorklist.erase(it);
+        } else {
+            exit(-1);
         }
 
         if ( isMoveRelated(m) )
@@ -166,6 +168,8 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
         if ( it != spillWorklist.end() ) {
             spillWorklist.erase(it);
+        } else {
+            exit(-1);
         }
     }
     coalescedNodes.push_back(v);
@@ -197,14 +201,18 @@ void RegAllocator::freezeMoves(liveness::TempNode u) {
         for ( ; idx != activeMoves.end(); idx++ )
             if ( it->dst == idx->dst and it->src == idx->src )
                 break;
+        if ( idx == activeMoves.end() ) {
+            exit(-1);
+        }
         activeMoves.erase(idx);
         frozenMoves.push_back(*it);
         if ( nodeMoves(v).empty() and degree.at(v) < K ) {
             auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
             if ( idx != freezeWorklist.end() ) {
                 freezeWorklist.erase(idx);
+            } else {
+                exit(-1);
             }
-            freezeWorklist.erase(idx);
             simplifyWorklist.push_back(v);
         }
     }
@@ -457,9 +465,6 @@ assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::Instr
         }
         instruction_list = new_instruction_list;
     }
-    // spilledNodes.clear();
-    // coloredNodes.clear();
-    // coalescedNodes.clear();
     return instruction_list;
 }
 
@@ -479,13 +484,25 @@ void RegAllocator::clearLists() {
     moveList.clear();
     alias.clear();
     nodeColors.clear();
-
+    spilledNodes.clear();
     adjList.clear();
+    initial.clear();
+}
+
+void print_instr(assem::InstructionList list) {
+    std::cout << "List [" << std::endl;
+    for ( auto p : list ) {
+        p->print();
+        std::cout << std::endl;
+    }
+    std::cout << "], ";
+    std::cout << std::endl;
 }
 
 result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_list) {
     avail_colors.clear();
     precolored.clear();
+    print_instr(instruction_list);
     temp::TempMap initial_coloring;
     temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
     auto reg_map = f.get_reg_to_temp_map();

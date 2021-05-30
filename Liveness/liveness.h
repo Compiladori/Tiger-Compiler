@@ -30,7 +30,7 @@ struct TempNode {
         return *this;
     }
     bool operator==(const TempNode &s) const { return _info == s._info; }
-    void print() { std::cout << "TempNode(key = " << key << ", _info = "; _info.print(); std::cout << ")"; }
+    void print() { _info.print(); }
     TempNode() = default;
 };
 
