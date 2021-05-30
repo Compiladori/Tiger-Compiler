@@ -48,9 +48,9 @@ using TempToRegMap = std::map<temp::Temp, Register>;
 
 class Frame {
     AccessList _formals;
-    int _offset;
 
    public:
+    int _offset;
     temp::Label _name;
     static int wordSize;
     Frame(temp::Label f, std::vector<bool> list);

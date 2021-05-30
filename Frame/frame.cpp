@@ -46,7 +46,7 @@ temp::Temp Frame::fp_temp() {
 RegToTempMap Frame::register_temporaries;
 RegList Frame::get_rets() { return RegList{"rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
 RegList Frame::get_arg_regs() { return RegList{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}; }
-RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11", "rcx", "rsi", "rip", "rdx", "rdi", "r8", "r9"}; }
+RegList Frame::get_caller_saved_regs() { return RegList{"r10", "r11", "rcx", "rsi", "rip", "rdx", "rdi", "r8", "r9", "rax"}; }
 RegList Frame::get_callee_saved_regs() { return RegList{"r12", "r13", "r14", "r15", "rbx", "rsp", "rbp"}; }
 RegList Frame::get_calldefs() { return Frame::get_caller_saved_regs(); }
 RegToTempMap &Frame::get_reg_to_temp_map() {
@@ -175,11 +175,10 @@ assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, ass
     for ( auto &reg_name : regs ) {
         return_sink.push_back(Frame::register_temporaries[reg_name]);
     }
-    int stack_pointer_offset = 100;
-    std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
-    list.push_back(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    list = restore_callee_saved_regs(frame, list);
-    list.push_back(make_shared<assem::Oper>("ret", return_sink, temp::TempList{}, temp::LabelList{}));
+    return_sink.push_back(reg_map["rax"]);
+    return_sink.push_back(reg_map["rsp"]);
+    return_sink.push_back(reg_map["rsp"]);
+    list.push_back(make_shared<assem::Oper>("", return_sink, temp::TempList{}, temp::LabelList{}));
     return list;
 }
 
@@ -187,11 +186,18 @@ shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     RegList regs = frame->get_callee_saved_regs();
     auto reg_map = frame->get_reg_to_temp_map();
     string prolog = "# PROCEDURE " + (frame->_name).name + "\n";
-    int stack_pointer_offset = 100;
+    string epilog = "# END\n";
+    int stack_pointer_offset = ((frame->_offset + 15) / 16) * 16;
+    stack_pointer_offset = 1000;
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_front(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
     list.push_front(make_shared<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
     list = append_callee_saved_regs(frame, list);
     list.push_front(make_shared<assem::Label>((frame->_name).name + ":", frame->_name));
-    return make_shared<assem::Procedure>(prolog, list, "# END\n");
+
+    offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
+    list.push_back(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
+    list = restore_callee_saved_regs(frame, list);
+    list.push_back(make_shared<assem::Oper>("ret", temp::TempList{}, temp::TempList{}, temp::LabelList{}));
+    return make_shared<assem::Procedure>(prolog, list, epilog);
 }

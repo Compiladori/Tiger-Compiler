@@ -240,22 +240,14 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp) {
                 // TODO : maybe duplicate the last argument?
                 // call_exp->args->push_back(make_unique<irt::Temp>(munchExpression(call_exp->args->back().get())));
             }
-            auto calldefs = munch_frame.get_calldefs();
-            for ( auto& reg : munch_frame.get_calldefs() ) {
-                emit(make_unique<assem::Oper>("pushq %'s0 ", temp::TempList{reg_to_temp[reg]}, temp::TempList{rsp}, temp::LabelList{}));
-            }
 
             std::string call_code = "call " + fun_name_exp->name.name;
             temp::TempList srcArgsTemps = munchArgs(call_exp->args.get());
-            calldefsTemps.push_back(rax);
             emit(make_unique<assem::Oper>(call_code, srcArgsTemps, calldefsTemps, temp::LabelList{}));
 
             if ( stack_pointer_offset > 0 ) {
                 std::string offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'d0";
                 emit(make_unique<assem::Oper>(offset_code, temp::TempList{rsp}, temp::TempList{rsp}, temp::LabelList{}));
-            }
-            for ( auto reg = calldefs.rbegin(); reg < calldefs.rend(); reg++ ) {
-                emit(make_unique<assem::Oper>("popq %'d0 ", temp::TempList{rsp}, temp::TempList{reg_to_temp[*reg]}, temp::LabelList{}));
             }
             return rax;
         } else {
