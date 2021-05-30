@@ -144,7 +144,6 @@ unique_ptr<TranslatedExp> Translator::recordExp(unique_ptr<trans::ExpressionList
                 (*exp)->unEx()),
             move(result));
         field_indx++;
-        field_count--;
     }
 
     return make_unique<trans::Ex>(
