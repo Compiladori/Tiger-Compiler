@@ -1,0 +1,5 @@
+let
+in
+	for i := 5 to () do ();
+	0
+end

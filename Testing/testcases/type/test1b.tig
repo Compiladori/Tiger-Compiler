@@ -1,0 +1,6 @@
+let
+	var a:int := 5
+	var b:string := 3
+in
+	b
+end

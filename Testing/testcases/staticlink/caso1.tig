@@ -1,0 +1,5 @@
+let
+    function g(x:int) : int = x+1
+    function f() : int = g(0)
+in f()
+end

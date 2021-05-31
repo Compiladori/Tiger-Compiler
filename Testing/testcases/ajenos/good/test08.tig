@@ -1,0 +1,5 @@
+/* correct if */
+let
+in
+    if (10 > 20) then 30 else 40
+end
