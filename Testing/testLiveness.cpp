@@ -8,7 +8,7 @@ using namespace std;
 
 TEST_CASE("flowgraph", "[liveness]") {
     SECTION("FLOWGRAPH") {
-        auto list = util::GenericList<assem::Instruction>();
+        auto list = std::deque<std::shared_ptr<assem::Instruction>>();
         string str = "label1:";
         std::string code = "jmp `d0";
         std::string code_move = "mv `d0 0";
