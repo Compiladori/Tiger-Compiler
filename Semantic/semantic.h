@@ -10,6 +10,7 @@
 #include <cassert>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "../AST/AST.h"
 #include "../Translation/translation.h"
 #include "environmentTable.h"
