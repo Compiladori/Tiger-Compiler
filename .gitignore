@@ -29,7 +29,6 @@
 
 # Executables
 *.exe
-*.out
 *.app
 
 # Ignore flex and bison
