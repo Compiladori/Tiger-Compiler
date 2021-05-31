@@ -187,8 +187,7 @@ shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     auto reg_map = frame->get_reg_to_temp_map();
     string prolog = "# PROCEDURE " + (frame->_name).name + "\n";
     string epilog = "# END\n";
-    int stack_pointer_offset = ((frame->_offset + 15) / 16) * 16;
-    stack_pointer_offset = 1000;
+    int stack_pointer_offset = ((frame->_offset * -1 + 15) / 16) * 16;
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_front(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
     list.push_front(make_shared<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
@@ -201,3 +200,5 @@ shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     list.push_back(make_shared<assem::Oper>("ret", temp::TempList{}, temp::TempList{}, temp::LabelList{}));
     return make_shared<assem::Procedure>(prolog, list, epilog);
 }
+
+// let val stackLocalsSz = (((!(#cantLocalsInFrame frame) * wSz)+15) div 16) * 16
