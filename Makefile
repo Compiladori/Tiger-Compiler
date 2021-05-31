@@ -10,7 +10,7 @@ LDFLAGS = -std=c++17
 .PHONY: allD allC cleanD cleanC
 
 default: allC
-	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) app.cpp -o tiger.exe
 allC:
 	$(MAKE) -C AST depend
 	$(MAKE) -C AST all
@@ -18,7 +18,7 @@ allC:
 	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax allC
+	$(MAKE) -C Syntax all
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
@@ -45,7 +45,7 @@ allD:
 	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax allD
+	$(MAKE) -C Syntax all
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
@@ -70,7 +70,7 @@ cleanD:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
-		$(MAKE) -C Syntax cleanD
+		$(MAKE) -C Syntax clean
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean
@@ -84,7 +84,7 @@ cleanC:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
-		$(MAKE) -C Syntax cleanC
+		$(MAKE) -C Syntax clean
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean

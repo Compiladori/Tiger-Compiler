@@ -34,7 +34,7 @@ SEMAN_SRC = semantic.cpp
 SEMAN_OBJ = semantic.o
 
 SYNTAX_OBJ_D = lex.yy.o tigerbison.tab.o
-SYNTAX_OBJ_C = lex.yy.o tigerbison.tab.o app.o
+SYNTAX_OBJ_C = lex.yy.o tigerbison.tab.o
 
 
 FRAME_HDR = ../AST/AST.h			  \
