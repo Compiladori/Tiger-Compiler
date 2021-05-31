@@ -9,7 +9,34 @@ SH   = bash
 LDFLAGS = -std=c++17
 .PHONY: allD allC cleanD cleanC
 
-default: allD # executes Testing main
+default: allC
+	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) app.cpp -o tiger.exe
+allC:
+	$(MAKE) -C AST depend
+	$(MAKE) -C AST all
+	$(MAKE) -C IRT depend
+	$(MAKE) -C IRT all
+	$(MAKE) -C Escapes depend
+	$(MAKE) -C Escapes all
+	$(MAKE) -C Syntax all
+	$(MAKE) -C Frame depend
+	$(MAKE) -C Frame all
+	$(MAKE) -C Semantic depend
+	$(MAKE) -C Semantic all
+	$(MAKE) -C Translation depend
+	$(MAKE) -C Translation all
+	$(MAKE) -C Liveness depend
+	$(MAKE) -C Liveness all
+	$(MAKE) -C Canon depend
+	$(MAKE) -C Canon all
+	$(MAKE) -C Munch depend
+	$(MAKE) -C Munch all
+	$(MAKE) -C RegAlloc depend
+	$(MAKE) -C RegAlloc all
+	$(MAKE) -C FileHandler depend
+	$(MAKE) -C FileHandler all
+
+test: allD # executes Testing main
 	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
 allD:
 	$(MAKE) -C AST depend
@@ -18,7 +45,7 @@ allD:
 	$(MAKE) -C IRT all
 	$(MAKE) -C Escapes depend
 	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax allD
+	$(MAKE) -C Syntax all
 	$(MAKE) -C Frame depend
 	$(MAKE) -C Frame all
 	$(MAKE) -C Semantic depend
@@ -38,38 +65,12 @@ allD:
 	$(MAKE) -C FileHandler depend
 	$(MAKE) -C FileHandler all
 
-
-custom: allC
-	g++ $(LDFLAGS) $(PROGRAM_OBJ_C) -o tiger.exe
-allC:
-	$(MAKE) -C AST depend
-	$(MAKE) -C AST all
-	$(MAKE) -C IRT depend
-	$(MAKE) -C IRT all
-	$(MAKE) -C Escapes depend
-	$(MAKE) -C Escapes all
-	$(MAKE) -C Syntax allC
-	$(MAKE) -C Frame depend
-	$(MAKE) -C Frame all
-	$(MAKE) -C Semantic depend
-	$(MAKE) -C Semantic all
-	$(MAKE) -C Translation depend
-	$(MAKE) -C Translation all
-	$(MAKE) -C Canon depend
-	$(MAKE) -C Canon all
-	$(MAKE) -C Munch depend
-	$(MAKE) -C Munch all
-	$(MAKE) -C RegAlloc depend
-	$(MAKE) -C RegAlloc all
-	$(MAKE) -C FileHandler depend
-	$(MAKE) -C FileHandler all
-	
-
+clean: cleanD cleanC 
 cleanD:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
-		$(MAKE) -C Syntax cleanD
+		$(MAKE) -C Syntax clean
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean
@@ -83,7 +84,7 @@ cleanC:
 		$(MAKE) -C AST clean
 		$(MAKE) -C IRT clean
 		$(MAKE) -C Escapes clean
-		$(MAKE) -C Syntax cleanC
+		$(MAKE) -C Syntax clean
 		$(MAKE) -C Frame clean
 		$(MAKE) -C Semantic clean
 		$(MAKE) -C Translation clean

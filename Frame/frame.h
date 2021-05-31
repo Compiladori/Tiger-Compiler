@@ -2,9 +2,10 @@
 #define __FRAME_H__
 
 #include <iostream>
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
+
 #include "../IRT/IRT.h"
 #include "../Munch/assem.h"
 #include "temp.h"
@@ -32,87 +33,78 @@ class Frag;
 
 std::unique_ptr<irt::Expression> exp(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> static_link_exp_base(std::unique_ptr<irt::Expression> framePtr);
-std::unique_ptr<irt::Expression> static_link_jump(std::unique_ptr<irt::Expression> staticLink);
 std::unique_ptr<irt::Expression> exp_with_static_link(std::shared_ptr<Access> acc, std::unique_ptr<irt::Expression> framePtr);
 std::unique_ptr<irt::Expression> external_call(std::string s, std::unique_ptr<irt::ExpressionList> args);
-std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> stm);
-std::unique_ptr<assem::Procedure> proc_entry_exit3(assem::InstructionList list);
+std::unique_ptr<irt::Statement> proc_entry_exit1(std::shared_ptr<Frame> frame, std::unique_ptr<irt::Statement> stm);
+assem::InstructionList proc_entry_exit2(std::shared_ptr<Frame> frame, assem::InstructionList list);
+std::shared_ptr<assem::Procedure> proc_entry_exit3(std::shared_ptr<Frame> frame, assem::InstructionList list);
 
 using FragList = util::GenericList<Frag>;
 using AccessList = std::vector<std::shared_ptr<Access>>;
 using Register = std::string;
 using RegList = std::vector<Register>;
 using RegToTempMap = std::map<Register, temp::Temp>;
-using TempToRegMap = std::map<temp::Temp,Register>;
-
+using TempToRegMap = std::map<temp::Temp, Register>;
 
 class Frame {
-  temp::Label _name;
-  AccessList _formals;
-  AccessList _locals;
-  int _offset;
+    AccessList _formals;
 
- public:
-  static int wordSize;
-  static temp::Temp fp;
-  static temp::Temp eax;
-  static temp::Temp ecx;
-  static temp::Temp edx;
-  static temp::Temp ebx;
-  static temp::Temp esi;
-  static temp::Temp edi;
-  static temp::Temp sp;
-  static temp::Temp zero;
-  static temp::Temp ra;
-  static temp::Temp rv;
-  Frame(temp::Label f, std::vector<bool> list);
-  temp::Label name() { return _name; }
-  AccessList &formals() { return _formals; }
-  std::shared_ptr<Access> alloc_local(bool escape);
-
-  RegList get_arg_regs();
-  RegList get_caller_saved_regs();
-  RegList get_callee_saved_regs();
-  RegList get_calldefs();
-  static RegToTempMap register_temporaries;
-  RegToTempMap& get_reg_to_temp_map();
-  TempToRegMap get_temp_to_reg_map();
+   public:
+    int _offset;
+    temp::Label _name;
+    static int wordSize;
+    Frame(temp::Label f, std::vector<bool> list);
+    temp::Label name() { return _name; }
+    AccessList& formals() { return _formals; }
+    std::shared_ptr<Access> alloc_local(bool escape);
+    std::shared_ptr<Access> alloc_helper(bool escape);
+    RegList get_rets();
+    static RegList get_arg_regs();
+    static RegList get_caller_saved_regs();
+    static RegList get_callee_saved_regs();
+    static RegList get_calldefs();
+    static RegToTempMap register_temporaries;
+    static RegToTempMap& get_reg_to_temp_map();
+    static temp::TempMap get_temp_to_reg_map();
+    static temp::Temp ra_temp();
+    static temp::Temp rv_temp();
+    static temp::Temp fp_temp();
 };
 
 struct Access {
-  virtual void print() const = 0;
+    virtual void print() const = 0;
 };
 
 struct InFrame : public Access {
-  int offset;
-  InFrame(int offset) : offset(offset) {}
-  void print() const {}
+    int offset;
+    InFrame(int offset) : offset(offset) {}
+    void print() const {}
 };
 
 struct InReg : public Access {
-  temp::Temp reg;
-  InReg() : reg(temp::Temp()) {}
-  void print() const {}
+    temp::Temp reg;
+    InReg() : reg(temp::Temp()) {}
+    void print() const {}
 };
 
 struct Frag {
-  virtual void print() const = 0;
+    virtual void print() const = 0;
 };
 
 struct StringFrag : public Frag {
-  temp::Label _label;
-  std::string str;
-  StringFrag(temp::Label label, std::string str) : _label(label) {}
-  void print() const {}
+    temp::Label _label;
+    std::string str;
+    StringFrag(temp::Label label, std::string str) : _label(label), str(str) {}
+    void print() const {}
 };
 
 struct ProcFrag : public Frag {
     std::shared_ptr<Frame> _frame;
     std::unique_ptr<irt::Statement> body;
-    ProcFrag(std::shared_ptr<Frame> frame,std::unique_ptr<irt::Statement> body) : _frame(frame), body(std::move(body))  {}
+    ProcFrag(std::shared_ptr<Frame> frame, std::unique_ptr<irt::Statement> body) : _frame(frame), body(std::move(body)) {}
     void print() const {}
 };
 
-};  // namespace frame
+};    // namespace frame
 
 #endif

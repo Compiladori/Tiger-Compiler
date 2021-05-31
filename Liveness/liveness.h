@@ -22,8 +22,15 @@ struct TempNode {
     static int total_num;
     int key;
     temp::Temp _info;
+    TempNode(const TempNode &node) : _info(node._info), key(node.key) {}
     TempNode(temp::Temp info) : _info(info), key(total_num++) {}
+    TempNode &operator=(const TempNode &node) {
+        _info = node._info;
+        key = node.key;
+        return *this;
+    }
     bool operator==(const TempNode &s) const { return _info == s._info; }
+    void print() { _info.print(); }
     TempNode() = default;
 };
 
@@ -37,13 +44,15 @@ struct Move {
     TempNode dst;
     TempNode src;
     Move(TempNode dst, TempNode src) : dst(dst), src(src) {}
+    bool operator==(const Move &s) const { return src == s.src and dst == s.dst; }
 };
 
 struct Liveness {
     std::vector<std::set<temp::Temp>> in, out, def, use;
     graph::Graph<TempNode, TempNodeHasher> _interference_graph;
     std::unordered_map<temp::Temp, TempNode, TempNodeHasher> temp_to_node;
-    std::vector<Move> moves;
+    std::vector<Move> workListmoves;
+    std::unordered_map<TempNode, std::vector<Move>, TempNodeHasher> moveList;
     Liveness(flowgraph::FlowGraph &flow_graph);
     Liveness() = default;
     void GenerateLiveInfo(flowgraph::FlowGraph &flow_graph);

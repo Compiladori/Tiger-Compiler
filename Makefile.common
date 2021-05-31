@@ -6,51 +6,51 @@ AST_HDR = AST.h
 AST_SRC = AST.cpp
 AST_OBJ = AST.o
 
-IRT_HDR = IRT.h                 \
+IRT_HDR = IRT.h				 \
 		  ../Frame/temp.h
 IRT_SRC = IRT.cpp
 IRT_OBJ = IRT.o
 
-ESCAPES_HDR = escapes.h         \
-              ../AST/AST.h
+ESCAPES_HDR = escapes.h		 \
+			  ../AST/AST.h
 ESCAPES_SRC = escapes.cpp
 ESCAPES_OBJ = escapes.o
 
-TRANS_HDR = ../IRT/IRT.h            \
-			patchList.h             \
+TRANS_HDR = ../IRT/IRT.h			\
+			patchList.h			 \
 			translatedExpression.h  \
-            ../Frame/frame.h
+			../Frame/frame.h
 TRANS_SRC = translation.cpp translatedExpression.cpp
 TRANS_OBJ = translation.o translatedExpression.o
 
-SEMAN_HDR = environmentTable.h     \
-            expressionType.h       \
-            semantic.h             \
-            ../AST/AST.h           \
-            ../Utility/utility.h   \
-            ../Utility/toposort.h
+SEMAN_HDR = environmentTable.h	 \
+			expressionType.h	   \
+			semantic.h			 \
+			../AST/AST.h		   \
+			../Utility/utility.h   \
+			../Utility/toposort.h
 
 SEMAN_SRC = semantic.cpp
 SEMAN_OBJ = semantic.o
 
 SYNTAX_OBJ_D = lex.yy.o tigerbison.tab.o
-SYNTAX_OBJ_C = lex.yy.o tigerbison.tab.o app.o
+SYNTAX_OBJ_C = lex.yy.o tigerbison.tab.o
 
 
-FRAME_HDR = ../AST/AST.h              \
-            temp.h                    \
-            frame.h
+FRAME_HDR = ../AST/AST.h			  \
+			temp.h					\
+			frame.h
 FRAME_SRC = temp.cpp  frame.cpp
 FRAME_OBJ = temp.o frame.o
 
-CANON_HDR = ../Utility/utility.h             \
-            ../IRT/IRT.h
+CANON_HDR = ../Utility/utility.h			 \
+			../IRT/IRT.h
 CANON_SRC = canon.cpp
 CANON_OBJ = canon.o
 
-MUNCH_HDR = ../IRT/IRT.h             \
-            ../Frame/temp.h          \
-            munch.h assem.h
+MUNCH_HDR = ../IRT/IRT.h			 \
+			../Frame/temp.h		  \
+			munch.h assem.h
 MUNCH_SRC = x86-64munch.cpp assem.cpp
 MUNCH_OBJ = x86-64munch.o assem.o
 
@@ -85,17 +85,17 @@ REGALLOC_OBJ_DIR = $(patsubst %, RegAlloc/%, $(REGALLOC_OBJ))
 TESTING_OBJ_DIR = $(patsubst %, Testing/%, $(TESTING_OBJ))
 FILE_HANDLER_OBJ_DIR = $(patsubst %, FileHandler/%, $(FILE_HANDLER_OBJ))
 
-PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
-                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)  \
-                $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-                $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-                $(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)     \
-                $(LIVENESS_OBJ_DIR) $(REGALLOC_OBJ_DIR) \
-                $(FILE_HANDLER_OBJ_DIR)
+PROGRAM_OBJ_D = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)		 \
+				$(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_D)  \
+				$(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)		 \
+				$(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)	   \
+				$(MUNCH_OBJ_DIR) $(TESTING_OBJ_DIR)	 \
+				$(LIVENESS_OBJ_DIR) $(REGALLOC_OBJ_DIR) \
+				$(FILE_HANDLER_OBJ_DIR)
 
-PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)         \
-                $(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)  \
-                $(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)         \
-                $(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)       \
-                $(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)    \
-                $(REGALLOC_OBJ_DIR) $(FILE_HANDLER_OBJ_DIR)
+PROGRAM_OBJ_C = $(TRANS_OBJ_DIR) $(AST_OBJ_DIR)		 \
+				$(ESCAPES_OBJ_DIR) $(SYNTAX_OBJ_DIR_C)  \
+				$(IRT_OBJ_DIR) $(FRAME_OBJ_DIR)		 \
+				$(SEMAN_OBJ_DIR) $(CANON_OBJ_DIR)	   \
+				$(MUNCH_OBJ_DIR) $(LIVENESS_OBJ_DIR)	\
+				$(REGALLOC_OBJ_DIR) $(FILE_HANDLER_OBJ_DIR)

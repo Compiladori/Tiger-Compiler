@@ -18,18 +18,25 @@ struct Handler {
     ~Handler() {
         _file.close();
     };
-    void print_proc(assem::Procedure proc, temp::TempMap coloring) {
-        _file << "#BEGIN function\n";
-        _file << proc.prolog;
-        for ( auto i = proc.body.begin(); proc.body.end() != i; i++ ) {
-            (*i)->print(_file, coloring);    // add Temp_layerMap
+    void print_proc(std::shared_ptr<assem::Procedure> proc, temp::TempMap coloring) {
+        _file << proc->prolog + "\n";
+        for ( auto i = proc->body.begin(); proc->body.end() != i; i++ ) {
+            (*i)->output(_file, coloring);    // add Temp_layerMap
         }
-        _file << proc.epilog;
-        _file << "#END function\n\n";
+        _file << "\n" + proc->epilog;
     };
     void print_str(frame::StringFrag string_frag) {
-        _file << string_frag._label.name + ": .ascii " + "'\'" + string_frag.str + "'\'" + "\n";
+        _file << string_frag._label.name + ":\n.string " + string_frag.str + "\n";
     };
+
+    void print_text_header() {
+        _file << ".text\n";
+        _file << ".global tigermain\n";
+        _file << ".type tigermain, @function\n\n";
+    }
+    void print_data_header() {
+        _file << ".section .rodata\n";
+    }
 };
 }    // namespace file
 #endif

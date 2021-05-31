@@ -1,0 +1,6 @@
+let
+    type l = {elem:int, next:l}
+    var L:l:=nil
+in
+    0
+end

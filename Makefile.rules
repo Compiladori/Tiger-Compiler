@@ -8,8 +8,8 @@ clean:
 	$(RM) $(OBJ_FILES) Makefile.depends
 
 depend: $(SRC_FILES) $(HDR_FILES)
-    # WARNING: this may break if the preprocessor outputs something, because
-    # that would get mixed with the dependency output.
+	# WARNING: this may break if the preprocessor outputs something, because
+	# that would get mixed with the dependency output.
 	$(CXX) $(OPTIONFLAGS) -MM $^ >Makefile.depends
 
 

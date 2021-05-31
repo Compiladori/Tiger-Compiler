@@ -59,7 +59,6 @@ void Liveness::GenerateLiveInfo(flowgraph::FlowGraph& flow_graph) {
             if ( in[i] != _in || out[i] != _out ) done = false;
         }
     }
-
     return;
 }
 
@@ -84,11 +83,16 @@ void Liveness::InferenceGraph(flowgraph::FlowGraph& flow_graph) {
         defs = (*i)->get_def();
         // si es move agrega una para cada live out que no coincida con el que lo definio
         // sino para cada elemento de los defs agrega una arista con cada out
-        if ( dynamic_cast<assem::Move*>((*i)->_info) ) {
+        if ( dynamic_cast<assem::Move*>((*i)->_info.get()) ) {
             srcs = (*i)->get_use();
             auto dst = temp_to_node[getFirstElement(defs)];
             auto src = temp_to_node[getFirstElement(srcs)];
-            moves.push_back(Move(dst, src));
+            auto move = Move(dst, src);
+            workListmoves.push_back(move);
+            auto usedefs = getUnion(defs, srcs);
+            for ( auto tmp : usedefs ) {
+                moveList[temp_to_node.at(tmp)].push_back(move);
+            }
             auto liveouts = out[flowgraph_node_index];
             for ( auto t = liveouts.begin(); t != liveouts.end(); ++t ) {
                 auto t_node = temp_to_node[*t];

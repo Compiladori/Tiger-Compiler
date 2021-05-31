@@ -5,13 +5,15 @@
 #include <set>
 #include <vector>    // std::vec
 
+#include "../Utility/error.h"
+
 using namespace flowgraph;
 using namespace std;
 
 int Node::total_num = 0;
-void FlowGraph::addJumps(Node *t) {
+void FlowGraph::addJumps(std::shared_ptr<Node> t) {
     auto i = t->_info;
-    auto oper = dynamic_cast<assem::Oper *>(i);
+    auto oper = dynamic_cast<assem::Oper *>(i.get());
     if ( !oper )
         return;
 
@@ -19,37 +21,34 @@ void FlowGraph::addJumps(Node *t) {
     for ( auto p : temp_list ) {
         auto neighbour = label_map.find(p);
         if ( neighbour != label_map.end() ) {
-            if ( !_flow_graph.hasDirectEdge(t, neighbour->second) ) {
-                _flow_graph.addDirectedEdge(t, neighbour->second);
+            if ( !_flow_graph.hasDirectEdge(*t, neighbour->second) ) {
+                _flow_graph.addDirectedEdge(*t, neighbour->second);
             }
         } else {    //can't find label
-            exit(-1);
+            throw error::internal_error("can't find label " + p.name, __FILE__);
         }
     }
 }
 
-FlowGraph::FlowGraph(util::GenericList<assem::Instruction> &instruction_list) {
+FlowGraph::FlowGraph(assem::InstructionList &instruction_list) {
     auto i = instruction_list.begin();
-    auto prev = make_unique<Node>((*i).get());
-    auto prev_ptr = prev.get();
+    auto prev = make_shared<Node>(*i);
     if ( auto label_inst = dynamic_cast<assem::Label *>((*i).get()) ) {
-        label_map[label_inst->label] = prev_ptr;
+        label_map[label_inst->label] = *prev;
     }
-    node_list.push_back(move(prev));
+    node_list.push_back(prev);
     i++;
     for ( ; i != instruction_list.end(); i++ ) {
-        auto curr = make_unique<Node>((*i).get());
-        auto curr_ptr = curr.get();
-        node_list.push_back(move(curr));
-        _flow_graph.addDirectedEdge(prev_ptr, curr_ptr);
+        auto curr = make_shared<Node>(*i);
+        node_list.push_back(curr);
+        _flow_graph.addDirectedEdge(*prev, *curr);
         if ( auto label_inst = dynamic_cast<assem::Label *>((*i).get()) ) {
-            label_map[label_inst->label] = curr_ptr;
+            label_map[label_inst->label] = *curr;
         }
-        prev_ptr = curr_ptr;
+        prev = curr;
     }
     for ( const auto &node : node_list )
-        addJumps(node.get());
-    // _flow_graph.show_graph();
+        addJumps(node);
 }
 
 std::set<temp::Temp> convertToSet(temp::TempList v) {

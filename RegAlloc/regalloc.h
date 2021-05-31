@@ -11,6 +11,8 @@
 #include "../Liveness/flowgraph.h"
 #include "../Liveness/liveness.h"
 #include "../Munch/assem.h"
+#include "../Utility/error.h"
+
 namespace regalloc {
 
 using namespace std;
@@ -19,6 +21,7 @@ class Result;
 struct result {
     temp::TempMap coloring;
     assem::InstructionList instruction_list;
+    bool renew;
 };
 
 template <typename T>
@@ -36,11 +39,12 @@ class RegAllocator {
     vector<liveness::TempNode> spilledNodes;        // nodes marked for spilling during this round; initially empty
     vector<liveness::TempNode> coalescedNodes;      // registers that have been coalesced; when u<-v is coalesced,
     // v is added to this set and u put back on some work-list (or vice versa)
-    vector<liveness::TempNode> precolored;
-    int K;                                      // regs.size()
+    temp::TempList precolored;
+    vector<liveness::TempNode> initial;
+    int K;    // regs.size()
+    vector<temp::Label> avail_colors;
     vector<liveness::TempNode> coloredNodes;    // nodes successfully colored
     vector<liveness::TempNode> selectStack;     // stack containing temporaries removed from the graph
-
     vector<liveness::Move> coalescedMoves;      // moves that have been coalesced
     vector<liveness::Move> constrainedMoves;    // moves whose source and target interfere
     vector<liveness::Move> frozenMoves;         // moves that will no longer be considered for coalescing
@@ -57,8 +61,9 @@ class RegAllocator {
     unordered_map<liveness::TempNode, int, liveness::TempNodeHasher> nodeColors;
     void addEdge(liveness::TempNode u, liveness::TempNode v);
     vector<liveness::TempNode> adjacent(liveness::TempNode n);
-    unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjacentNodes;
+    unordered_map<liveness::TempNode, vector<liveness::TempNode>, liveness::TempNodeHasher> adjList;
     vector<liveness::Move> nodeMoves(liveness::TempNode n);
+    temp::TempMap coloring;
     bool isMoveRelated(liveness::TempNode node);
     void decrementDegree(liveness::TempNode m);
     void enableMoves(vector<liveness::TempNode> nodes);
@@ -72,14 +77,15 @@ class RegAllocator {
     float spillHeuristic(liveness::TempNode node);
     void clearLists();
 
-    void build(temp::TempList regs);
+    void build(assem::InstructionList instruction_list);
     void makeWorklist();
     void simplify();
     void coalesce();
     void freeze();
     void selectSpill();
-    temp::TempMap assignColors(temp::TempMap initial);
+    temp::TempMap assignColors();
     assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
+    result main(frame::Frame f, assem::InstructionList instruction_list);
 
    public:
     result regAllocate(frame::Frame f, assem::InstructionList instruction_list);

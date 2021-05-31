@@ -10,5 +10,5 @@ A Tiger compiler for the x86 architecture, implemented in C++, as described in t
 6. Tile out the canonized IRT into generic assembly instructions (Munch, Frame)
 
 ## Usage
-- Use `make` or `make default` to compile a unit testing executable.
-- Use `make custom` to compile the Compiler, currently reads the source code from `test.file`. 
+- Use `make test` to compile a unit testing executable.
+- Use `make` to compile the Compiler, currently reads the source code from `test.file`. 

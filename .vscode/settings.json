@@ -3,6 +3,8 @@
   "window.zoomLevel": -1,
   "explorer.confirmDragAndDrop": false,
   "files.associations": {
-    "iosfwd": "cpp"
+    "iosfwd": "cpp",
+    "iostream": "cpp",
+    "ostream": "cpp"
   }
 }

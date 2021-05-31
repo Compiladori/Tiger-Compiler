@@ -1,0 +1,6 @@
+let
+    type a = int
+    type b = asdf
+in
+    0
+end
