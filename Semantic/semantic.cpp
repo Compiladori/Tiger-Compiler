@@ -49,7 +49,7 @@ void SemanticChecker::load_initial_values(shared_ptr<trans::Level> outermost) {
     insertValueEntry("printi", make_unique<FunEntry>(type_vector{TInt}, TUnit, outermost, make_shared<temp::Label>("printi")), true);
     insertValueEntry("print", make_unique<FunEntry>(type_vector{TString}, TUnit, outermost, make_shared<temp::Label>("print")), true);
     insertValueEntry("flush", make_unique<FunEntry>(type_vector{}, TUnit, outermost, make_shared<temp::Label>("flush")), true);
-    insertValueEntry("getchar", make_unique<FunEntry>(type_vector{}, TString, outermost, make_shared<temp::Label>("getchar")), true);
+    insertValueEntry("getchar", make_unique<FunEntry>(type_vector{}, TString, outermost, make_shared<temp::Label>("getstr")), true);
     insertValueEntry("ord", make_unique<FunEntry>(type_vector{TString}, TInt, outermost, make_shared<temp::Label>("ord")), true);
     insertValueEntry("chr", make_unique<FunEntry>(type_vector{TInt}, TString, outermost, make_shared<temp::Label>("chr")), true);
     insertValueEntry("size", make_unique<FunEntry>(type_vector{TString}, TInt, outermost, make_shared<temp::Label>("size")), true);

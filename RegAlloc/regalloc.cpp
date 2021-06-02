@@ -80,8 +80,6 @@ void RegAllocator::decrementDegree(liveness::TempNode m) {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), m);
         if ( it != spillWorklist.end() ) {
             spillWorklist.erase(it);
-        } else {
-            exit(-1);
         }
 
         if ( isMoveRelated(m) )
@@ -168,8 +166,6 @@ void RegAllocator::combine(liveness::TempNode u, liveness::TempNode v) {
         auto it = find(spillWorklist.begin(), spillWorklist.end(), v);
         if ( it != spillWorklist.end() ) {
             spillWorklist.erase(it);
-        } else {
-            exit(-1);
         }
     }
     coalescedNodes.push_back(v);
@@ -210,8 +206,6 @@ void RegAllocator::freezeMoves(liveness::TempNode u) {
             auto idx = find(freezeWorklist.begin(), freezeWorklist.end(), v);
             if ( idx != freezeWorklist.end() ) {
                 freezeWorklist.erase(idx);
-            } else {
-                exit(-1);
             }
             simplifyWorklist.push_back(v);
         }
