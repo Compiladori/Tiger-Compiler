@@ -84,11 +84,11 @@ class RegAllocator {
     void freeze();
     void selectSpill();
     temp::TempMap assignColors();
-    assem::InstructionList rewriteProgram(frame::Frame f, assem::InstructionList instruction_list);
-    result main(frame::Frame f, assem::InstructionList instruction_list);
+    assem::InstructionList rewriteProgram(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list);
+    result main(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list);
 
    public:
-    result regAllocate(frame::Frame f, assem::InstructionList instruction_list);
+    result regAllocate(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list);
 };
 
 };    // namespace regalloc

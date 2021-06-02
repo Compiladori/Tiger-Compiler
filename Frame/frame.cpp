@@ -200,5 +200,3 @@ shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     list.push_back(make_shared<assem::Oper>("ret", temp::TempList{}, temp::TempList{}, temp::LabelList{}));
     return make_shared<assem::Procedure>(prolog, list, epilog);
 }
-
-// let val stackLocalsSz = (((!(#cantLocalsInFrame frame) * wSz)+15) div 16) * 16

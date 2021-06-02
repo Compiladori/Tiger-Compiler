@@ -88,7 +88,7 @@ char* concat(char* a, char* b){
 
     return t;
 }
-
+int tigermain(int);
 int main() {
     printf("\n");
     return tigermain(0 /* static link */);

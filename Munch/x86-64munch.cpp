@@ -117,12 +117,12 @@ void Muncher::munchStatement(irt::Statement* stm) {
 }
 
 temp::TempList Muncher::munchArgs(irt::ExpressionList* args) {
-    frame::RegToTempMap& reg_to_temp = munch_frame.get_reg_to_temp_map();
+    frame::RegToTempMap& reg_to_temp = munch_frame->get_reg_to_temp_map();
 
     auto arg_iterator = args->begin();
     temp::TempList argregsTemps;
 
-    for ( auto& reg : munch_frame.get_arg_regs() ) {
+    for ( auto& reg : munch_frame->get_arg_regs() ) {
         if ( arg_iterator == args->end() ) {
             // Ran out of function arguments
             break;
@@ -164,7 +164,7 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp) {
 
         if ( binop_exp->bin_op == irt::Mul or binop_exp->bin_op == irt::Div ) {
             /* BINOP(Mul|Div, left, right) */
-            frame::RegToTempMap& reg_to_temp = munch_frame.get_reg_to_temp_map();
+            frame::RegToTempMap& reg_to_temp = munch_frame->get_reg_to_temp_map();
             if ( !reg_to_temp.count("rax") or !reg_to_temp.count("rdx") ) {
                 throw error::internal_error("Couldn't find x86-64 frame-provided rax and rdx registers' temporaries while munching a BINOP expression", __FILE__);
             }
@@ -220,19 +220,19 @@ temp::Temp Muncher::munchExpression(irt::Expression* exp) {
     if ( auto call_exp = dynamic_cast<irt::Call*>(exp) ) {
         if ( auto fun_name_exp = dynamic_cast<irt::Name*>(call_exp->fun.get()) ) {
             /* EXP(CALL(LABEL(name), args = exp_list)) */
-            frame::RegToTempMap& reg_to_temp = munch_frame.get_reg_to_temp_map();
+            frame::RegToTempMap& reg_to_temp = munch_frame->get_reg_to_temp_map();
             if ( !reg_to_temp.count("rax") or !reg_to_temp.count("rsp") )
                 throw error::internal_error("Couldn't find x86-64 frame-provided rax and rsp registers' temporaries while munching an EXP(CALL(...)) statement", __FILE__);
             temp::Temp rax = reg_to_temp["rax"], rsp = reg_to_temp["rsp"];
 
             temp::TempList calldefsTemps;
-            for ( auto& reg : munch_frame.get_calldefs() ) {
+            for ( auto& reg : munch_frame->get_calldefs() ) {
                 if ( !reg_to_temp.count(reg) )
                     throw error::internal_error("Couldn't find x86-64 frame-provided calldefs registers' temporaries while munching an EXP(CALL(...)) statement", __FILE__);
                 calldefsTemps.push_back(reg_to_temp[reg]);
             }
 
-            int stack_pointer_offset = (call_exp->args->size() - munch_frame.get_arg_regs().size()) * munch_frame.wordSize;
+            int stack_pointer_offset = (call_exp->args->size() - munch_frame->get_arg_regs().size()) * munch_frame->wordSize;
             int stack_pointer_aligned = ((stack_pointer_offset + 15) / 16) * 16;    // Must be alligned to 16 bytes
 
             if ( stack_pointer_offset != stack_pointer_aligned ) {

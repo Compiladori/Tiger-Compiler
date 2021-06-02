@@ -44,7 +44,7 @@ void doProc(file::Handler& out, shared_ptr<frame::Frame> frame, unique_ptr<irt::
     cout << "traceSchedule!!!!" << endl;
     cout << endl;
     cout << endl;
-    munch::Muncher MN(*frame);
+    munch::Muncher MN(frame);
     auto instr_list = MN.munchStatementList(move(*stm_list.get()));
     cout << endl;
     cout << "Muncher!!!!" << endl;
@@ -56,7 +56,7 @@ void doProc(file::Handler& out, shared_ptr<frame::Frame> frame, unique_ptr<irt::
     }
     shrd_list = frame::proc_entry_exit2(frame, shrd_list);
     regalloc::RegAllocator RA;
-    auto ra_result = RA.regAllocate(*frame, shrd_list);
+    auto ra_result = RA.regAllocate(frame, shrd_list);
     cout << "Regallocate!!!!" << endl;
     cout << endl;
     cout << endl;

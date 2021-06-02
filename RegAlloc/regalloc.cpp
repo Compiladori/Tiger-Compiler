@@ -403,11 +403,11 @@ temp::TempMap RegAllocator::assignColors() {
 // initial ← coloredNodes ∪ coalescedNodes ∪ newTemps
 // coloredNodes ← {}
 // coalescedNodes ← {}
-assem::InstructionList RegAllocator::rewriteProgram(frame::Frame f, assem::InstructionList instruction_list) {
+assem::InstructionList RegAllocator::rewriteProgram(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list) {
     for ( auto it1 = spilledNodes.begin(); it1 != spilledNodes.end(); it1++ ) {
         std::cout << "Spilling temp: " << it1->_info.num << std::endl;
         assem::InstructionList new_instruction_list;
-        shared_ptr<frame::Access> mem = f.alloc_local(true);
+        shared_ptr<frame::Access> mem = f->alloc_local(true);
         int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;
         for ( auto it2 = instruction_list.begin(); it2 != instruction_list.end(); it2++ ) {
             bool flag_dst = false;
@@ -499,14 +499,14 @@ void print_instr(assem::InstructionList list) {
     std::cout << std::endl;
 }
 
-result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_list) {
+result RegAllocator::main(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list) {
     avail_colors.clear();
     precolored.clear();
     print_instr(instruction_list);
     temp::TempMap initial_coloring;
-    temp::TempMap temp_to_reg_map = f.get_temp_to_reg_map();
-    auto reg_map = f.get_reg_to_temp_map();
-    auto reg_list = f.get_rets();
+    temp::TempMap temp_to_reg_map = f->get_temp_to_reg_map();
+    auto reg_map = f->get_reg_to_temp_map();
+    auto reg_list = f->get_rets();
     for ( auto it = reg_list.begin(); it != reg_list.end(); it++ )
         precolored.push_back(reg_map[*it]);
     K = precolored.size();
@@ -539,7 +539,7 @@ result RegAllocator::main(frame::Frame f, assem::InstructionList instruction_lis
     res.coloring = coloring;
     return res;
 }
-result RegAllocator::regAllocate(frame::Frame f, assem::InstructionList instruction_list) {
+result RegAllocator::regAllocate(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list) {
     result res;
     do {
         res = main(f, instruction_list);
