@@ -26,10 +26,12 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 unique_ptr<frame::FragList> SemanticChecker::translate(ast::Expression* exp) {
-    auto t = temp::Label("tigermain");
     shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("tigermain"), vector<bool>());
     clear(outermost);
     AssociatedExpType result = transExpression(outermost, exp);
+    if( result.exp_type ->kind != IntKind ){
+        throw error::semantic_error("Program return type must be int",exp -> pos);
+    }
     translator->proc_entry_exit(outermost, move(result.tr_exp));
     return move(translator->_frag_list);
 }
