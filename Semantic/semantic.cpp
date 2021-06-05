@@ -498,13 +498,13 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
     auto first_dec = dec_list->begin()->get();
 
     if ( auto var_dec = dynamic_cast<ast::VarDec*>(first_dec) ) {
-        // var_dec -> print();
         if ( dec_list->size() != 1 ) {
             // Internal error, a declaration list of variables should only have one single element in it
             throw error::internal_error("declaration list of variables should have only one element", __FILE__);
         }
 
         auto result = transExpression(lvl, var_dec->exp.get());
+        unique_ptr<VarEntry> var_entry;
         if ( var_dec->type_id ) {
             // Check if the explicitly specified type_id matches the type of the expression
             auto type_entry = getTypeEntry(*var_dec->type_id);
@@ -518,13 +518,16 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
                 // Error, type_id was explicitly specified but doesn't match the expression type
                 throw error::semantic_error("Type \"" + var_dec->type_id->name + "\" was explicitly specified but doesn't match the expression type", var_dec->pos);
             }
+            var_entry = make_unique<VarEntry>(type_entry->type, trans::Level::alloc_local(lvl, var_dec->escape));
+        } else {
+            if ( result.exp_type->kind == ExpTypeKind::NilKind ) {
+                throw error::semantic_error("Cannot infer type of " + var_dec->id->name + " from nil", var_dec->pos);
+            }
+            var_entry = make_unique<VarEntry>(result.exp_type, trans::Level::alloc_local(lvl, var_dec->escape));
         }
-        auto var_entry = make_unique<VarEntry>(result.exp_type, trans::Level::alloc_local(lvl, var_dec->escape));
         auto access = var_entry->access;
         insertValueEntry(*var_dec->id, move(var_entry));
         auto a = translator->simpleVar(access, lvl);
-        // a -> print();
-        // result.tr_exp -> print();
         return translator->assignExp(move(a), move(result.tr_exp));
     }
 
