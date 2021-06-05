@@ -2,7 +2,6 @@
 
 using namespace regalloc;
 using namespace std;
-
 void RegAllocator::addEdge(liveness::TempNode u, liveness::TempNode v) {
     if ( !isIn(u, adjList[v]) and !(u == v) ) {
         if ( !isIn(u._info, precolored) ) {
@@ -235,11 +234,35 @@ float RegAllocator::spillHeuristic(liveness::TempNode node) {
 // AddEdge(l, d)
 // live ← use(I) ∪ (live\def(I))
 
+void print_instr(assem::InstructionList list) {
+    std::cout << "List [" << std::endl;
+    for ( auto p : list ) {
+        p->print();
+        std::cout << std::endl;
+    }
+    std::cout << "], ";
+    std::cout << std::endl;
+}
+
 void RegAllocator::build(assem::InstructionList instruction_list) {
+    std::shared_ptr<cmd::Handler> singleton = cmd::Handler::GetInstance();
+    if ( singleton->is_option("-instr") ) {
+        cout << "Instruction List:" << endl;
+        print_instr(instruction_list);
+        cout << endl;
+    }
     flowgraph::FlowGraph graph = flowgraph::FlowGraph(instruction_list);
-    graph._flow_graph.show_graph();
+    if ( singleton->is_option("-flow") ) {
+        cout << "Flow Graph:" << endl;
+        graph._flow_graph.show_graph();
+        cout << endl;
+    }
     live_graph = liveness::Liveness(graph);
-    live_graph._interference_graph.show_graph();
+    if ( singleton->is_option("-live") ) {
+        cout << "Flow Graph:" << endl;
+        live_graph._interference_graph.show_graph();
+        cout << endl;
+    }
     adjList = live_graph._interference_graph.getAdjacentList();
     worklistMoves = live_graph.workListmoves;
     moveList = live_graph.moveList;
@@ -365,20 +388,17 @@ temp::TempMap RegAllocator::assignColors() {
         if ( !ok_colors.empty() ) {
             auto color = ok_colors.front();
             coloring[n._info] = color;
-            std::cout << "assigning color: " + color.name + " to :" << n._info.num << std::endl;
             coloredNodes.push_back(n);
         } else {
             spilledNodes.push_back(n);
         }
     }
-    std::cout << "coalesced Coloring" << std::endl;
     for ( auto it = coalescedNodes.begin(); it != coalescedNodes.end(); it++ ) {
         if ( isIn(getAlias(*it), spilledNodes) )
             spilledNodes.push_back(*it);
         else {
             auto alias_color = coloring.find(getAlias(*it)._info);
             if ( alias_color != coloring.end() ) {
-                std::cout << "assigning color: " + alias_color->second.name + " to :" << (*it)._info.num << std::endl;
                 coloring[(*it)._info] = alias_color->second;
             } else {
                 throw error::internal_error("coalesced node not finded in coloring", __FILE__);
@@ -483,20 +503,9 @@ void RegAllocator::clearLists() {
     initial.clear();
 }
 
-void print_instr(assem::InstructionList list) {
-    std::cout << "List [" << std::endl;
-    for ( auto p : list ) {
-        p->print();
-        std::cout << std::endl;
-    }
-    std::cout << "], ";
-    std::cout << std::endl;
-}
-
 result RegAllocator::main(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list) {
     avail_colors.clear();
     precolored.clear();
-    print_instr(instruction_list);
     temp::TempMap initial_coloring;
     temp::TempMap temp_to_reg_map = f->get_temp_to_reg_map();
     auto reg_map = f->get_reg_to_temp_map();

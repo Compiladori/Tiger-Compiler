@@ -12,6 +12,7 @@
 #include "../Liveness/liveness.h"
 #include "../Munch/assem.h"
 #include "../Utility/error.h"
+#include "../Cmd/cmd.h"
 
 namespace regalloc {
 
