@@ -29,8 +29,8 @@ unique_ptr<frame::FragList> SemanticChecker::translate(ast::Expression* exp) {
     shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("tigermain"), vector<bool>());
     clear(outermost);
     AssociatedExpType result = transExpression(outermost, exp);
-    if( result.exp_type ->kind != IntKind ){
-        throw error::semantic_error("Program return type must be int",exp -> pos);
+    if ( result.exp_type->kind != IntKind ) {
+        throw error::semantic_error("Program return type must be int", exp->pos);
     }
     translator->proc_entry_exit(outermost, move(result.tr_exp));
     return move(translator->_frag_list);
@@ -680,10 +680,11 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
                 auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
 
                 for ( size_t i = 0; i < record_type->tyfields->size(); i++ ) {
-                    auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
+                    auto field_id = *(*record_type->tyfields)[i]->type_id;
+                    auto field_type_entry = getTypeEntry(field_id);
                     if ( not field_type_entry ) {
                         // Error, record type not defined in this scope
-                        throw error::semantic_error("Field record type \"" + kind_name[field_type_entry->type->kind] + "\" isn't defined in the scope", type_dec->pos);
+                        throw error::semantic_error("Field record type \"" + field_id.name + "\" isn't defined in the scope", type_dec->pos);
                     }
 
                     record_exptype->updateField(i, field_type_entry->type);
