@@ -41,6 +41,9 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
     for ( auto it = worklistMoves.begin(); it != worklistMoves.end(); it++ )
         unionAW.push_back(*it);
 
+    if ( !moveList.count(n) ) {
+        return vector<liveness::Move>();
+    }
     vector<liveness::Move> moveListN = moveList.at(n), result;
     for ( auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++ ) {
         for ( auto it2 = unionAW.begin(); it2 != unionAW.end(); it2++ )
