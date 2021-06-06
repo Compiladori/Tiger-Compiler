@@ -66,10 +66,11 @@ void SemanticChecker::beginScope() {
     // Create a new scope without any initial insertions
     type_insertions.push(stack<ast::Symbol>());
     value_insertions.push(stack<ast::Symbol>());
+    protected_insertions.push(stack<ast::Symbol>());
 }
 
 void SemanticChecker::endScope() {
-    if ( type_insertions.empty() or value_insertions.empty() ) {
+    if ( type_insertions.empty() or value_insertions.empty() or protected_insertions.empty() ) {
         // Internal error, there is no scope to end
         throw error::internal_error("there is no scope to end", __FILE__);
     }
@@ -86,6 +87,12 @@ void SemanticChecker::endScope() {
         ValueEnv[symbol].pop();
     }
     value_insertions.pop();
+
+    for ( auto& protected_scope = protected_insertions.top(); not protected_scope.empty(); protected_scope.pop() ) {
+        auto& symbol = protected_scope.top();
+        ProtectedEnv[symbol].pop();
+    }
+    protected_insertions.pop();
 }
 void SemanticChecker::endBreakScope() {
     if ( break_insertions.empty() ) {
@@ -102,6 +109,17 @@ void SemanticChecker::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_
     TypeEnv[s].push(move(type_entry));
     if ( not ignore_scope ) {
         type_insertions.top().push(s);
+    }
+}
+
+void SemanticChecker::insertProtectedEntry(ast::Symbol s, unique_ptr<int> type_entry, bool ignore_scope) {
+    if ( (not ignore_scope) and protected_insertions.empty() ) {
+        // Internal error, no scope was initialized
+        throw error::internal_error("no scope was initialized", __FILE__);
+    }
+    ProtectedEnv[s].push(move(type_entry));
+    if ( not ignore_scope ) {
+        protected_insertions.top().push(s);
     }
 }
 
@@ -346,6 +364,11 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
     }
 
     if ( auto assign_exp = dynamic_cast<ast::AssignExp*>(exp) ) {
+        if ( auto simple_var = dynamic_cast<ast::SimpleVar*>(assign_exp->var.get()) ) {
+            if ( getProtectedEntry(*simple_var->id) ) {
+                throw error::semantic_error("Variable " + simple_var->id->name + " is read-only", exp->pos);
+            }
+        }
         auto var_result = transVariable(lvl, assign_exp->var.get());
         auto exp_result = transExpression(lvl, assign_exp->exp.get());
 
@@ -420,6 +443,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
         auto varentry = make_unique<VarEntry>(lo_result.exp_type, Level::alloc_local(lvl, for_exp->escape));
         auto access = varentry->access;
         insertValueEntry(for_exp->var->name, move(varentry));
+        insertProtectedEntry(for_exp->var->name, make_unique<int>(1));
 
         temp::Label forbreak = temp::Label();
         beginBreakScope(forbreak);
