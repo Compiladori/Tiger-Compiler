@@ -61,6 +61,9 @@ void Label::output(std::ostream& os, temp::TempMap temp_map) const {
 
 void Move::output(std::ostream& os, temp::TempMap temp_map) const {
     std::string result;
+    if ( temp_map.at(src[0]).name == temp_map.at(dst[0]).name ) {
+        return;
+    }
     for ( auto it = assm.cbegin(); it != assm.cend(); ++it ) {
         if ( *it == '\'' ) {
             switch ( *(++it) ) {

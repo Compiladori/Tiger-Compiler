@@ -339,7 +339,6 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 fieldCount++;
             }
             auto a = translator->recordExp(move(field_list), fieldCount);
-            // a -> print();
             return AssociatedExpType(move(a), type_entry->type);
         }
 
@@ -456,9 +455,6 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             throw error::semantic_error("For body must produce no value", exp->pos);
         }
         endScope();
-        // lo_result.tr_exp -> print();
-        // hi_result.tr_exp -> print();
-        // body_result.tr_exp -> print();
         return AssociatedExpType(translator->forExp(access, lvl, move(lo_result.tr_exp), move(hi_result.tr_exp), move(body_result.tr_exp), forbreak), make_shared<UnitExpType>());
     }
 
@@ -471,7 +467,6 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             letlist->push_front(move(e));
         }
         auto result = transExpression(lvl, let_exp->body.get());
-        // result.tr_exp -> print();
         endScope();
         return AssociatedExpType(translator->letExp(move(letlist), move(result.tr_exp)), result.exp_type);
     }
@@ -497,13 +492,11 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
                 // Error, array's size MUST be an int
                 throw error::semantic_error("Array's size must be an int", exp->pos);
             }
-            // size_result.tr_exp -> print();
             auto init_result = transExpression(lvl, array_exp->init.get());
             if ( *init_result.exp_type != *array_type->getType() ) {
                 // Error, array type MUST match with its initialization's type
                 throw error::semantic_error("Array type must match with its initialization type", exp->pos);
             }
-            // init_result.tr_exp -> print();
             return AssociatedExpType(translator->arrayExp(move(init_result.tr_exp), move(size_result.tr_exp)), type_entry->type);
         }
 

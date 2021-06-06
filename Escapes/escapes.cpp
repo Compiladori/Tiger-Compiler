@@ -18,7 +18,7 @@ using std::unique_ptr;
 
 void Escapator::setEscapes(ast::Expression* exp) {
     clear();
-    traverseExpression(exp);
+    traverseExpression(exp, 0);
 }
 
 void Escapator::beginScope() {
@@ -51,9 +51,9 @@ void Escapator::insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> es
     }
 }
 
-void Escapator::traverseExpression(ast::Expression* exp) {
+void Escapator::traverseExpression(ast::Expression* exp, int current_depth) {
     if ( auto var_exp = dynamic_cast<ast::VarExp*>(exp) ) {
-        traverseVariable(var_exp->var.get());
+        traverseVariable(var_exp->var.get(), current_depth);
         return;
     }
 
@@ -73,58 +73,58 @@ void Escapator::traverseExpression(ast::Expression* exp) {
 
     if ( auto call_exp = dynamic_cast<ast::CallExp*>(exp) ) {
         for ( const auto& exp : *call_exp->exp_list ) {
-            traverseExpression(exp.get());
+            traverseExpression(exp.get(), current_depth);
         }
         return;
     }
 
     if ( auto op_exp = dynamic_cast<ast::OpExp*>(exp) ) {
-        traverseExpression(op_exp->left.get());
-        traverseExpression(op_exp->right.get());
+        traverseExpression(op_exp->left.get(), current_depth);
+        traverseExpression(op_exp->right.get(), current_depth);
         return;
     }
 
     if ( auto record_exp = dynamic_cast<ast::RecordExp*>(exp) ) {
         for ( const auto& record_field : *record_exp->fields ) {
-            traverseExpression(record_field->exp.get());
+            traverseExpression(record_field->exp.get(), current_depth);
         }
         return;
     }
 
     if ( auto seq_exp = dynamic_cast<ast::SeqExp*>(exp) ) {
         for ( const auto& exp : *seq_exp->exp_list ) {
-            traverseExpression(exp.get());
+            traverseExpression(exp.get(), current_depth);
         }
         return;
     }
 
     if ( auto assign_exp = dynamic_cast<ast::AssignExp*>(exp) ) {
-        traverseVariable(assign_exp->var.get());
-        traverseExpression(assign_exp->exp.get());
+        traverseVariable(assign_exp->var.get(), current_depth);
+        traverseExpression(assign_exp->exp.get(), current_depth);
         return;
     }
 
     if ( auto if_exp = dynamic_cast<ast::IfExp*>(exp) ) {
-        traverseExpression(if_exp->test.get());
-        traverseExpression(if_exp->then.get());
+        traverseExpression(if_exp->test.get(), current_depth);
+        traverseExpression(if_exp->then.get(), current_depth);
         if ( if_exp->otherwise ) {
-            traverseExpression(if_exp->otherwise.get());
+            traverseExpression(if_exp->otherwise.get(), current_depth);
         }
         return;
     }
 
     if ( auto while_exp = dynamic_cast<ast::WhileExp*>(exp) ) {
-        traverseExpression(while_exp->test.get());
-        traverseExpression(while_exp->body.get());
+        traverseExpression(while_exp->test.get(), current_depth);
+        traverseExpression(while_exp->body.get(), current_depth);
         return;
     }
 
     if ( auto for_exp = dynamic_cast<ast::ForExp*>(exp) ) {
-        traverseExpression(for_exp->lo.get());
-        traverseExpression(for_exp->hi.get());
+        traverseExpression(for_exp->lo.get(), current_depth);
+        traverseExpression(for_exp->hi.get(), current_depth);
         beginScope();
         insertEscapeEntry(*for_exp->var, make_unique<EscapeEntry>(current_depth, &for_exp->escape));
-        traverseExpression(for_exp->body.get());
+        traverseExpression(for_exp->body.get(), current_depth);
         endScope();
         return;
     }
@@ -132,9 +132,9 @@ void Escapator::traverseExpression(ast::Expression* exp) {
     if ( auto let_exp = dynamic_cast<ast::LetExp*>(exp) ) {
         beginScope();
         for ( const auto& dec_list : *let_exp->decs ) {
-            traverseDeclarations(dec_list.get());
+            traverseDeclarations(dec_list.get(), current_depth);
         }
-        traverseExpression(let_exp->body.get());
+        traverseExpression(let_exp->body.get(), current_depth);
         endScope();
         return;
     }
@@ -144,8 +144,8 @@ void Escapator::traverseExpression(ast::Expression* exp) {
     }
 
     if ( auto array_exp = dynamic_cast<ast::ArrayExp*>(exp) ) {
-        traverseExpression(array_exp->size.get());
-        traverseExpression(array_exp->init.get());
+        traverseExpression(array_exp->size.get(), current_depth);
+        traverseExpression(array_exp->init.get(), current_depth);
         return;
     }
 
@@ -153,7 +153,7 @@ void Escapator::traverseExpression(ast::Expression* exp) {
     throw error::internal_error("didn't match any clause in traverse expression function", __FILE__);
 }
 
-void Escapator::traverseDeclarations(ast::DeclarationList* dec_list) {
+void Escapator::traverseDeclarations(ast::DeclarationList* dec_list, int current_depth) {
     if ( dec_list->empty() ) {
         // Internal error, declaration lists shouldn't be empty
         throw error::internal_error("declaration list is empty", __FILE__);
@@ -162,7 +162,7 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list) {
     auto first_dec = dec_list->begin()->get();
 
     if ( auto var_dec = dynamic_cast<ast::VarDec*>(first_dec) ) {
-        traverseExpression(var_dec->exp.get());
+        traverseExpression(var_dec->exp.get(), current_depth);
         insertEscapeEntry(*var_dec->id, make_unique<EscapeEntry>(current_depth, &var_dec->escape));
         return;
     }
@@ -174,7 +174,7 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list) {
             for ( const auto& param : *fun_dec->tyfields ) {
                 insertEscapeEntry(*param->id, make_unique<EscapeEntry>(current_depth + 1, &param->escape));
             }
-            traverseExpression(fun_dec->exp.get());
+            traverseExpression(fun_dec->exp.get(), current_depth + 1);
             endScope();
         }
         return;
@@ -189,7 +189,7 @@ void Escapator::traverseDeclarations(ast::DeclarationList* dec_list) {
     throw error::internal_error("didn't match any clause in traverse declarations function", __FILE__);
 }
 
-void Escapator::traverseVariable(ast::Variable* var) {
+void Escapator::traverseVariable(ast::Variable* var, int current_depth) {
     if ( auto simple_var = dynamic_cast<ast::SimpleVar*>(var) ) {
         if ( auto escape_entry = getEscapeEntry(*simple_var->id) ) {
             // simple_var escape found
@@ -202,13 +202,13 @@ void Escapator::traverseVariable(ast::Variable* var) {
     }
 
     if ( auto field_var = dynamic_cast<ast::FieldVar*>(var) ) {
-        traverseVariable(field_var->var.get());
+        traverseVariable(field_var->var.get(), current_depth);
         return;
     }
 
     if ( auto subscript_var = dynamic_cast<ast::SubscriptVar*>(var) ) {
-        traverseVariable(subscript_var->var.get());
-        traverseExpression(subscript_var->exp.get());
+        traverseVariable(subscript_var->var.get(), current_depth);
+        traverseExpression(subscript_var->exp.get(), current_depth);
         return;
     }
 

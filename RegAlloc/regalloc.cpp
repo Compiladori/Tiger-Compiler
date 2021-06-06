@@ -41,6 +41,9 @@ vector<liveness::Move> RegAllocator::nodeMoves(liveness::TempNode n) {
     for ( auto it = worklistMoves.begin(); it != worklistMoves.end(); it++ )
         unionAW.push_back(*it);
 
+    if ( !moveList.count(n) ) {
+        return vector<liveness::Move>();
+    }
     vector<liveness::Move> moveListN = moveList.at(n), result;
     for ( auto it1 = moveListN.begin(); it1 != moveListN.end(); it1++ ) {
         for ( auto it2 = unionAW.begin(); it2 != unionAW.end(); it2++ )
@@ -372,7 +375,6 @@ temp::TempMap RegAllocator::assignColors() {
         auto ok_colors = avail_colors;    // todos los colores disponibles
         liveness::TempNode n = selectStack.back();
         selectStack.pop_back();
-        // if ( coloring.find(n._info) != coloring.end() ) continue;
         vector<liveness::TempNode> nodes = adjList[n];
         for ( auto it = nodes.begin(); it != nodes.end(); it++ ) {
             auto alias_node = getAlias(*it);
@@ -419,7 +421,6 @@ temp::TempMap RegAllocator::assignColors() {
 // coalescedNodes ← {}
 assem::InstructionList RegAllocator::rewriteProgram(std::shared_ptr<frame::Frame> f, assem::InstructionList instruction_list) {
     for ( auto it1 = spilledNodes.begin(); it1 != spilledNodes.end(); it1++ ) {
-        std::cout << "Spilling temp: " << it1->_info.num << std::endl;
         assem::InstructionList new_instruction_list;
         shared_ptr<frame::Access> mem = f->alloc_local(true);
         int offset = dynamic_cast<frame::InFrame*>(mem.get())->offset;

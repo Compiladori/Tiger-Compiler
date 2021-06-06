@@ -21,7 +21,7 @@ std::string operation_name[] = { [Operation::Plus] = "+",
 std::ostream& operator<<(std::ostream& os, const Operation& op){ return os << operation_name[op]; }
 
 /** Types **/
-void TypeField::print()     const { cout << "TypeField ("; id -> print(); cout <<") ("; type_id -> print(); cout << ")"; }
+void TypeField::print()     const { cout << "TypeField ("; id -> print(); cout <<") ("; type_id -> print(); cout <<") ("; cout<< escape;  cout << ")"; }
 void RecordField::print()   const { cout << "RecordField ("; id -> print(); cout <<") ("; exp -> print(); cout << ")"; }
 
 void NameType::print()      const { cout << "NameType ("; type_id -> print(); cout << ")"; }
@@ -52,7 +52,7 @@ void IfExp::print()     const {
     cout << ")";
 }
 void WhileExp::print()  const { cout << "WhileExp ("; test -> print(); cout << ") ("; body -> print(); cout << ")"; }
-void ForExp::print()    const { cout << "ForExp ("; var -> print(); cout << ") ("; lo -> print(); cout << ") ("; hi -> print(); cout << ") ("; body -> print(); cout << ")"; }
+void ForExp::print()    const { cout << "ForExp ("; var -> print(); cout << ") ("; lo -> print(); cout << ") ("; hi -> print(); cout << ") ("; body -> print(); cout <<") ("; cout<< escape; cout << ")"; }
 void LetExp::print()    const { cout << "LetExp (";  decs -> print(); cout << ") ("; body -> print(); cout << ")"; }
 void BreakExp::print()  const { cout << "BreakExp ()"; }
 void ArrayExp::print()  const { cout << "ArrayExp ("; ty -> print(); cout << ") ("; size -> print(); cout << ") ("; init -> print(); cout << ")"; }
@@ -63,7 +63,7 @@ void ArrayExp::print()  const { cout << "ArrayExp ("; ty -> print(); cout << ") 
 void VarDec::print()    const {
     cout << "VarDec ("; id -> print(); cout << ") (";
     if(type_id) type_id->print(); else cout << "None";
-    cout << ") ("; exp -> print(); cout << ")";
+    cout << ") ("; exp -> print(); cout << ") ("; cout << escape; cout << ")";
 }
 void TypeDec::print()   const { cout << "TypeDec ("; type_id -> print(); cout << ") ("; ty -> print(); cout << ")"; }
 void FunDec::print()    const {

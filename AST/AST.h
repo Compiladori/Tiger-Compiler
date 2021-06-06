@@ -89,7 +89,7 @@ struct Type {
 
 struct TypeField {
     std::unique_ptr<Symbol> id, type_id;
-    bool escape = true;
+    bool escape = false;
 
     TypeField (Symbol *id, Symbol *type_id) : id(id), type_id(type_id) {}
     void print() const;
@@ -299,7 +299,7 @@ struct VarDec : public Declaration {
     std::unique_ptr<Symbol> id;
     std::unique_ptr<Symbol> type_id;
     std::unique_ptr<Expression> exp;
-    bool escape = true;
+    bool escape = false;
 
     VarDec(Symbol *id, Expression *exp, Position pos) : Declaration(pos), id(id), type_id(), exp(exp) {}
     VarDec(Symbol *id, Symbol *type_id, Expression *exp, Position pos) : Declaration(pos), id(id), type_id(type_id), exp(exp) {}

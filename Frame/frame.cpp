@@ -160,6 +160,11 @@ assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, ass
     return_sink.push_back(reg_map["rsp"]);
     return_sink.push_back(reg_map["rsp"]);
     list.push_back(make_shared<assem::Oper>("", return_sink, temp::TempList{}, temp::LabelList{}));
+    for ( auto &reg_name : regs ) {
+        auto t = temp::Temp();
+        list.push_front(make_unique<assem::Move>("movq %'s0, %'d0", temp::TempList{reg_map[reg_name]}, temp::TempList{t}));
+        list.push_back(make_unique<assem::Move>("movq %'s0, %'d0", temp::TempList{t}, temp::TempList{reg_map[reg_name]}));
+    }
     return list;
 }
 
