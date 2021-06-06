@@ -272,8 +272,10 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             case ast::Eq:
             case ast::Neq: {
                 if ( *result_left.exp_type != *result_right.exp_type ) {
-                    // Error, different types on equality testing
                     throw error::semantic_error("Operands must have the same type", exp->pos);
+                }
+                if ( result_left.exp_type->kind == ExpTypeKind::NilKind and result_right.exp_type->kind == ExpTypeKind::NilKind ) {
+                    throw error::semantic_error("Invalid comparation", exp->pos);
                 }
                 if ( result_left.exp_type->kind == ExpTypeKind::StringKind )
                     return AssociatedExpType(translator->strExp(oper, move(result_left.tr_exp), move(result_right.tr_exp)), make_shared<IntExpType>());
