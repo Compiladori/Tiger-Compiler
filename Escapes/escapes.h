@@ -31,7 +31,6 @@ struct EscapeEntry {
 class Escapator {
     seman::BindingTable<EscapeEntry> EscapeEnv;
     std::stack<std::stack<ast::Symbol>> escape_insertions;
-    int current_depth = 0;
     
     auto getEscapeEntry(ast::Symbol s){ return EscapeEnv.getEntry(s); }
     void insertEscapeEntry(ast::Symbol s, std::unique_ptr<EscapeEntry> escape_entry, bool ignore_scope = false);
@@ -42,12 +41,11 @@ class Escapator {
     void clear(){
         EscapeEnv.clear();
         escape_insertions = std::stack<std::stack<ast::Symbol>>();
-        current_depth = 0;
     }
     
-    void traverseExpression(ast::Expression* exp);
-    void traverseDeclarations(ast::DeclarationList* dec_list);
-    void traverseVariable(ast::Variable* var);
+    void traverseExpression(ast::Expression* exp, int current_depth);
+    void traverseDeclarations(ast::DeclarationList* dec_list, int current_depth);
+    void traverseVariable(ast::Variable* var, int current_depth);
 public:
     Escapator() = default;
     

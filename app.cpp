@@ -81,15 +81,15 @@ int main(int argc, char** argv) {
     try {
         unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
 
+        // Set variable escapes
+        esc::Escapator E;
+        E.setEscapes(final_ast.get());
+        
         if ( singleton->is_option("-ast") ) {
             cout << "AST Tree: " << endl;
             final_ast->print();
             cout << endl;
         }
-
-        // Set variable escapes
-        esc::Escapator E;
-        E.setEscapes(final_ast.get());
 
         // Semantic check
         seman::SemanticChecker SC;
