@@ -2,7 +2,7 @@
    variables with the same name.  The second one hides the first.  */
 let
 	var a := " "
-	var a := 420
+	var a := 120
 in
 	a
 end

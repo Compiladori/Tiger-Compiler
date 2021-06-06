@@ -20,7 +20,7 @@ namespace munch {
 
 class Muncher {
     util::GenericList<assem::Instruction> instruction_list;
-    frame::Frame munch_frame;
+    std::shared_ptr<frame::Frame> munch_frame;
     
     void emit(std::unique_ptr<assem::Instruction> ins);
 
@@ -28,7 +28,7 @@ class Muncher {
     temp::TempList munchArgs(irt::ExpressionList* exp_list);
     temp::Temp     munchExpression(irt::Expression* exp);
 public:
-    Muncher(frame::Frame frame) : munch_frame(frame) {}
+    Muncher(std::shared_ptr<frame::Frame> frame) : munch_frame(frame) {}
     
     util::GenericList<assem::Instruction> munchStatementList(irt::StatementList stm_list);
 };

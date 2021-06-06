@@ -26,10 +26,12 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 unique_ptr<frame::FragList> SemanticChecker::translate(ast::Expression* exp) {
-    auto t = temp::Label("tigermain");
     shared_ptr<trans::Level> outermost = make_shared<trans::Level>(nullptr, temp::Label("tigermain"), vector<bool>());
     clear(outermost);
     AssociatedExpType result = transExpression(outermost, exp);
+    if ( result.exp_type->kind != IntKind ) {
+        throw error::semantic_error("Program return type must be int", exp->pos);
+    }
     translator->proc_entry_exit(outermost, move(result.tr_exp));
     return move(translator->_frag_list);
 }
@@ -49,7 +51,7 @@ void SemanticChecker::load_initial_values(shared_ptr<trans::Level> outermost) {
     insertValueEntry("printi", make_unique<FunEntry>(type_vector{TInt}, TUnit, outermost, make_shared<temp::Label>("printi")), true);
     insertValueEntry("print", make_unique<FunEntry>(type_vector{TString}, TUnit, outermost, make_shared<temp::Label>("print")), true);
     insertValueEntry("flush", make_unique<FunEntry>(type_vector{}, TUnit, outermost, make_shared<temp::Label>("flush")), true);
-    insertValueEntry("getchar", make_unique<FunEntry>(type_vector{}, TString, outermost, make_shared<temp::Label>("getchar")), true);
+    insertValueEntry("getchar", make_unique<FunEntry>(type_vector{}, TString, outermost, make_shared<temp::Label>("getstr")), true);
     insertValueEntry("ord", make_unique<FunEntry>(type_vector{TString}, TInt, outermost, make_shared<temp::Label>("ord")), true);
     insertValueEntry("chr", make_unique<FunEntry>(type_vector{TInt}, TString, outermost, make_shared<temp::Label>("chr")), true);
     insertValueEntry("size", make_unique<FunEntry>(type_vector{TString}, TInt, outermost, make_shared<temp::Label>("size")), true);
@@ -64,10 +66,11 @@ void SemanticChecker::beginScope() {
     // Create a new scope without any initial insertions
     type_insertions.push(stack<ast::Symbol>());
     value_insertions.push(stack<ast::Symbol>());
+    protected_insertions.push(stack<ast::Symbol>());
 }
 
 void SemanticChecker::endScope() {
-    if ( type_insertions.empty() or value_insertions.empty() ) {
+    if ( type_insertions.empty() or value_insertions.empty() or protected_insertions.empty() ) {
         // Internal error, there is no scope to end
         throw error::internal_error("there is no scope to end", __FILE__);
     }
@@ -84,6 +87,12 @@ void SemanticChecker::endScope() {
         ValueEnv[symbol].pop();
     }
     value_insertions.pop();
+
+    for ( auto& protected_scope = protected_insertions.top(); not protected_scope.empty(); protected_scope.pop() ) {
+        auto& symbol = protected_scope.top();
+        ProtectedEnv[symbol].pop();
+    }
+    protected_insertions.pop();
 }
 void SemanticChecker::endBreakScope() {
     if ( break_insertions.empty() ) {
@@ -100,6 +109,17 @@ void SemanticChecker::insertTypeEntry(ast::Symbol s, unique_ptr<TypeEntry> type_
     TypeEnv[s].push(move(type_entry));
     if ( not ignore_scope ) {
         type_insertions.top().push(s);
+    }
+}
+
+void SemanticChecker::insertProtectedEntry(ast::Symbol s, unique_ptr<int> type_entry, bool ignore_scope) {
+    if ( (not ignore_scope) and protected_insertions.empty() ) {
+        // Internal error, no scope was initialized
+        throw error::internal_error("no scope was initialized", __FILE__);
+    }
+    ProtectedEnv[s].push(move(type_entry));
+    if ( not ignore_scope ) {
+        protected_insertions.top().push(s);
     }
 }
 
@@ -252,8 +272,10 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
             case ast::Eq:
             case ast::Neq: {
                 if ( *result_left.exp_type != *result_right.exp_type ) {
-                    // Error, different types on equality testing
                     throw error::semantic_error("Operands must have the same type", exp->pos);
+                }
+                if ( result_left.exp_type->kind == ExpTypeKind::NilKind and result_right.exp_type->kind == ExpTypeKind::NilKind ) {
+                    throw error::semantic_error("Invalid comparation", exp->pos);
                 }
                 if ( result_left.exp_type->kind == ExpTypeKind::StringKind )
                     return AssociatedExpType(translator->strExp(oper, move(result_left.tr_exp), move(result_right.tr_exp)), make_shared<IntExpType>());
@@ -344,6 +366,11 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
     }
 
     if ( auto assign_exp = dynamic_cast<ast::AssignExp*>(exp) ) {
+        if ( auto simple_var = dynamic_cast<ast::SimpleVar*>(assign_exp->var.get()) ) {
+            if ( getProtectedEntry(*simple_var->id) ) {
+                throw error::semantic_error("Variable " + simple_var->id->name + " is read-only", exp->pos);
+            }
+        }
         auto var_result = transVariable(lvl, assign_exp->var.get());
         auto exp_result = transExpression(lvl, assign_exp->exp.get());
 
@@ -418,6 +445,7 @@ AssociatedExpType SemanticChecker::transExpression(shared_ptr<trans::Level> lvl,
         auto varentry = make_unique<VarEntry>(lo_result.exp_type, Level::alloc_local(lvl, for_exp->escape));
         auto access = varentry->access;
         insertValueEntry(for_exp->var->name, move(varentry));
+        insertProtectedEntry(for_exp->var->name, make_unique<int>(1));
 
         temp::Label forbreak = temp::Label();
         beginBreakScope(forbreak);
@@ -496,13 +524,13 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
     auto first_dec = dec_list->begin()->get();
 
     if ( auto var_dec = dynamic_cast<ast::VarDec*>(first_dec) ) {
-        // var_dec -> print();
         if ( dec_list->size() != 1 ) {
             // Internal error, a declaration list of variables should only have one single element in it
             throw error::internal_error("declaration list of variables should have only one element", __FILE__);
         }
 
         auto result = transExpression(lvl, var_dec->exp.get());
+        unique_ptr<VarEntry> var_entry;
         if ( var_dec->type_id ) {
             // Check if the explicitly specified type_id matches the type of the expression
             auto type_entry = getTypeEntry(*var_dec->type_id);
@@ -516,13 +544,16 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
                 // Error, type_id was explicitly specified but doesn't match the expression type
                 throw error::semantic_error("Type \"" + var_dec->type_id->name + "\" was explicitly specified but doesn't match the expression type", var_dec->pos);
             }
+            var_entry = make_unique<VarEntry>(type_entry->type, trans::Level::alloc_local(lvl, var_dec->escape));
+        } else {
+            if ( result.exp_type->kind == ExpTypeKind::NilKind ) {
+                throw error::semantic_error("Cannot infer type of " + var_dec->id->name + " from nil", var_dec->pos);
+            }
+            var_entry = make_unique<VarEntry>(result.exp_type, trans::Level::alloc_local(lvl, var_dec->escape));
         }
-        auto var_entry = make_unique<VarEntry>(result.exp_type, trans::Level::alloc_local(lvl, var_dec->escape));
         auto access = var_entry->access;
         insertValueEntry(*var_dec->id, move(var_entry));
         auto a = translator->simpleVar(access, lvl);
-        // a -> print();
-        // result.tr_exp -> print();
         return translator->assignExp(move(a), move(result.tr_exp));
     }
 
@@ -678,10 +709,11 @@ unique_ptr<TranslatedExp> SemanticChecker::transDeclarations(shared_ptr<trans::L
                 auto record_exptype = static_cast<RecordExpType*>(getTypeEntry(*type_dec->type_id)->type.get());
 
                 for ( size_t i = 0; i < record_type->tyfields->size(); i++ ) {
-                    auto field_type_entry = getTypeEntry(*(*record_type->tyfields)[i]->type_id);
+                    auto field_id = *(*record_type->tyfields)[i]->type_id;
+                    auto field_type_entry = getTypeEntry(field_id);
                     if ( not field_type_entry ) {
                         // Error, record type not defined in this scope
-                        throw error::semantic_error("Field record type \"" + kind_name[field_type_entry->type->kind] + "\" isn't defined in the scope", type_dec->pos);
+                        throw error::semantic_error("Field record type \"" + field_id.name + "\" isn't defined in the scope", type_dec->pos);
                     }
 
                     record_exptype->updateField(i, field_type_entry->type);

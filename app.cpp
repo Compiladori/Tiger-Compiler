@@ -3,6 +3,7 @@
 
 #include "AST/AST.h"
 #include "Canon/canon.h"
+#include "Cmd/cmd.h"
 #include "Escapes/escapes.h"
 #include "FileHandler/file_handler.h"
 #include "Munch/munch.h"
@@ -17,55 +18,48 @@ extern int yylineno;
 extern void yyerror(const char* s);
 
 extern ast::Expression* ast_raw_ptr;
+std::shared_ptr<cmd::Handler> singleton = cmd::Handler::GetInstance();
 
 using namespace std;
 
 void doProc(file::Handler& out, shared_ptr<frame::Frame> frame, unique_ptr<irt::Statement> body) {
-    cout << "Entered doProc!!!!" << endl;
-    cout << endl;
-    cout << endl;
     canon::Canonizator C;
     auto stmList = C.linearize(move(body));
-    cout << endl;
-    stmList->print();
-    cout << endl;
-    cout << "Linerize !!!!" << endl;
-    cout << endl;
-    cout << endl;
+    if ( singleton->is_option("-linearize") ) {
+        cout << "Linerize Stage:" << endl;
+        stmList->print();
+        cout << endl;
+    }
     auto basic_b = C.basicBlocks(move(stmList));
-    basic_b->stmLists->print();
-    cout << endl;
-    cout << "BasicBLock List!!!!" << endl;
-    cout << endl;
-    cout << endl;
+    if ( singleton->is_option("-blocks") ) {
+        cout << "Basic Blocks Stage:" << endl;
+        basic_b->stmLists->print();
+        cout << endl;
+    }
     auto stm_list = C.traceSchedule(move(basic_b));
-    stm_list->print();
-    cout << endl;
-    cout << "traceSchedule!!!!" << endl;
-    cout << endl;
-    cout << endl;
-    munch::Muncher MN(*frame);
+
+    if ( singleton->is_option("-traces") ) {
+        cout << "trace Schedule Stage:" << endl;
+        stm_list->print();
+        cout << endl;
+    }
+    munch::Muncher MN(frame);
     auto instr_list = MN.munchStatementList(move(*stm_list.get()));
-    cout << endl;
-    cout << "Muncher!!!!" << endl;
-    cout << endl;
-    cout << endl;
+    if ( singleton->is_option("-munch") ) {
+        cout << "Munching Stage:" << endl;
+        instr_list.print();
+        cout << endl;
+    }
     assem::InstructionList shrd_list;
     for ( auto& inst : instr_list ) {
         shrd_list.push_back(move(inst));
     }
     shrd_list = frame::proc_entry_exit2(frame, shrd_list);
     regalloc::RegAllocator RA;
-    auto ra_result = RA.regAllocate(*frame, shrd_list);
-    cout << "Regallocate!!!!" << endl;
-    cout << endl;
-    cout << endl;
+    auto ra_result = RA.regAllocate(frame, shrd_list);
     auto coloring = ra_result.coloring;
     auto proc = frame::proc_entry_exit3(frame, ra_result.instruction_list);
     out.print_proc(move(proc), coloring);
-    cout << "Print!!!!" << endl;
-    cout << endl;
-    cout << endl;
 }
 
 int main(int argc, char** argv) {
@@ -76,6 +70,7 @@ int main(int argc, char** argv) {
         cout << "I can't open a.snazzle.file!" << endl;
         return -1;
     }
+    singleton->process_args(argc, argv);
     // Set flex to read from it instead of defaulting to STDIN:
     yyin = myfile;
 
@@ -86,9 +81,11 @@ int main(int argc, char** argv) {
     try {
         unique_ptr<ast::Expression> final_ast(ast_raw_ptr);
 
-        // Print the final built AST
-        final_ast->print();
-        cout << endl;
+        if ( singleton->is_option("-ast") ) {
+            cout << "AST Tree: " << endl;
+            final_ast->print();
+            cout << endl;
+        }
 
         // Set variable escapes
         esc::Escapator E;
@@ -98,12 +95,14 @@ int main(int argc, char** argv) {
         seman::SemanticChecker SC;
         auto frags = SC.translate(final_ast.get());
         // Canonical conversion
-        cout << "FragList size:" << frags->size() << endl;
         bool head_text = true, head_data = true;
         for ( const auto& frag : *frags ) {
             if ( auto proc_frag = dynamic_cast<frame::ProcFrag*>(frag.get()) ) {
-                proc_frag->body->print();
-                cout << endl;
+                if ( singleton->is_option("-irt") ) {
+                    cout << "AST Tree: " << endl;
+                    proc_frag->body->print();
+                    cout << endl;
+                }
                 if ( head_text ) {
                     out.print_text_header();
                     head_text = false;

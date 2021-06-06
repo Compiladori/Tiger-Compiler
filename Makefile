@@ -34,7 +34,9 @@ allC:
 	$(MAKE) -C RegAlloc depend
 	$(MAKE) -C RegAlloc all
 	$(MAKE) -C FileHandler depend
-	$(MAKE) -C FileHandler all
+	$(MAKE) -C FileHandler all	
+	$(MAKE) -C Cmd depend
+	$(MAKE) -C Cmd all
 
 test: allD # executes Testing main
 	g++ $(LDFLAGS) $(PROGRAM_OBJ_D) -o tiger.exe
@@ -64,6 +66,8 @@ allD:
 	$(MAKE) -C Testing all
 	$(MAKE) -C FileHandler depend
 	$(MAKE) -C FileHandler all
+	$(MAKE) -C Cmd depend
+	$(MAKE) -C Cmd all
 
 clean: cleanD cleanC 
 cleanD:
@@ -79,6 +83,7 @@ cleanD:
 		$(MAKE) -C RegAlloc clean
 		$(MAKE) -C Testing clean
 		$(MAKE) -C FileHandler clean
+		$(MAKE) -C Cmd clean
 
 cleanC:
 		$(MAKE) -C AST clean
@@ -93,5 +98,6 @@ cleanC:
 		$(MAKE) -C Liveness clean
 		$(MAKE) -C RegAlloc clean
 		$(MAKE) -C FileHandler clean
+		$(MAKE) -C Cmd clean
 
 include Makefile.common
