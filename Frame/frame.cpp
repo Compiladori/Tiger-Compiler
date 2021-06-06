@@ -147,25 +147,6 @@ unique_ptr<irt::Statement> frame::proc_entry_exit1(shared_ptr<Frame> frame, uniq
     return move(move_args);
 }
 
-assem::InstructionList restore_callee_saved_regs(std::shared_ptr<Frame> frame, assem::InstructionList list) {
-    auto regs = frame->get_callee_saved_regs();
-    auto reg_map = frame->get_reg_to_temp_map();
-    std::string code = "popq  %'s0";
-    for ( auto &reg_name : regs ) {
-        list.push_back(make_shared<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    }
-    return move(list);
-}
-assem::InstructionList append_callee_saved_regs(std::shared_ptr<Frame> frame, assem::InstructionList list) {
-    auto regs = frame->get_callee_saved_regs();
-    auto reg_map = frame->get_reg_to_temp_map();
-    std::string code = "pushq  %'s0";
-    for ( auto &reg_name : regs ) {
-        list.push_front(make_shared<assem::Oper>(code, temp::TempList{reg_map[reg_name]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    }
-    return move(list);
-}
-
 // This function appends a “sink” instruction to the function body to tell the
 // register allocator that certain registers are live at procedure exit
 assem::InstructionList frame::proc_entry_exit2(std::shared_ptr<Frame> frame, assem::InstructionList list) {
@@ -191,12 +172,12 @@ shared_ptr<assem::Procedure> frame::proc_entry_exit3(std::shared_ptr<Frame> fram
     std::string offset_code = "subq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_front(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{}, temp::LabelList{}));
     list.push_front(make_shared<assem::Oper>("movq %'s0, %'d0", temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rbp"]}, temp::LabelList{}));
-    list = append_callee_saved_regs(frame, list);
+    list.push_front(make_shared<assem::Oper>("pushq  %'s0", temp::TempList{reg_map["rbp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     list.push_front(make_shared<assem::Label>((frame->_name).name + ":", frame->_name));
 
     offset_code = "addq $" + std::to_string(stack_pointer_offset) + ", %'s0";
     list.push_back(make_shared<assem::Oper>(offset_code, temp::TempList{reg_map["rsp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
-    list = restore_callee_saved_regs(frame, list);
+    list.push_back(make_shared<assem::Oper>("pop  %'s0", temp::TempList{reg_map["rbp"]}, temp::TempList{reg_map["rsp"]}, temp::LabelList{}));
     list.push_back(make_shared<assem::Oper>("ret", temp::TempList{}, temp::TempList{}, temp::LabelList{}));
     return make_shared<assem::Procedure>(prolog, list, epilog);
 }

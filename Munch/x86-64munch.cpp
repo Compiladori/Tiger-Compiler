@@ -121,7 +121,6 @@ temp::TempList Muncher::munchArgs(irt::ExpressionList* args) {
 
     auto arg_iterator = args->begin();
     temp::TempList argregsTemps;
-
     for ( auto& reg : munch_frame->get_arg_regs() ) {
         if ( arg_iterator == args->end() ) {
             // Ran out of function arguments
@@ -136,11 +135,13 @@ temp::TempList Muncher::munchArgs(irt::ExpressionList* args) {
         arg_iterator++;
     }
 
-    while ( arg_iterator != args->end() ) {
-        // Ran out of frame argregs, pushing to stack
-        // TODO : Warning, maybe it should push arguments in reversed order
-        emit(make_unique<assem::Oper>("pushq %'s0", temp::TempList{munchExpression(arg_iterator->get())}, temp::TempList{}, temp::LabelList{}));
-        arg_iterator++;
+    if ( arg_iterator != args->end() ) {
+        int regs_size = munch_frame->get_arg_regs().size();
+        int args_size = args->size();
+        for ( auto reg = args->rbegin(); args_size != regs_size; reg++ ) {
+            emit(make_unique<assem::Oper>("pushq %'s0", temp::TempList{munchExpression(reg->get())}, temp::TempList{}, temp::LabelList{}));
+            args_size--;
+        }
     }
 
     return argregsTemps;
