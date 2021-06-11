@@ -34,7 +34,7 @@ TEST_CASE("linearize", "[canon]") {
     unique_ptr<irt::Temp> e = make_unique<irt::Temp>(temp::Temp());
     unique_ptr<irt::Eseq> exp1 = make_unique<irt::Eseq>(move(s), move(e));
     unique_ptr<irt::Temp> exp2 = make_unique<irt::Temp>(temp::Temp());
-    unique_ptr<irt::BinOp> binop = make_unique<irt::BinOp>(irt::Plus, move(exp1), move(exp2));
+    unique_ptr<irt::BinOp> binop = make_unique<irt::BinOp>(irt::Plus, move(exp2), move(exp1));
     unique_ptr<irt::Statement> exp = make_unique<irt::Exp>(move(binop));
     unique_ptr<irt::StatementList> stmList = c.linearize(move(exp));
     REQUIRE(stmList->size() == 2);
