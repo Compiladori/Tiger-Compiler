@@ -194,9 +194,11 @@ TEST_CASE("traceSchedule", "[canon]") {
     stmLists->push_back(move(stmList1));
     unique_ptr<canon::Block> b = make_unique<canon::Block>(move(stmLists), label);
     unique_ptr<irt::StatementList> res = c.traceSchedule(move(b));
-    REQUIRE(res->size() == 2);
+    REQUIRE(res->size() == 3); // getNext adds a label, this one is different than the one from Jump
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
     REQUIRE(dynamic_cast<irt::Label*>(res->back().get()));
+    res->pop_front();
+    REQUIRE(dynamic_cast<irt::Jump*>(res->front().get()));
   }
 
   unique_ptr<irt::Const> expr1 = make_unique<irt::Const>(0);
@@ -221,14 +223,15 @@ TEST_CASE("traceSchedule", "[canon]") {
     unique_ptr<irt::Jump> jump3 = make_unique<irt::Jump>(move(exp2), label_list2);
     stmList2->push_back(move(jump3));
     stmLists->push_back(move(stmList2));
-
     unique_ptr<canon::Block> b = make_unique<canon::Block>(move(stmLists), label);
     unique_ptr<irt::StatementList> res = c.traceSchedule(move(b));
-    REQUIRE(res->size() == 4); // [Label, Label, Exp (BinOp (...)), Label]
+    REQUIRE(res->size() == 5); // [Label, Label, Exp (BinOp (...)), Jump, Label] , Jump label is different from the last label
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
     REQUIRE(dynamic_cast<irt::Label*>(res->back().get()));
     res->pop_front();
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
+    res->pop_back();
+    REQUIRE(dynamic_cast<irt::Jump*>(res->back().get()));
     res->pop_back();
     REQUIRE(dynamic_cast<irt::Exp*>(res->back().get()));
   }
