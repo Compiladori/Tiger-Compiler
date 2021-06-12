@@ -237,7 +237,7 @@ TEST_CASE("traceSchedule", "[canon]") {
   }
 
   SECTION("[[Label1, Exp (Mem ()), CJump1], [Label3, Exp (BinOp ()), Jump]], [Label4, Move (), Jump]"){
-    // must return [Label1, Exp (Mem ()), CJump1, Label4, Move (), Label done]
+    // must return [Label1, Exp (Mem ()), CJump1, Label4, Move (), Jump, Label3, Exp(BinOp ()), Jump, Label done]
     unique_ptr<irt::Const> expr3 = make_unique<irt::Const>(100);
     unique_ptr<irt::Mem> mem = make_unique<irt::Mem>(move(expr3));
     unique_ptr<irt::Exp> e2 = make_unique<irt::Exp>(move(mem));
@@ -272,17 +272,21 @@ TEST_CASE("traceSchedule", "[canon]") {
     stmLists->push_back(move(stmList3));
     unique_ptr<canon::Block> b = make_unique<canon::Block>(move(stmLists), label);
     unique_ptr<irt::StatementList> res = c.traceSchedule(move(b));
-    REQUIRE(res->size() == 6);
+    REQUIRE(res->size() == 10);
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
     REQUIRE(dynamic_cast<irt::Label*>(res->back().get()));
-    res->pop_front();
+    res->pop_front(); res->pop_back();
     REQUIRE(dynamic_cast<irt::Exp*>(res->front().get()));
-    res->pop_front();
+    REQUIRE(dynamic_cast<irt::Jump*>(res->back().get()));
+    res->pop_front(); res->pop_back();
     REQUIRE(dynamic_cast<irt::Cjump*>(res->front().get()));
-    res->pop_front();
+    REQUIRE(dynamic_cast<irt::Exp*>(res->back().get()));
+    res->pop_front(); res->pop_back();
     REQUIRE(dynamic_cast<irt::Label*>(res->front().get()));
-    res->pop_front();
+    REQUIRE(dynamic_cast<irt::Label*>(res->back().get()));
+    res->pop_front(); res->pop_back();
     REQUIRE(dynamic_cast<irt::Move*>(res->front().get()));
+    REQUIRE(dynamic_cast<irt::Jump*>(res->back().get()));
   }
 }
 
