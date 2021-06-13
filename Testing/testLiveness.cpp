@@ -53,7 +53,7 @@ TEST_CASE("flowgraph", "[liveness]") {
         REQUIRE(live.out[4] == set<temp::Temp>{c,one,two});
         REQUIRE(live.out[5] == set<temp::Temp>{a, c,one,two});
         REQUIRE(live.out[6] == set<temp::Temp>{a, c,one,two});
-        live._interference_graph.show_graph();
+        //live._interference_graph.show_graph();
     }
     SECTION("LIVENESS") {
         REQUIRE(1 == 1);

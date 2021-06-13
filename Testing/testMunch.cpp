@@ -13,23 +13,26 @@ TEST_CASE("print", "[assem]") {
     SECTION("Oper") {
         stringstream out;
         auto oper = make_unique<assem::Oper>("jmp 'j0", temp::TempList{}, temp::TempList{}, temp::LabelList(1, lbl));
-        oper->print();
+        oper->output(out, map);
         auto str = out.str();
-        REQUIRE(str.compare("jmp L48") == 0);
+        REQUIRE(str.compare("    jmp L38\n") == 0);
     }
     SECTION("Label") {
         stringstream out;
         auto oper = make_unique<assem::Label>(lbl.name + ":", lbl);
-        oper->print();
+        oper->output(out, map);
         auto str = out.str();
-        REQUIRE(str.compare("L50:") == 0);
+        REQUIRE(str.compare("L40:\n") == 0);
     }
 
     SECTION("Move") {
         stringstream out;
-        auto oper = make_unique<assem::Move>("movq %'s0, %'d0", temp::TempList(1, tmp), temp::TempList(1, tmp));
-        oper->print();
+        temp::Temp tmp2 = temp::Temp();
+        temp::Label lbl2 = temp::Label();
+        map[tmp2] = lbl2;
+        auto oper = make_unique<assem::Move>("movq %'s0, %'d0", temp::TempList(1, tmp), temp::TempList(1, tmp2));
+        oper->output(out, map);
         auto str = out.str();
-        REQUIRE(str.compare("movq %L52, %L52") == 0);
+        REQUIRE(str.compare("    movq %L42, %L44\n") == 0);
     }
 }
